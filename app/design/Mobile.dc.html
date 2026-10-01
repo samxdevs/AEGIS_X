@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  </style>
+</helmet>
+
+<div style="width:390px;background:#F8F5F0">
+
+  <!-- ===== HERO ===== -->
+  <div style="position:relative;height:734px;overflow:hidden">
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,#F8F5F0 0%,#F5F3EA 40%,#EFF4E8 66%,#E8F5E9 86%)"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:210px;background:linear-gradient(180deg,#66BB6A 0%,#388E3C 32%,#1B5E20 74%,#0A1F0C 100%)"></div>
+    <div style="position:absolute;left:-60%;width:220%;bottom:0;height:210px;overflow:hidden;opacity:.42">
+      <div style="width:100%;height:210px;transform:perspective(190px) rotateX(68deg);transform-origin:50% 0%;background:repeating-linear-gradient(90deg,#0A1F0C 0 3px,rgba(255,255,255,0) 3px 26px)"></div>
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:196px;height:44px;background:linear-gradient(180deg,rgba(232,245,233,0),rgba(232,245,233,.9) 60%,rgba(102,187,106,.4))"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:180px;background:linear-gradient(180deg,rgba(10,31,12,0),rgba(10,31,12,.85))"></div>
+
+    <!-- drone -->
+    <div style="position:absolute;left:50%;top:432px;width:264px;margin-left:-132px;animation:bob 5.2s ease-in-out infinite">
+      <svg width="264" height="228" viewBox="0 0 480 414" fill="none" style="display:block">
+        <defs>
+          <radialGradient id="mpb" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1F3420" stop-opacity=".5"/><stop offset="62%" stop-color="#1F3420" stop-opacity=".2"/><stop offset="100%" stop-color="#1F3420" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="mcone" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#4CAF50" stop-opacity=".4"/><stop offset="100%" stop-color="#4CAF50" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M232 156 L248 156 L356 356 L124 356 Z" fill="url(#mcone)"/>
+        <ellipse cx="240" cy="356" rx="116" ry="18" fill="none" stroke="#4CAF50" stroke-width="2.5" stroke-dasharray="9 7"/>
+        <ellipse cx="146" cy="84" rx="72" ry="12" fill="url(#mpb)"/>
+        <ellipse cx="334" cy="84" rx="72" ry="12" fill="url(#mpb)"/>
+        <path d="M226 108 L152 88 M254 108 L328 88" stroke="#1F3420" stroke-width="9" stroke-linecap="round"/>
+        <ellipse cx="112" cy="106" rx="86" ry="15" fill="url(#mpb)"/>
+        <ellipse cx="368" cy="106" rx="86" ry="15" fill="url(#mpb)"/>
+        <ellipse cx="112" cy="106" rx="86" ry="15" fill="none" stroke="#1F3420" stroke-opacity=".34"/>
+        <ellipse cx="368" cy="106" rx="86" ry="15" fill="none" stroke="#1F3420" stroke-opacity=".34"/>
+        <path d="M222 122 L118 110 M258 122 L362 110" stroke="#12280F" stroke-width="11" stroke-linecap="round"/>
+        <rect x="102" y="96" width="20" height="24" rx="6" fill="#3A4E36"/>
+        <rect x="358" y="96" width="20" height="24" rx="6" fill="#3A4E36"/>
+        <rect x="196" y="100" width="88" height="46" rx="14" fill="#26372A"/>
+        <rect x="203" y="104" width="74" height="12" rx="6" fill="#5B7057" opacity=".6"/>
+        <circle cx="212" cy="133" r="3.4" fill="#4CAF50"/><circle cx="268" cy="133" r="3.4" fill="#D08600"/>
+        <rect x="226" y="154" width="28" height="22" rx="6" fill="#071408"/>
+        <circle cx="240" cy="166" r="8" fill="#0A1F0C" stroke="#4A6146" stroke-width="1.5"/>
+        <path d="M214 150 L188 196 M266 150 L292 196 M166 198 L214 198 M266 198 L314 198" stroke="#26372A" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- nav -->
+    <div style="position:absolute;left:16px;right:16px;top:14px;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 8px 0 14px;border-radius:12px;background:rgba(248,245,240,.86);border:1px solid #E0D6C9;backdrop-filter:blur(12px)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2.2 20.5 7v10L12 21.8 3.5 17V7z" stroke="#2E7D32" stroke-width="1.7" stroke-linejoin="round"/>
+          <path d="M8.4 8.4 15.6 15.6M15.6 8.4 8.4 15.6" stroke="#2E7D32" stroke-width="1.3"/>
+          <circle cx="8.4" cy="8.4" r="1.8" fill="#2E7D32"/><circle cx="15.6" cy="8.4" r="1.8" fill="#2E7D32"/>
+          <circle cx="8.4" cy="15.6" r="1.8" fill="#2E7D32"/><circle cx="15.6" cy="15.6" r="1.8" fill="#2E7D32"/>
+        </svg>
+        <span style="font-size:15.5px;font-weight:700;color:#3E2723">AEGIS</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h14" stroke="#3E2723" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- copy -->
+    <div style="position:absolute;left:20px;right:20px;top:88px">
+      <div style="display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 11px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+        <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+        <span class="mono" style="font-size:9.5px;letter-spacing:.07em;color:#1B5E20">SIH 2026 · PS 26180 · TH10-HW</span>
+      </div>
+      <h1 style="margin:16px 0 0;font-size:34px;line-height:1.12;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+        Two passes over the field. Every problem located, named and explained.
+      </h1>
+      <p style="margin:14px 0 0;font-size:14.5px;line-height:1.64;color:#6D4C41">
+        An autonomous grid at 20–30 m, then a revisit at 3–5 m over the flagged coordinates only. Every model runs on the aircraft or the field station.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+        <span style="display:flex;align-items:center;justify-content:center;gap:9px;height:48px;border-radius:8px;background:#2E7D32;color:#FFFFFF;font-size:15px;font-weight:600">
+          See the two-pass flow
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;height:48px;border-radius:8px;background:#F8F5F0;border:1px solid #E0D6C9;color:#3E2723;font-size:15px;font-weight:600">Read the technical stack</span>
+      </div>
+    </div>
+
+    <span class="mono" style="position:absolute;left:20px;bottom:18px;font-size:9.5px;letter-spacing:.08em;color:rgba(248,245,240,.6)">SAMPLE TELEMETRY · ILLUSTRATIVE</span>
+  </div>
+
+  <!-- ===== ALERT CARD (overlaps) ===== -->
+  <div style="padding:0 20px;margin-top:-46px;position:relative">
+    <div style="border-radius:12px;overflow:hidden;background:#F8F5F0;border:1px solid #E0D6C9;box-shadow:0 1px 3px 0 rgba(0,0,0,.10),0 8px 10px -1px rgba(0,0,0,.10)">
+      <div style="position:relative;height:120px;background:linear-gradient(180deg,#4CAF50,#1B5E20)">
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(86deg,rgba(10,31,12,.42) 0 5px,rgba(255,255,255,0) 5px 22px)"></div>
+        <div style="position:absolute;left:112px;top:28px;width:120px;height:62px;border-radius:6px;background:radial-gradient(ellipse,rgba(208,134,0,.9),rgba(208,134,0,.1) 72%)"></div>
+        <div style="position:absolute;left:104px;top:20px;width:136px;height:78px;border:2px solid #D08600;border-radius:4px"></div>
+        <span class="mono" style="position:absolute;left:10px;top:10px;font-size:9px;letter-spacing:.05em;color:#0A1F0C;background:#C8E6C9;padding:4px 6px;border-radius:6px">PASS 2 · 4.1 m</span>
+      </div>
+      <div style="padding:14px 16px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:16.5px;font-weight:700;color:#3E2723">Water stress</span>
+          <span style="display:flex;align-items:center;height:24px;padding:0 9px;border-radius:6px;background:#FBE5C3;border:1px solid #F0CF9D;font-size:11.5px;font-weight:600;color:#B14F00">Moderate</span>
+        </div>
+        <div class="mono" style="margin-top:6px;font-size:11px;color:#6D4C41">ZONE 3 · 17.4021, 78.5312</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:12px">
+          <span class="mono" style="font-size:9.5px;letter-spacing:.08em;color:#9A7F77">CONF</span>
+          <div style="flex-grow:1;height:6px;border-radius:3px;background:#E0D6C9;overflow:hidden"><div style="width:81%;height:6px;border-radius:3px;background:#2E7D32"></div></div>
+          <span class="mono" style="font-size:11px;color:#3E2723">0.81</span>
+        </div>
+        <div style="margin-top:12px;padding:11px 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+          <div class="mono" style="font-size:9px;letter-spacing:.09em;color:#2E7D32">CHECK NEXT</div>
+          <div style="margin-top:4px;font-size:13px;line-height:1.5;color:#1B5E20">ड्रिप लाइन 3 जाँचें — सिंचाई से पहले।</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PROOF ===== -->
+  <div style="padding:32px 20px 0;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#2E7D32" stroke-width="1.4"/><path d="M5 8.2 7.1 10.3 11 6.2" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span style="font-size:14px;font-weight:500;color:#3E2723">₹80,000 payload, not ₹6.67 lakh</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#2E7D32" stroke-width="1.4"/><path d="M5 8.2 7.1 10.3 11 6.2" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span style="font-size:14px;font-weight:500;color:#3E2723">Fully offline — app, display or SMS</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#2E7D32" stroke-width="1.4"/><path d="M5 8.2 7.1 10.3 11 6.2" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span style="font-size:14px;font-weight:500;color:#3E2723">Evidence photo on every alert</span>
+    </div>
+  </div>
+
+  <!-- ===== TIMELINE (mobile) ===== -->
+  <div style="margin-top:36px;padding:32px 20px 40px;background:#F0E9E0;border-top:1px solid #E0D6C9">
+    <div style="display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 11px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+      <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+      <span class="mono" style="font-size:9.5px;letter-spacing:.08em;color:#1B5E20">END-TO-END WORKFLOW</span>
+    </div>
+    <h2 style="margin:16px 0 0;font-size:30px;line-height:1.14;font-weight:700;letter-spacing:-.025em;color:#3E2723">From field polygon to farmer advisory</h2>
+
+    <div style="position:relative;margin-top:24px;padding-left:0">
+      <div style="position:absolute;left:5px;top:8px;bottom:14px;width:1.5px;background:#E0D6C9"></div>
+      <div style="position:absolute;left:5px;top:8px;height:62%;width:1.5px;background:#2E7D32"></div>
+
+      <div style="display:flex;gap:18px;padding-bottom:22px">
+        <div style="width:12px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px"><div style="width:7px;height:7px;background:#E0D6C9"></div></div>
+        <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:10.5px;color:#B59F98">04</span><span style="font-size:17px;font-weight:500;color:#9A7F77">Onboard inference</span></div>
+      </div>
+      <div style="display:flex;gap:18px;padding-bottom:22px">
+        <div style="width:12px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px"><div style="width:7px;height:7px;background:#E0D6C9"></div></div>
+        <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:10.5px;color:#B59F98">05</span><span style="font-size:17px;font-weight:500;color:#9A7F77">Hotspot map</span></div>
+      </div>
+      <div style="display:flex;gap:18px;padding-bottom:22px">
+        <div style="width:12px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px"><div style="width:7px;height:7px;background:#E0D6C9"></div></div>
+        <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:10.5px;color:#B59F98">06</span><span style="font-size:17px;font-weight:500;color:#9A7F77">Low-altitude revisit</span></div>
+      </div>
+
+      <div style="position:relative;display:flex;gap:18px;padding-bottom:22px">
+        <div style="width:12px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px"><div style="width:7px;height:7px;background:#2E7D32;box-shadow:0 0 0 4px #C8E6C9"></div></div>
+        <div>
+          <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:10.5px;color:#2E7D32">07</span><span style="font-size:17px;font-weight:700;color:#3E2723">Sensor fusion</span></div>
+          <p style="margin:9px 0 0;font-size:13.5px;line-height:1.64;color:#6D4C41">LoRa nodes bring soil moisture, leaf wetness, air temperature and water level in from the ground, so a stressed zone gets a reason and not just a colour.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+            <span class="mono" style="height:22px;display:inline-flex;align-items:center;padding:0 8px;border-radius:6px;background:#F8F5F0;border:1px solid #E0D6C9;font-size:9.5px;color:#6D4C41">ESP32 + SX1276</span>
+            <span class="mono" style="height:22px;display:inline-flex;align-items:center;padding:0 8px;border-radius:6px;background:#F8F5F0;border:1px solid #E0D6C9;font-size:9.5px;color:#6D4C41">RULE-BASED FUSION</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:18px">
+        <div style="width:12px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px"><div style="width:7px;height:7px;background:#E0D6C9"></div></div>
+        <div style="display:flex;align-items:baseline;gap:12px"><span class="mono" style="font-size:10.5px;color:#B59F98">08</span><span style="font-size:17px;font-weight:500;color:#9A7F77">Farmer advisory</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

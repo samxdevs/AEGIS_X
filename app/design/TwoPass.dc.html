@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    @keyframes fly{to{stroke-dashoffset:-560}}
+    @keyframes drift{0%{transform:translate(0,0)}25%{transform:translate(180px,40px)}50%{transform:translate(-140px,80px)}75%{transform:translate(160px,120px)}100%{transform:translate(0,0)}}
+    @keyframes pop{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.14);opacity:1}}
+    @keyframes descend{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:1191px;overflow:hidden;background:#F0E9E0;padding:0 64px">
+
+  <!-- header -->
+  <div style="position:relative;padding-top:88px">
+    <div style="display:inline-flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+      <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+      <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">TWO-PASS AUTONOMY</span>
+    </div>
+    <h2 style="margin:22px 0 0;font-size:50px;line-height:1.09;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+      The survey finds <span style="color:#2E7D32">where</span>.<br>The revisit decides <span style="color:#2E7D32">what</span>.
+    </h2>
+    <p style="margin:22px 0 0;width:680px;font-size:16px;line-height:1.66;color:#6D4C41">
+      One flight maps the whole field at 20–30 m and flags coordinates. The second visits only those coordinates at 3–5 m. A 5&nbsp;mm insect that was under a single pixel on pass one becomes a photograph on pass two.
+    </p>
+  </div>
+
+  <!-- diagram card (dark map surface) -->
+  <div style="position:relative;margin-top:48px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid #E0D6C9;border-radius:12px;overflow:hidden;background:#0A1F0C;box-shadow:0 1px 3px 0 rgba(0,0,0,.10),0 8px 10px -1px rgba(0,0,0,.10)">
+
+    <!-- PASS 1 -->
+    <div style="padding:24px 26px 26px;border-right:1px solid #26372A">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div style="display:flex;align-items:baseline;gap:11px">
+          <span class="mono" style="font-size:11px;letter-spacing:.11em;color:{{accent}}">PASS 1</span>
+          <span style="font-size:17px;font-weight:600;color:#F8F5F0">Survey grid</span>
+        </div>
+        <span class="mono" style="font-size:11px;color:#7C8D7D">25 m AGL · 75/65 overlap</span>
+      </div>
+      <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#99AA9A;width:94%">Fields2Cover turns the drawn polygon into a boustrophedon mission. ArduPilot flies it, the camera triggers at every waypoint, and the Jetson segments frames in the air.</p>
+
+      <svg viewBox="0 0 560 400" style="width:100%;height:auto;margin-top:16px;display:block">
+        <defs>
+          <linearGradient id="fieldg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1F3420"/><stop offset="100%" stop-color="#12280F"/>
+          </linearGradient>
+        </defs>
+        <path d="M40 58 L520 32 L538 346 L58 374 Z" fill="url(#fieldg)" stroke="#304330" stroke-width="1.5"/>
+        <path d="M40 58 L520 32 L538 346 L58 374 Z" fill="none" stroke="{{accent}}" stroke-width="1.5" stroke-dasharray="6 6" opacity=".45"/>
+        <g opacity=".28">
+          <path d="M70 70 L84 366 M140 66 L152 362 M210 62 L220 358 M280 58 L288 354 M350 54 L356 350 M420 50 L424 346 M490 46 L492 342" stroke="#66BB6A" stroke-width="1"/>
+        </g>
+
+        <path d="M72 88 H500 V128 H72 V168 H500 V208 H72 V248 H500 V288 H72 V328 H500" fill="none" stroke="#3B5238" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M72 88 H500 V128 H72 V168 H500 V208 H72 V248 H500 V288 H72 V328 H500" fill="none" stroke="{{accent}}" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="14 546" style="animation:fly 6s linear infinite"/>
+
+        <g fill="#4A6146">
+          <circle cx="72" cy="88" r="3"/><circle cx="500" cy="128" r="3"/><circle cx="72" cy="168" r="3"/>
+          <circle cx="500" cy="208" r="3"/><circle cx="72" cy="248" r="3"/><circle cx="500" cy="288" r="3"/><circle cx="72" cy="328" r="3"/>
+        </g>
+
+        <g style="animation:pop 2.6s ease-in-out infinite">
+          <rect x="158" y="136" width="34" height="34" rx="4" fill="rgba(208,134,0,.24)" stroke="#D08600" stroke-width="2"/>
+        </g>
+        <g style="animation:pop 2.6s ease-in-out .9s infinite">
+          <rect x="372" y="240" width="42" height="42" rx="4" fill="rgba(198,40,40,.24)" stroke="#C62828" stroke-width="2"/>
+        </g>
+        <g style="animation:pop 2.6s ease-in-out 1.7s infinite">
+          <rect x="244" y="292" width="30" height="30" rx="4" fill="rgba(208,134,0,.24)" stroke="#D08600" stroke-width="2"/>
+        </g>
+
+        <g style="animation:drift 9s ease-in-out infinite">
+          <g transform="translate(286,208)">
+            <circle cx="0" cy="0" r="26" fill="rgba(76,175,80,.12)"/>
+            <path d="M-13 -13 L13 13 M13 -13 L-13 13" stroke="#E8F5E9" stroke-width="2.4"/>
+            <circle cx="-13" cy="-13" r="7" fill="none" stroke="#E8F5E9" stroke-width="2" opacity=".8"/>
+            <circle cx="13" cy="-13" r="7" fill="none" stroke="#E8F5E9" stroke-width="2" opacity=".8"/>
+            <circle cx="-13" cy="13" r="7" fill="none" stroke="#E8F5E9" stroke-width="2" opacity=".8"/>
+            <circle cx="13" cy="13" r="7" fill="none" stroke="#E8F5E9" stroke-width="2" opacity=".8"/>
+            <rect x="-6" y="-6" width="12" height="12" rx="3" fill="#F8F5F0"/>
+          </g>
+        </g>
+
+        <text x="40" y="394" font-family="Source Code Pro, monospace" font-size="11" fill="#7C8D7D">4–8 acres · 18–25 min · one battery</text>
+      </svg>
+    </div>
+
+    <!-- PASS 2 -->
+    <div style="padding:24px 26px 26px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div style="display:flex;align-items:baseline;gap:11px">
+          <span class="mono" style="font-size:11px;letter-spacing:.11em;color:#D08600">PASS 2</span>
+          <span style="font-size:17px;font-weight:600;color:#F8F5F0">Flagged coordinates only</span>
+        </div>
+        <span class="mono" style="font-size:11px;color:#7C8D7D">4 m AGL · reviewed before flight</span>
+      </div>
+      <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#99AA9A;width:94%">The hotspot map generates a second mission. A person approves it, the aircraft descends over each flagged square, and the close-up frame becomes the evidence attached to the alert.</p>
+
+      <svg viewBox="0 0 560 400" style="width:100%;height:auto;margin-top:16px;display:block">
+        <defs>
+          <linearGradient id="skyg2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#16301A"/><stop offset="100%" stop-color="#0A1F0C"/>
+          </linearGradient>
+          <linearGradient id="cone2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#D08600" stop-opacity=".34"/><stop offset="100%" stop-color="#D08600" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="560" height="400" fill="url(#skyg2)"/>
+
+        <line x1="58" y1="40" x2="58" y2="330" stroke="#304330" stroke-width="1.5"/>
+        <g font-family="Source Code Pro, monospace" font-size="10" fill="#7C8D7D">
+          <line x1="52" y1="52" x2="64" y2="52" stroke="#4A6146" stroke-width="1.5"/><text x="14" y="56">25 m</text>
+          <line x1="52" y1="128" x2="64" y2="128" stroke="#4A6146" stroke-width="1.5"/><text x="14" y="132">18 m</text>
+          <line x1="52" y1="204" x2="64" y2="204" stroke="#4A6146" stroke-width="1.5"/><text x="14" y="208">11 m</text>
+          <line x1="46" y1="272" x2="70" y2="272" stroke="#D08600" stroke-width="2"/><text x="14" y="276" fill="#D08600">4 m</text>
+        </g>
+        <path d="M118 60 C 150 96, 150 210, 176 254" fill="none" stroke="#4A6146" stroke-width="2" stroke-dasharray="5 6"/>
+
+        <rect x="0" y="330" width="560" height="70" fill="#12280F"/>
+        <g opacity=".55"><path d="M0 348 H560 M0 366 H560 M0 384 H560" stroke="#1B5E20" stroke-width="6"/></g>
+
+        <rect x="132" y="318" width="96" height="60" rx="4" fill="rgba(208,134,0,.14)" stroke="#D08600" stroke-width="2"/>
+
+        <g style="animation:descend 4.2s ease-in-out infinite">
+          <path d="M180 268 L192 268 L228 330 L132 330 Z" fill="url(#cone2)"/>
+          <g transform="translate(186,258)">
+            <ellipse cx="-34" cy="-4" rx="28" ry="5" fill="#C8E6C9" opacity=".38"/>
+            <ellipse cx="34" cy="-4" rx="28" ry="5" fill="#C8E6C9" opacity=".38"/>
+            <path d="M-14 4 L-30 -3 M14 4 L30 -3" stroke="#26372A" stroke-width="4" stroke-linecap="round"/>
+            <rect x="-16" y="-2" width="32" height="16" rx="5" fill="#3A4E36"/>
+            <rect x="-6" y="14" width="12" height="9" rx="3" fill="#071408"/>
+            <circle cx="0" cy="19" r="3.4" fill="#0A1F0C" stroke="#D08600" stroke-width="1.2"/>
+          </g>
+        </g>
+
+        <g transform="translate(300,120)">
+          <rect x="0" y="0" width="216" height="150" rx="10" fill="#16301A" stroke="#304330" stroke-width="1.5"/>
+          <rect x="10" y="10" width="196" height="96" rx="6" fill="#2E7D32"/>
+          <g opacity=".6"><path d="M10 30 H206 M10 52 H206 M10 74 H206 M10 96 H206" stroke="#12280F" stroke-width="9"/></g>
+          <ellipse cx="118" cy="58" rx="34" ry="22" fill="#D08600" opacity=".8"/>
+          <rect x="82" y="34" width="72" height="48" rx="4" fill="none" stroke="#D08600" stroke-width="2"/>
+          <text x="10" y="126" font-family="Montserrat, sans-serif" font-size="13" font-weight="600" fill="#F8F5F0">Evidence frame · 0.7 cm/px</text>
+          <text x="10" y="142" font-family="Source Code Pro, monospace" font-size="10" fill="#7C8D7D">ZONE 3 · 17.4021, 78.5312 · 07:42</text>
+        </g>
+        <path d="M232 272 C 262 260, 276 220, 296 196" fill="none" stroke="#4A6146" stroke-width="1.5" stroke-dasharray="4 5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- stat strip -->
+  <div style="position:relative;margin-top:40px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+    <div style="padding:20px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+      <div class="mono" style="font-size:26px;font-weight:500;color:#3E2723">20–30 m</div>
+      <div style="margin-top:6px;font-size:13px;color:#6D4C41">Pass 1 survey altitude</div>
+    </div>
+    <div style="padding:20px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+      <div class="mono" style="font-size:26px;font-weight:500;color:#3E2723">3–5 m</div>
+      <div style="margin-top:6px;font-size:13px;color:#6D4C41">Pass 2 confirmation altitude</div>
+    </div>
+    <div style="padding:20px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+      <div class="mono" style="font-size:26px;font-weight:500;color:#3E2723">2 m</div>
+      <div style="margin-top:6px;font-size:13px;color:#6D4C41">Severity grid resolution</div>
+    </div>
+    <div style="padding:20px 22px;border:1px solid #C8E6C9;border-radius:12px;background:#E8F5E9">
+      <div class="mono" style="font-size:26px;font-weight:500;color:#2E7D32">0</div>
+      <div style="margin-top:6px;font-size:13px;color:#1B5E20">Network connections required</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#4CAF50","options":["#4CAF50","#2E7D32","#D08600","#1B5E20"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#4CAF50' };
+  }
+}
+</script>
+</body>
+</html>

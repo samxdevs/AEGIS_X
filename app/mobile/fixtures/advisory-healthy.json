@@ -1,0 +1,267 @@
+{
+  "schema_version": "1.0",
+  "advisory_id": "2026-09-20T06:41:12Z_F01",
+  "seq": 91,
+  "generated_at_utc": "2026-09-20T06:41:12Z",
+  "inference_backend": "trt",
+  "replay": false,
+  "scan": {
+    "started_utc": "2026-09-20T06:40:58Z",
+    "ended_utc": "2026-09-20T06:41:12Z",
+    "mode": "handheld_pod",
+    "frames_captured": 30,
+    "frames_evaluated": 28,
+    "tiles_classified": 252,
+    "distance_walked_m": 41.6,
+    "distance_reason": null
+  },
+  "crop_health": {
+    "state": "HEALTHY",
+    "reason": null,
+    "crop": "rice",
+    "frames_evaluated": 28,
+    "frames_agreeing": 25,
+    "frames_rejected_ood": 1,
+    "frames_rejected_not_crop": 2,
+    "frames_uncertain": 0,
+    "source": "measured"
+  },
+  "growth_stage": {
+    "crop": "rice",
+    "stage": "mid_season",
+    "stage_code": "MID",
+    "days_since_planting": 68,
+    "total_cycle_days": 150,
+    "cycle_source": "default_assumption",
+    "cycle_verification_status": "RECALLED_UNVERIFIED",
+    "stage_lengths_days": {
+      "initial": 30,
+      "development": 30,
+      "mid_season": 60,
+      "late_season": 30
+    },
+    "canopy_cover_measured": 0.7338,
+    "canopy_cover_expected_range": [
+      0.7,
+      0.9
+    ],
+    "kc": 1.2,
+    "status": "OK",
+    "reason": null,
+    "verification_status": "WEB_VERIFIED",
+    "source": "derived",
+    "document_reference": "Allen et al. (1998), FAO Irrigation and Drainage Paper 56, Chapter 5 Table 11 & Chapter 6 Table 12"
+  },
+  "vegetation": {
+    "interpretation_mode": "relative",
+    "canopy_cover": {
+      "mean": 0.7338,
+      "p10": 0.304,
+      "p50": 0.9444,
+      "p90": 0.988,
+      "min_fraction_threshold": 0.15,
+      "status": "OK",
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "vari": {
+      "mean": 0.1347,
+      "threshold_source": "PROVISIONAL — within-scan relative, no published absolute band exists for uncalibrated RGB VARI",
+      "threshold_confirmed": false,
+      "source": "measured",
+      "p10": 0.1097,
+      "p50": 0.1341,
+      "p90": 0.16,
+      "field_median": 0.1341,
+      "band": "TYPICAL",
+      "band_basis": "within_scan_percentile"
+    },
+    "exg": {
+      "mean": 95.66,
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "tgi": {
+      "mean": 53.02,
+      "threshold_source": "PROVISIONAL — uncalibrated RGB TGI regression",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "dgci": {
+      "mean": 0.4329,
+      "threshold_source": "PROVISIONAL — narrowed foliage domain [60, 120] deg",
+      "threshold_confirmed": false,
+      "source": "measured",
+      "out_of_domain_fraction": 0.0405
+    },
+    "ndvi": null,
+    "ndvi_status": "PENDING_HARDWARE_FINALIZATION",
+    "ndvi_reason": "Optical path and calib_matrix in progress. Field reserved; not estimated."
+  },
+  "thermal": {
+    "available": true,
+    "reason": null,
+    "tc_c": 28.4,
+    "twet_c": 25.9,
+    "tdry_c": 37.2,
+    "cwsi": 0.2212,
+    "flag": "NORMAL",
+    "thermal_source": "hardware",
+    "frame_utc": "2026-09-20T06:41:10Z"
+  },
+  "ndvi": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED (Target CSI camera /dev/video1 not found; available: ['/dev/video0'])"
+  },
+  "ndvi_satellite": {
+    "available": true,
+    "reason": null,
+    "source": "SENTINEL2_L2A_CDSE",
+    "scene_date": "2026-09-16",
+    "age_days": 3.8,
+    "ndvi_mean": 0.612,
+    "ndvi_std": 0.081,
+    "valid_pixel_count": 46,
+    "cloud_masked_fraction": 0.04,
+    "pixel_size_m": 10,
+    "reliability_note": null
+  },
+  "irrigation": {
+    "available": true,
+    "reason": null,
+    "method": "fao56_hargreaves_samani",
+    "air_temp_c": 31.2,
+    "rh_pct": 64,
+    "t_min_24h_c": 24.1,
+    "t_max_24h_c": 34.8,
+    "t_mean_24h_c": 29.4,
+    "ra_mj_m2_day": 35.62,
+    "ra_mm_day": 14.54,
+    "ra_source": "GPS",
+    "ra_latitude_deg": 26.85,
+    "day_of_year": 263,
+    "et0_mm_day": 4.71,
+    "kc": 1.2,
+    "crop_et_mm_day": 5.65,
+    "soil1_v": 1.42,
+    "soil2_v": 1.38,
+    "battery_v": 3.29,
+    "samples_24h": 48,
+    "source": "derived_fao56"
+  },
+  "detections": [
+    {
+      "class": "rice__normal",
+      "confidence": 0.9124,
+      "cross_source_reliability": "TESTED_WEAK",
+      "lat": 26.7815,
+      "lon": 81.0615,
+      "fix_quality": 1,
+      "hdop": 1.2,
+      "captured_utc": "2026-09-20T06:41:00.114000+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "rice__normal",
+      "confidence": 0.8842,
+      "cross_source_reliability": "TESTED_WEAK",
+      "lat": 26.7817,
+      "lon": 81.0618,
+      "fix_quality": 1,
+      "hdop": 1.3,
+      "captured_utc": "2026-09-20T06:41:04.902000+00:00",
+      "source": "measured"
+    }
+  ],
+  "gps": {
+    "status": "OK",
+    "point_count": 28,
+    "accuracy_note": "Point tagging only, approximately 2.5 m CEP. Not a survey-grade position."
+  },
+  "disease": [],
+  "pest": [
+    {
+      "target_pest_context": "sugarcane_whitefly_woolly_aphid",
+      "count_basis": "watershed_all_blobs",
+      "count_observed": 34,
+      "days_monitored": 2,
+      "daily_rate": 17,
+      "threshold_value": 100,
+      "threshold_unit": "insects_per_trap",
+      "threshold_available": true,
+      "status": "BELOW_ETL",
+      "threshold_verification_status": "VERIFIED",
+      "classification_verification_status": "RECALLED_UNVERIFIED",
+      "total_blobs_counted": 34,
+      "classification_source": "CROSS_DOMAIN_PRETRAINED",
+      "morphological_distribution": {
+        "small_pale_winged": 0.5294,
+        "larger_insect": 0.1176,
+        "debris": 0.2059,
+        "UNCERTAIN_NON_TARGET": 0.1471
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "name": "pod_camera_rgb",
+      "source_node": "POD",
+      "status": "OK"
+    },
+    {
+      "name": "pod_gps",
+      "source_node": "POD",
+      "status": "OK"
+    },
+    {
+      "name": "pod_thermal",
+      "source_node": "POD",
+      "status": "OK"
+    }
+  ],
+  "actions": [
+    {
+      "rank": 1,
+      "template_id": "ACT_MAINTAIN_ROUTINE",
+      "action": "Maintain routine crop management and irrigation schedule. Continue weekly scouting without chemical application.",
+      "rationale": "Canopy is confirmed healthy with high consensus across consecutive spatial tiles; prophylactic pesticide application is economically and environmentally unjustified. Citation: DPPQS, Ministry of Agriculture & Farmers Welfare: 'Components of IPM'.",
+      "params": {
+        "crop": "rice",
+        "state": "HEALTHY",
+        "confidence": 0.9124,
+        "verification_status": "WEB_VERIFIED"
+      },
+      "verification_status": "WEB_VERIFIED",
+      "url": "https://ppqs.gov.in/divisions/integrated-pest-management/components-ipm",
+      "document_reference": "DPPQS: Integrated Pest Management Components & Surveillance Guidelines (updated 2026), Section 'Cultural Practices' & 'Chemical Control as Last Resort'",
+      "offline_source_file": "docs/sources/dppqs_components_ipm.md",
+      "confidence": "high",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    },
+    {
+      "rank": 2,
+      "template_id": "ACT_IRRIGATE_WATER_DEFICIT",
+      "action": "Apply field irrigation. Estimated daily crop water requirement is approximately 5.65 mm/day. Apply recommended depth of 28.0 mm.",
+      "rationale": "Computed from FAO-56 Hargreaves-Samani reference evapotranspiration and the mid-season crop coefficient. Citation: Allen et al. (1998), FAO Irrigation and Drainage Paper 56, Chapters 4 & 6; edge/irrigation_model.py:4-45.",
+      "params": {
+        "etc_mm_day": 5.65,
+        "irrigation_depth_mm": 28,
+        "cwsi": 0.2212,
+        "soil_moisture_pct": null,
+        "verification_status": "VERIFIED"
+      },
+      "verification_status": "VERIFIED",
+      "url": "https://www.fao.org/land-water/databases-and-software/cropwat/en/",
+      "document_reference": "Allen et al. (1998), FAO Irrigation and Drainage Paper 56: 'Crop Evapotranspiration', Chapter 4 & 6; edge/irrigation_model.py:4-45",
+      "offline_source_file": "docs/sources/fao56.pdf",
+      "confidence": "medium",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    }
+  ]
+}

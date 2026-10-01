@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    .lead{position:absolute;height:1px;background:#A5CBA7}
+    .dot{position:absolute;width:5px;height:5px;border-radius:3px;background:#2E7D32;margin-top:-2px}
+    .lbl{position:absolute;width:300px;font-size:13px;line-height:1.5;color:#3E2723;font-weight:600}
+    .lbl span{display:block;font-weight:400;color:#6D4C41;margin-top:3px}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:1187px;overflow:hidden;background:#E8F5E9;padding:88px 64px 0">
+
+  <!-- header -->
+  <div style="display:flex;flex-direction:column;align-items:center">
+    <div style="display:flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#F8F5F0;border:1px solid #C8E6C9">
+      <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+      <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">EVIDENCE, NOT VERDICTS</span>
+    </div>
+    <h2 style="margin:22px 0 0;width:840px;text-align:center;font-size:50px;line-height:1.09;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+      Every alert can be<br>argued with.
+    </h2>
+    <p style="margin:22px 0 0;width:720px;text-align:center;font-size:15.5px;line-height:1.68;color:#6D4C41">
+      Mohanty et&nbsp;al. reported 99.35% accuracy on PlantVillage and about 31% on independent field images. So AEGIS never simply names a disease — it hands over the photograph, the confidence and the sensor reading behind the call, and says “needs inspection” when it does not know.
+    </p>
+  </div>
+
+  <!-- annotated card -->
+  <div style="position:relative;height:462px;margin-top:52px">
+
+    <!-- leaders (left) -->
+    <div class="lead" style="left:476px;top:100px;width:50px"></div><div class="dot" style="left:522px;top:100px"></div>
+    <div class="lead" style="left:476px;top:222px;width:50px"></div><div class="dot" style="left:522px;top:222px"></div>
+    <div class="lead" style="left:476px;top:278px;width:50px"></div><div class="dot" style="left:522px;top:278px"></div>
+    <!-- leaders (right) -->
+    <div class="lead" style="left:914px;top:250px;width:50px"></div><div class="dot" style="left:914px;top:250px"></div>
+    <div class="lead" style="left:914px;top:316px;width:50px"></div><div class="dot" style="left:914px;top:316px"></div>
+    <div class="lead" style="left:914px;top:374px;width:50px"></div><div class="dot" style="left:914px;top:374px"></div>
+    <div class="lead" style="left:914px;top:424px;width:50px"></div><div class="dot" style="left:914px;top:424px"></div>
+
+    <!-- labels (left) -->
+    <div class="lbl" style="left:166px;top:88px;text-align:right">Evidence frame from the revisit<span>The 4 m photograph the call was made on, not a stock image of the disease.</span></div>
+    <div class="lbl" style="left:166px;top:210px;text-align:right">Class and severity, in plain words<span>“Water stress · Moderate”, never a bare model label.</span></div>
+    <div class="lbl" style="left:166px;top:266px;text-align:right">Confidence, always on screen<span>Shown even when it is low — especially when it is low.</span></div>
+
+    <!-- labels (right) -->
+    <div class="lbl" style="left:970px;top:238px">The exact coordinate<span>A GPS fix for the zone, not “the north field”.</span></div>
+    <div class="lbl" style="left:970px;top:304px">Why, from the ground node<span>The soil and canopy readings that explain the colour on the map.</span></div>
+    <div class="lbl" style="left:970px;top:362px">What to check next<span>One action, in the farmer’s language, on the field display or by SMS.</span></div>
+    <div class="lbl" style="left:970px;top:412px">An honest unknown<span>“Needs inspection” is a first-class outcome, not a failure.</span></div>
+
+    <!-- the card -->
+    <div style="position:absolute;left:530px;top:0;width:380px;border-radius:12px;overflow:hidden;background:#F8F5F0;border:1px solid #E0D6C9;box-shadow:0 1px 3px 0 rgba(0,0,0,.10),0 8px 10px -1px rgba(0,0,0,.10)">
+      <!-- evidence photo -->
+      <div style="position:relative;height:200px;background:linear-gradient(180deg,#4CAF50,#1B5E20)">
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(86deg,rgba(10,31,12,.42) 0 6px,rgba(255,255,255,0) 6px 26px)"></div>
+        <div style="position:absolute;left:112px;top:52px;width:150px;height:86px;border-radius:8px;background:radial-gradient(ellipse,rgba(208,134,0,.92),rgba(208,134,0,.1) 72%)"></div>
+        <div style="position:absolute;left:102px;top:42px;width:170px;height:106px;border:2px solid #D08600;border-radius:4px"></div>
+        <span class="mono" style="position:absolute;left:102px;top:148px;font-size:9.5px;letter-spacing:.06em;color:#FBE5C3;background:rgba(10,31,12,.75);padding:3px 6px;border-radius:4px">canopy gap · 0.7 cm/px</span>
+        <span class="mono" style="position:absolute;left:12px;top:12px;font-size:9.5px;letter-spacing:.06em;color:#0A1F0C;background:#C8E6C9;padding:4px 7px;border-radius:6px">PASS 2 · 4.1 m AGL · 12 SEP 07:42</span>
+      </div>
+
+      <div style="padding:16px 18px 18px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:18px;font-weight:700;letter-spacing:-.015em;color:#3E2723">Water stress</span>
+          <span style="display:flex;align-items:center;height:24px;padding:0 9px;border-radius:6px;background:#FBE5C3;border:1px solid #F0CF9D;font-size:11.5px;font-weight:600;color:#B14F00">Moderate</span>
+        </div>
+
+        <div class="mono" style="margin-top:7px;font-size:11.5px;color:#6D4C41">ZONE 3 · NE BLOCK · 17.4021, 78.5312</div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px">
+          <span class="mono" style="font-size:10px;letter-spacing:.08em;color:#9A7F77">CONF</span>
+          <div style="flex-grow:1;height:6px;border-radius:3px;background:#E0D6C9;overflow:hidden">
+            <div style="width:81%;height:6px;border-radius:3px;background:#2E7D32"></div>
+          </div>
+          <span class="mono" style="font-size:11.5px;color:#3E2723">0.81</span>
+        </div>
+
+        <div style="margin-top:16px;padding:12px 13px;border-radius:8px;background:#F0E9E0;border:1px solid #E0D6C9">
+          <div class="mono" style="font-size:9.5px;letter-spacing:.1em;color:#9A7F77">WHY</div>
+          <div style="margin-top:5px;font-size:13px;line-height:1.55;color:#6D4C41">Soil moisture <span style="color:#3E2723;font-weight:600">18%</span>, leaf wetness <span style="color:#3E2723;font-weight:600">0</span>, canopy <span style="color:#3E2723;font-weight:600">+3.4 °C</span> over the field mean.</div>
+        </div>
+
+        <div style="margin-top:10px;padding:12px 13px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+          <div class="mono" style="font-size:9.5px;letter-spacing:.1em;color:#2E7D32">CHECK NEXT</div>
+          <div style="margin-top:5px;font-size:13px;line-height:1.55;color:#1B5E20">ड्रिप लाइन 3 जाँचें — इस खंड में सिंचाई से पहले।</div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <span class="mono" style="height:24px;display:flex;align-items:center;padding:0 9px;border-radius:6px;background:#F0E9E0;border:1px solid #E0D6C9;font-size:10px;letter-spacing:.04em;color:#6D4C41">NEEDS INSPECTION</span>
+          <span class="mono" style="height:24px;display:flex;align-items:center;padding:0 9px;border-radius:6px;background:#F0E9E0;border:1px solid #E0D6C9;font-size:10px;letter-spacing:.04em;color:#6D4C41">LOG RESULT</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom notes -->
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:44px">
+    <div style="padding:22px 24px;border:1px solid #C8E6C9;border-radius:12px;background:#F8F5F0">
+      <div style="display:flex;align-items:baseline;gap:10px">
+        <span class="mono" style="font-size:22px;font-weight:500;color:#2E7D32">99.35%</span>
+        <span class="mono" style="font-size:14px;color:#9A7F77">→</span>
+        <span class="mono" style="font-size:22px;font-weight:500;color:#C62828">31%</span>
+      </div>
+      <div style="margin-top:10px;font-size:14px;font-weight:600;color:#3E2723">We train on our own imagery</div>
+      <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#6D4C41">PlantVillage accuracy against independent field images, Mohanty et&nbsp;al. 2016. Lab-trained models collapse outdoors, so ours are trained at our own camera and altitudes.</p>
+    </div>
+    <div style="padding:22px 24px;border:1px solid #C8E6C9;border-radius:12px;background:#F8F5F0">
+      <div class="mono" style="font-size:22px;font-weight:500;color:#2E7D32">by field, by date</div>
+      <div style="margin-top:10px;font-size:14px;font-weight:600;color:#3E2723">Splits that refuse to leak</div>
+      <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#6D4C41">Train and test sets are split by field and by capture date, so the model cannot score well by memorising one afternoon in one plot.</p>
+    </div>
+    <div style="padding:22px 24px;border:1px solid #C8E6C9;border-radius:12px;background:#F8F5F0">
+      <div class="mono" style="font-size:22px;font-weight:500;color:#2E7D32">“unknown”</div>
+      <div style="margin-top:10px;font-size:14px;font-weight:600;color:#3E2723">A state we ship on purpose</div>
+      <p style="margin:6px 0 0;font-size:13px;line-height:1.6;color:#6D4C41">Below the confidence floor the alert says “needs inspection” and asks for a close-up, rather than inventing a disease name a farmer might spray for.</p>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

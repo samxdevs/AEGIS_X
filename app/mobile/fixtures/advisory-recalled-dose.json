@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.0",
+  "advisory_id": "2026-09-20T11:58:03Z_F02",
+  "seq": 93,
+  "generated_at_utc": "2026-09-20T11:58:03Z",
+  "inference_backend": "trt",
+  "replay": false,
+  "scan": {
+    "started_utc": "2026-09-20T11:57:49Z",
+    "ended_utc": "2026-09-20T11:58:03Z",
+    "mode": "handheld_pod",
+    "frames_captured": 30,
+    "frames_evaluated": 22,
+    "tiles_classified": 198,
+    "distance_walked_m": null,
+    "distance_reason": "GPS_TRACK_NOT_RECORDED"
+  },
+  "crop_health": {
+    "state": "DISEASE",
+    "reason": null,
+    "crop": "sugarcane",
+    "frames_evaluated": 22,
+    "frames_agreeing": 16,
+    "frames_rejected_ood": 1,
+    "frames_rejected_not_crop": 4,
+    "frames_uncertain": 1,
+    "source": "measured"
+  },
+  "growth_stage": {
+    "crop": "sugarcane",
+    "stage": null,
+    "stage_code": null,
+    "days_since_planting": null,
+    "total_cycle_days": 280,
+    "cycle_source": "default_assumption",
+    "cycle_verification_status": "RECALLED_UNVERIFIED",
+    "canopy_cover_measured": 0.0812,
+    "canopy_cover_expected_range": null,
+    "kc": null,
+    "status": "DAYS_SINCE_PLANTING_REQUIRED",
+    "reason": "DAYS_SINCE_PLANTING_REQUIRED",
+    "verification_status": "WEB_VERIFIED",
+    "source": "derived",
+    "document_reference": "Allen et al. (1998), FAO Irrigation and Drainage Paper 56, Chapter 5 Table 11"
+  },
+  "vegetation": {
+    "interpretation_mode": "relative",
+    "canopy_cover": {
+      "mean": 0.0812,
+      "p10": 0.0102,
+      "p50": 0.0764,
+      "p90": 0.1402,
+      "min_fraction_threshold": 0.15,
+      "status": "INSUFFICIENT_CANOPY",
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "vari": {
+      "mean": null,
+      "reason": "INSUFFICIENT_CANOPY_FRACTION",
+      "min_fraction_threshold": 0.15,
+      "threshold_source": "PROVISIONAL — within-scan relative, no published absolute band exists for uncalibrated RGB VARI",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "exg": {
+      "mean": null,
+      "reason": "INSUFFICIENT_CANOPY_FRACTION",
+      "min_fraction_threshold": 0.15,
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "tgi": {
+      "mean": null,
+      "reason": "INSUFFICIENT_CANOPY_FRACTION",
+      "min_fraction_threshold": 0.15,
+      "threshold_source": "PROVISIONAL — uncalibrated RGB TGI regression",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "dgci": {
+      "mean": null,
+      "reason": "OUT_OF_DOMAIN_FRACTION_EXCEEDED",
+      "min_fraction_threshold": 0.15,
+      "threshold_source": "PROVISIONAL — narrowed foliage domain [60, 120] deg",
+      "threshold_confirmed": false,
+      "source": "measured",
+      "out_of_domain_fraction": 0.4187,
+      "threshold": 0.3
+    },
+    "ndvi": null,
+    "ndvi_status": "PENDING_HARDWARE_FINALIZATION",
+    "ndvi_reason": "Optical path and calib_matrix in progress. Field reserved; not estimated."
+  },
+  "thermal": {
+    "available": false,
+    "reason": "THERMAL_REFS_NOT_CONFIGURED",
+    "tc_c": 33.17,
+    "twet_c": null,
+    "tdry_c": null,
+    "cwsi": null,
+    "flag": null,
+    "thermal_source": "hardware",
+    "frame_utc": "2026-09-20T11:58:02Z"
+  },
+  "ndvi": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED (Target CSI camera /dev/video1 not found; available: ['/dev/video0'])"
+  },
+  "ndvi_satellite": {
+    "available": true,
+    "reason": null,
+    "source": "SENTINEL2_L2A_CDSE",
+    "scene_date": "2026-09-11",
+    "age_days": 9.5,
+    "ndvi_mean": 0.238,
+    "ndvi_std": 0.114,
+    "valid_pixel_count": 6,
+    "cloud_masked_fraction": 0.31,
+    "pixel_size_m": 10,
+    "reliability_note": "UNRELIABLE_SMALL_FIELD (<9 pixels / ~30x30m footprint)"
+  },
+  "irrigation": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED (Ground mast SHT40 weather telemetry absent or stale)"
+  },
+  "detections": [
+    {
+      "class": "sugarcane__red_rot",
+      "confidence": 0.9942,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-20T11:57:52.310000+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "sugarcane__red_rot",
+      "confidence": 0.9713,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-20T11:57:58.884000+00:00",
+      "source": "measured"
+    }
+  ],
+  "gps": {
+    "status": "ABSENT",
+    "point_count": 0,
+    "accuracy_note": "Point tagging only, approximately 2.5 m CEP. Not a survey-grade position."
+  },
+  "disease": [
+    {
+      "class": "sugarcane__red_rot",
+      "confidence": 0.9942,
+      "media_ids": [],
+      "source": "measured"
+    }
+  ],
+  "pest": [],
+  "inputs": [
+    {
+      "name": "pod_camera_rgb",
+      "source_node": "POD",
+      "status": "OK"
+    },
+    {
+      "name": "pod_gps",
+      "source_node": "POD",
+      "status": "ABSENT"
+    },
+    {
+      "name": "pod_thermal",
+      "source_node": "POD",
+      "status": "PENDING_CALIBRATION"
+    }
+  ],
+  "actions": [
+    {
+      "rank": 1,
+      "template_id": "ACT_TREAT_SUGARCANE_RED_ROT",
+      "action": "Foliar chemical spraying on standing infected crop is INEFFECTIVE. Immediately uproot and burn wilted clumps along with entire root mass. Disinfect the planting spot with Carbendazim 0.1% (1 g/L). Do NOT take a ratoon crop from this infected field.",
+      "rationale": "Colletotrichum falcatum is an internal vascular pathogen colonizing the nodal and internodal pith; surface foliar fungicides cannot penetrate vascular bundles once internal red lesions develop. Citation: Recalled from memory — ICAR-SBI Publication 214 unverified against physical text.",
+      "params": {
+        "crop": "sugarcane",
+        "disease": "red_rot",
+        "verification_status": "RECALLED_UNVERIFIED"
+      },
+      "verification_status": "RECALLED_UNVERIFIED",
+      "url": null,
+      "document_reference": "Unverified offline; primary ICAR-IISR/SBI IDM manual was not opened offline. Mandatory KVK verification required.",
+      "offline_source_file": null,
+      "confidence": "low",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    },
+    {
+      "rank": 2,
+      "template_id": "ACT_EXT_OFFICER_CONSULT",
+      "action": "Collect a fresh leaf sample showing typical symptoms in a clean paper bag and present it to your nearest Krishi Vigyan Kendra (KVK) or Block Agriculture Extension Officer.",
+      "rationale": "Symptom pattern requires microscopic or laboratory pathogen confirmation before chemical intervention. Citation: Procedural fallback — no published chemical or dose cited.",
+      "params": {
+        "crop": "sugarcane",
+        "suspected_condition": "sugarcane__red_rot",
+        "confidence": 0.9942,
+        "verification_status": "UNSOURCED"
+      },
+      "verification_status": "UNSOURCED",
+      "url": null,
+      "document_reference": null,
+      "offline_source_file": null,
+      "confidence": "medium",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    }
+  ]
+}

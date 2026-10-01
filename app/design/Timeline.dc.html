@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    @keyframes hoverbob{0%,100%{transform:translateY(-1.5px)}50%{transform:translateY(1.5px)}}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:681px;overflow:hidden;background:#F8F5F0;padding:88px 64px 0">
+
+  <div style="position:relative;display:grid;grid-template-columns:450px minmax(0,1fr);gap:96px">
+
+    <!-- left -->
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+        <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+        <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">END-TO-END WORKFLOW</span>
+      </div>
+      <h2 style="margin:24px 0 0;font-size:52px;line-height:1.08;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+        From field<br>polygon to<br>farmer advisory
+      </h2>
+      <p style="margin:26px 0 0;font-size:15.5px;line-height:1.68;color:#6D4C41">
+        Eight steps, none of which reach for the internet. The drone marker travels the rail as you scroll, and the step you are on opens to explain itself.
+      </p>
+
+      <div style="margin-top:34px;padding:18px 20px;border:1px solid #C8E6C9;border-radius:12px;background:#E8F5E9">
+        <div class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#2E7D32">GROUND TRUTH LOOP</div>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.62;color:#1B5E20">
+          Every advisory ends in an inspection log. What the farmer actually found goes back into the next round of training data.
+        </p>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:9px;margin-top:32px">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M4.5 9.5 8 13l3.5-3.5" stroke="#9A7F77" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#9A7F77">SCROLL, OR PICK A STEP</span>
+      </div>
+    </div>
+
+    <!-- right -->
+    <div style="position:relative;padding-left:2px">
+      <div style="position:absolute;left:6px;top:10px;bottom:16px;width:1.5px;background:#E0D6C9"></div>
+      <div style="position:absolute;left:6px;top:10px;width:1.5px;height:{{railFill}};background:#2E7D32"></div>
+
+      <sc-for list="{{items}}" as="item" hint-placeholder-count="8">
+        <div onClick="{{item.pick}}" style="position:relative;display:flex;gap:26px;padding-bottom:26px;cursor:pointer">
+          <div style="position:relative;width:14px;flex-shrink:0;display:flex;justify-content:center;padding-top:6px">
+            <div style="width:8px;height:8px;background:{{item.dotBg}};box-shadow:{{item.dotShadow}}"></div>
+          </div>
+
+          <sc-if value="{{item.isActive}}" hint-placeholder-val="{{true}}">
+            <div style="position:absolute;left:-52px;top:-3px;animation:hoverbob 3s ease-in-out infinite">
+              <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="19" fill="#E8F5E9"/>
+                <path d="M11 11 L29 29 M29 11 L11 29" stroke="#2E7D32" stroke-width="2"/>
+                <circle cx="11" cy="11" r="5" fill="none" stroke="#2E7D32" stroke-width="1.6" opacity=".7"/>
+                <circle cx="29" cy="11" r="5" fill="none" stroke="#2E7D32" stroke-width="1.6" opacity=".7"/>
+                <circle cx="11" cy="29" r="5" fill="none" stroke="#2E7D32" stroke-width="1.6" opacity=".7"/>
+                <circle cx="29" cy="29" r="5" fill="none" stroke="#2E7D32" stroke-width="1.6" opacity=".7"/>
+                <rect x="15.5" y="15.5" width="9" height="9" rx="2.5" fill="#2E7D32"/>
+              </svg>
+            </div>
+          </sc-if>
+
+          <div style="flex-grow:1;padding-right:40px">
+            <div style="display:flex;align-items:baseline;gap:16px">
+              <span class="mono" style="font-size:11px;letter-spacing:.07em;color:{{item.numColor}}">{{item.n}}</span>
+              <span style="font-size:20px;letter-spacing:-.015em;font-weight:{{item.labelWeight}};color:{{item.labelColor}}">{{item.label}}</span>
+            </div>
+            <sc-if value="{{item.isActive}}" hint-placeholder-val="{{true}}">
+              <div>
+                <p style="margin:11px 0 0;max-width:560px;font-size:14.5px;line-height:1.68;color:#6D4C41">{{item.body}}</p>
+                <div style="display:flex;gap:7px;margin-top:12px">
+                  <span class="mono" style="height:23px;display:inline-flex;align-items:center;padding:0 9px;border-radius:6px;background:#F0E9E0;border:1px solid #E0D6C9;font-size:10px;letter-spacing:.05em;color:#6D4C41">{{item.tagA}}</span>
+                  <span class="mono" style="height:23px;display:inline-flex;align-items:center;padding:0 9px;border-radius:6px;background:#F0E9E0;border:1px solid #E0D6C9;font-size:10px;letter-spacing:.05em;color:#6D4C41">{{item.tagB}}</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#2E7D32","options":["#2E7D32","#4CAF50","#1B5E20","#D08600"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var accent = this.props.accent ?? '#2E7D32';
+    var STEPS = [
+      { label: 'Field polygon',
+        body: 'The farmer or FPO draws the boundary once. Fields2Cover turns it into a survey grid at the chosen altitude with 75/65 overlap, and the same polygon is reused every week so flights stay comparable.',
+        tagA: 'FIELDS2COVER', tagB: 'REPEATABLE ROUTE' },
+      { label: 'Survey grid mission',
+        body: 'ArduPilot flies it without a pilot: take off, grid, camera trigger at every waypoint, return home. The whole mission was verified in SITL before it was ever flown over a real field.',
+        tagA: 'ARDUPILOT + PIXHAWK', tagB: 'VERIFIED IN SITL' },
+      { label: 'Synced image + GPS capture',
+        body: 'A shared clock writes image, GPS and attitude into one record over MAVLink, so any pixel can be traced back to a coordinate on the ground instead of an approximate one.',
+        tagA: 'MAVLINK TIME-SYNC', tagB: 'ONE RECORD PER FRAME' },
+      { label: 'Onboard inference',
+        body: 'The Jetson Nano segments sampled frames in flight — nano-scale networks at 640 px, FP16 TensorRT, active cooling. Heavy work is deliberately left for the ground.',
+        tagA: 'JETSON NANO 4 GB', tagB: 'FP16 TENSORRT' },
+      { label: 'Hotspot map',
+        body: 'Flagged tiles are projected pixel-to-GPS, duplicates merged, and binned into a 2 m severity grid. A GeoJSON hotspot map exists before the aircraft has finished landing.',
+        tagA: 'RASTERIO + GEOPANDAS', tagB: '2 m SEVERITY GRID' },
+      { label: 'Low-altitude revisit',
+        body: 'The hotspots generate a second mission at 3–5 m over the flagged coordinates only. A person reviews that mission before it flies — the aircraft never re-tasks itself unsupervised.',
+        tagA: 'HUMAN-REVIEWED', tagB: '3–5 m AGL' },
+      { label: 'Sensor fusion',
+        body: 'LoRa nodes bring soil moisture, leaf wetness, air temperature and water level in from the ground. Rule-based fusion pairs them with the imagery, so a stressed zone gets a reason and not just a colour.',
+        tagA: 'ESP32 + SX1276', tagB: 'RULE-BASED FUSION' },
+      { label: 'Farmer advisory',
+        body: 'Class, severity, confidence and an evidence photo, in the local language, delivered by app, field display or SMS. Anything the model is unsure of is labelled “needs inspection” rather than guessed.',
+        tagA: 'MAPLIBRE OFFLINE', tagB: 'SMS VIA SIM7600' }
+    ];
+    var active = (this.state && this.state.active != null) ? this.state.active : 6;
+    var self = this;
+    var items = STEPS.map(function (s, i) {
+      var on = i === active;
+      return {
+        n: (i + 1 < 10 ? '0' : '') + (i + 1),
+        label: s.label, body: s.body, tagA: s.tagA, tagB: s.tagB,
+        isActive: on,
+        pick: function () { self.setState({ active: i }); },
+        labelColor: on ? '#3E2723' : '#9A7F77',
+        labelWeight: on ? '700' : '500',
+        numColor: on ? accent : '#B59F98',
+        dotBg: on ? accent : '#E0D6C9',
+        dotShadow: on ? '0 0 0 4px #C8E6C9' : 'none'
+      };
+    });
+    return { accent: accent, items: items, railFill: (((active + 0.6) / 8) * 100).toFixed(1) + '%' };
+  }
+}
+</script>
+</body>
+</html>

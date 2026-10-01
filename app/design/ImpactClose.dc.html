@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#4CAF50;text-decoration:none} a:hover{color:#C8E6C9}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    @keyframes bob2{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .fl{font-size:13.5px;line-height:2.05;color:#99AA9A}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:1460px;overflow:hidden;background:#F0E9E0">
+
+  <!-- ======= LIGHT: IMPACT ======= -->
+  <div style="padding:88px 64px 0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+          <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+          <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">IMPACT AND BENEFITS</span>
+        </div>
+        <h2 style="margin:22px 0 0;font-size:50px;line-height:1.09;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+          Sprayed where it is needed,<br>not everywhere.
+        </h2>
+      </div>
+      <p style="width:480px;margin:0 0 8px;font-size:15.5px;line-height:1.68;color:#6D4C41">
+        The same flight that finds a problem also bounds it. Once a zone has a coordinate and a severity, the input follows the zone instead of the field.
+      </p>
+    </div>
+
+    <!-- audiences -->
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:44px">
+
+      <div style="padding:24px 24px 26px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 21v-7M12 14c0-3.3-2.2-6-5-6 0 3.3 2.2 6 5 6ZM12 14c0-3.9 2.6-7 6-7 0 3.9-2.6 7-6 7Z" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="margin-top:14px;font-size:16px;font-weight:700;color:#3E2723">Farmers</div>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.62;color:#6D4C41">Problems located before they spread, and spray or irrigation applied to the flagged zone instead of the whole field.</p>
+      </div>
+
+      <div style="padding:24px 24px 26px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="#2E7D32" stroke-width="1.5"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/><path d="M16 6.2a3 3 0 0 1 0 5.6M18 19c0-2.4-1-4-2.6-4.7" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div style="margin-top:14px;font-size:16px;font-weight:700;color:#3E2723">FPOs and cooperatives</div>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.62;color:#6D4C41">One aircraft serves many members, with shared scouting reports and a season-long record of every field.</p>
+      </div>
+
+      <div style="padding:24px 24px 26px;border:1px solid #E0D6C9;border-radius:12px;background:#F8F5F0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="4" width="15" height="17" rx="2.5" stroke="#2E7D32" stroke-width="1.5"/><path d="M9 3.5h6v3H9zM8.5 12h7M8.5 16h4.5" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div style="margin-top:14px;font-size:16px;font-weight:700;color:#3E2723">Agriculture officers</div>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.62;color:#6D4C41">Field-level maps with dated evidence photos make advisories and scheme reporting verifiable rather than anecdotal.</p>
+      </div>
+
+      <div style="padding:24px 24px 26px;border:1px solid #C8E6C9;border-radius:12px;background:#E8F5E9">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#2E7D32" stroke-width="1.5"/><path d="M3.5 12h17M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.3-5.3-3.3-8.5S9.8 5.9 12 3.5Z" stroke="#2E7D32" stroke-width="1.5"/></svg>
+        <div style="margin-top:14px;font-size:16px;font-weight:700;color:#1B5E20">Nation</div>
+        <p style="margin:8px 0 0;font-size:13.5px;line-height:1.62;color:#1B5E20">Lower chemical and water use per acre, and earlier warning of drought, flood and heat damage.</p>
+      </div>
+    </div>
+
+    <!-- benefits -->
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:44px;margin-top:44px;padding-top:36px;border-top:1px solid #E0D6C9">
+      <div>
+        <div class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#2E7D32">ECONOMIC</div>
+        <p style="margin:12px 0 0;font-size:14.5px;line-height:1.66;color:#6D4C41">Targeted intervention cuts pesticide, fertiliser and pumping spend. Capital cost is about <span style="color:#3E2723;font-weight:600">₹80,000</span> against ₹6.67 lakh for an imported multispectral drone, so an FPO can own one outright.</p>
+      </div>
+      <div>
+        <div class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#2E7D32">ENVIRONMENTAL</div>
+        <p style="margin:12px 0 0;font-size:14.5px;line-height:1.66;color:#6D4C41">Chemicals reach only the zones that show damage, and irrigation is advised only where soil moisture <span style="color:#3E2723;font-weight:600">and</span> canopy temperature both justify it — less runoff, less groundwater drawn.</p>
+      </div>
+      <div>
+        <div class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#2E7D32">SOCIAL</div>
+        <p style="margin:12px 0 0;font-size:14.5px;line-height:1.66;color:#6D4C41">Diagnostics reach farms with no connectivity, in the local language, with the photograph and the confidence attached — so advice can be <span style="color:#3E2723;font-weight:600">questioned and checked</span>, not just obeyed.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= DARK: CLOSE + FOOTER ======= -->
+  <div style="position:relative;margin-top:72px;background:#0A1F0C;overflow:hidden">
+    <div style="position:absolute;left:0;right:0;top:0;height:340px;background:linear-gradient(180deg,#1B3A1E 0%,#12290F 46%,#0A1F0C 100%)"></div>
+    <div style="position:absolute;left:50%;top:-90px;width:900px;height:420px;margin-left:-450px;background:radial-gradient(ellipse,rgba(208,134,0,.16),rgba(208,134,0,0) 66%)"></div>
+    <div style="position:absolute;left:-50%;width:200%;top:210px;height:150px;overflow:hidden;opacity:.35">
+      <div style="width:100%;height:150px;transform:perspective(200px) rotateX(70deg);transform-origin:50% 0%;background:repeating-linear-gradient(90deg,#4CAF50 0 3px,rgba(255,255,255,0) 3px 30px)"></div>
+    </div>
+
+    <!-- closing -->
+    <div style="position:relative;padding:76px 64px 0;display:flex;flex-direction:column;align-items:center">
+      <div style="animation:bob2 5s ease-in-out infinite">
+        <svg width="150" height="64" viewBox="0 0 300 128" fill="none">
+          <ellipse cx="66" cy="44" rx="52" ry="8" fill="#C8E6C9" opacity=".28"/>
+          <ellipse cx="234" cy="44" rx="52" ry="8" fill="#C8E6C9" opacity=".28"/>
+          <path d="M124 62 L74 46 M176 62 L226 46" stroke="#28402A" stroke-width="8" stroke-linecap="round"/>
+          <rect x="118" y="48" width="64" height="30" rx="10" fill="#33472F"/>
+          <rect x="141" y="78" width="18" height="13" rx="4" fill="#0A1F0C"/>
+          <circle cx="150" cy="86" r="5" fill="#071408" stroke="#4CAF50" stroke-width="1.6"/>
+          <circle cx="130" cy="64" r="3" fill="#4CAF50"/><circle cx="170" cy="64" r="3" fill="#D08600"/>
+          <path d="M128 78 L112 100 M172 78 L188 100" stroke="#28402A" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <p style="margin:34px 0 0;width:960px;text-align:center;font-size:29px;line-height:1.5;font-weight:500;letter-spacing:-.015em;color:#F8F5F0">
+        The drone finds <span style="color:#4CAF50">where</span> the problem is, close-up vision determines <span style="color:#4CAF50">what</span> it is, ground sensors explain <span style="color:#4CAF50">why</span> it is happening, and edge AI recommends <span style="color:#4CAF50">what to check next</span>.
+      </p>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-top:36px">
+        <span style="display:flex;align-items:center;gap:9px;height:46px;padding:0 22px;border-radius:8px;background:#4CAF50;color:#0A1F0C;font-size:14.5px;font-weight:700">
+          Read the full deck
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#0A1F0C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span style="display:flex;align-items:center;height:46px;padding:0 20px;border-radius:8px;border:1px solid #415242;color:#F8F5F0;font-size:14.5px;font-weight:600">Talk to the team</span>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="position:relative;margin-top:76px;padding:44px 64px 40px;border-top:1px solid #26372A">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 200px 200px 240px;gap:40px">
+        <div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2.2 20.5 7v10L12 21.8 3.5 17V7z" stroke="#4CAF50" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M8.4 8.4 15.6 15.6M15.6 8.4 8.4 15.6" stroke="#4CAF50" stroke-width="1.2"/>
+              <circle cx="8.4" cy="8.4" r="1.8" fill="#4CAF50"/><circle cx="15.6" cy="8.4" r="1.8" fill="#4CAF50"/>
+              <circle cx="8.4" cy="15.6" r="1.8" fill="#4CAF50"/><circle cx="15.6" cy="15.6" r="1.8" fill="#4CAF50"/>
+            </svg>
+            <span style="font-size:16.5px;font-weight:700;color:#F8F5F0">AEGIS</span>
+          </div>
+          <p style="margin:14px 0 0;width:280px;font-size:13.5px;line-height:1.62;color:#99AA9A">
+            Autonomous Edge Guidance &amp; Intelligent Surveillance — a field-deployable AI farming assistant that assumes there is no network.
+          </p>
+        </div>
+        <div>
+          <div class="mono" style="font-size:10px;letter-spacing:.1em;color:#7C8D7D">SYSTEM</div>
+          <div class="fl" style="margin-top:10px">Two-pass autonomy<br>Four layers<br>Evidence model<br>Offline by design</div>
+        </div>
+        <div>
+          <div class="mono" style="font-size:10px;letter-spacing:.1em;color:#7C8D7D">PROJECT</div>
+          <div class="fl" style="margin-top:10px">Problem statement 26180<br>Team TH10-HW<br>Six-week build order<br>Field trial log</div>
+        </div>
+        <div>
+          <div class="mono" style="font-size:10px;letter-spacing:.1em;color:#7C8D7D">RESEARCH</div>
+          <div class="fl" style="margin-top:10px">Mohanty et al., 2016<br>Cucho-Padin et al., 2019<br>Aasen et al., 2018<br>ArduPilot survey docs</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:40px;padding-top:22px;border-top:1px solid #26372A">
+        <span class="mono" style="font-size:11px;color:#7C8D7D">SMART INDIA HACKATHON 2026 · AGRICULTURE, FOODTECH &amp; RURAL DEVELOPMENT · PS CATEGORY: HARDWARE</span>
+        <span class="mono" style="font-size:11px;color:#7C8D7D">TEAM AEGIS · TH10-HW</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script>
+class Component extends DCLogic {}
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+    @keyframes flow{to{stroke-dashoffset:-40}}
+    @keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:960px;overflow:hidden;background:#F0E9E0;padding:88px 64px 0">
+
+  <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+        <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+        <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">TECHNICAL APPROACH</span>
+      </div>
+      <h2 style="margin:22px 0 0;font-size:50px;line-height:1.09;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+        Four layers,<br>one offline system
+      </h2>
+    </div>
+    <p style="width:520px;margin:0 0 8px;font-size:15.5px;line-height:1.68;color:#6D4C41">
+      Nothing here is unproven hardware. Pixhawk, Jetson Nano and ESP32 are already in hand; ArduPilot, OpenDroneMap and pretrained encoders are reused. Only the integration between the four layers is ours.
+    </p>
+  </div>
+
+  <!-- window -->
+  <div style="position:relative;margin-top:44px;border:1px solid #E0D6C9;border-radius:12px;overflow:hidden;background:#F8F5F0;box-shadow:0 1px 3px 0 rgba(0,0,0,.10),0 8px 10px -1px rgba(0,0,0,.10)">
+    <div style="display:flex;align-items:center;gap:14px;height:40px;padding:0 16px;border-bottom:1px solid #E0D6C9;background:#F0E9E0">
+      <div style="display:flex;gap:6px">
+        <span style="width:10px;height:10px;border-radius:5px;background:#E0D6C9"></span>
+        <span style="width:10px;height:10px;border-radius:5px;background:#E0D6C9"></span>
+        <span style="width:10px;height:10px;border-radius:5px;background:#E0D6C9"></span>
+      </div>
+      <span class="mono" style="font-size:11px;letter-spacing:.05em;color:#6D4C41">aegis · system view · offline</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:262px minmax(0,1fr)">
+      <!-- rail -->
+      <div style="border-right:1px solid #E0D6C9;background:#F0E9E0;padding:14px 12px">
+        <sc-for list="{{layers}}" as="l" hint-placeholder-count="4">
+          <div onClick="{{l.pick}}" style="display:flex;gap:12px;padding:14px 13px;border-radius:8px;cursor:pointer;background:{{l.rowBg}};border:1px solid {{l.rowBorder}};margin-bottom:6px">
+            <div style="width:7px;height:7px;margin-top:6px;flex-shrink:0;background:{{l.dotBg}}"></div>
+            <div style="flex-grow:1">
+              <div class="mono" style="font-size:9.5px;letter-spacing:.1em;color:{{l.kickerColor}}">{{l.kicker}}</div>
+              <div style="margin-top:4px;font-size:15px;font-weight:600;letter-spacing:-.01em;color:{{l.titleColor}}">{{l.title}}</div>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="margin:14px 5px 0;padding-top:14px;border-top:1px solid #E0D6C9">
+          <div class="mono" style="font-size:9.5px;letter-spacing:.1em;color:#9A7F77">DATA LEAVES THE FIELD</div>
+          <div style="margin-top:6px;font-size:13px;line-height:1.55;color:#6D4C41">Never, unless a network shows up and the operator chooses to sync.</div>
+        </div>
+      </div>
+
+      <!-- content -->
+      <div style="padding:22px 26px 26px">
+        <svg viewBox="0 0 1000 318" style="width:100%;height:auto;display:block">
+          <rect x="0" y="0" width="1000" height="318" rx="10" fill="#F2F9F2" stroke="#C8E6C9" stroke-width="1"/>
+          <rect x="1" y="236" width="998" height="81" fill="#E8F5E9"/>
+          <path d="M0 236 H1000" stroke="#C8E6C9" stroke-width="1.5"/>
+          <g opacity=".7"><path d="M0 258 H1000 M0 280 H1000 M0 302 H1000" stroke="#C8E6C9" stroke-width="6"/></g>
+
+          <!-- links -->
+          <path d="M196 236 C 300 200, 520 210, 656 244" fill="none" stroke="#B59F98" stroke-width="1.5" stroke-dasharray="6 6" style="animation:flow 1.6s linear infinite"/>
+          <text x="360" y="205" font-family="Source Code Pro, monospace" font-size="10.5" fill="#9A7F77">LoRa 868 MHz · soil, leaf, water</text>
+
+          <path d="M470 128 C 560 150, 620 200, 668 232" fill="none" stroke="#B59F98" stroke-width="1.5" stroke-dasharray="6 6" style="animation:flow 1.6s linear infinite"/>
+          <text x="556" y="140" font-family="Source Code Pro, monospace" font-size="10.5" fill="#9A7F77">image + GPS + attitude</text>
+
+          <path d="M764 250 H852" fill="none" stroke="#B59F98" stroke-width="1.5" stroke-dasharray="6 6" style="animation:flow 1.6s linear infinite"/>
+          <text x="758" y="232" font-family="Source Code Pro, monospace" font-size="10.5" fill="#9A7F77">advisory</text>
+
+          <!-- L1 ground node -->
+          <g style="opacity:{{op1}}">
+            <circle cx="152" cy="196" r="62" fill="none" stroke="{{ring1}}" stroke-width="1.5" stroke-dasharray="4 6"/>
+            <rect x="146" y="176" width="7" height="62" fill="#8D6E63"/>
+            <rect x="122" y="156" width="56" height="26" rx="5" fill="#F8F5F0" stroke="#1B5E20" stroke-width="1.5"/>
+            <circle cx="134" cy="169" r="3" fill="#2E7D32"/>
+            <text x="146" y="173" font-family="Source Code Pro, monospace" font-size="9" fill="#3E2723">ESP32</text>
+            <path d="M182 150 q 14 -12 0 -26 M190 156 q 22 -20 0 -42" fill="none" stroke="#2E7D32" stroke-width="1.6"/>
+            <path d="M150 222 l -22 14 M150 230 l 22 12" stroke="#8D6E63" stroke-width="2.4"/>
+            <text x="100" y="272" font-family="Montserrat, sans-serif" font-size="12" font-weight="600" fill="#1B5E20">Ground node</text>
+          </g>
+
+          <!-- L2 aircraft -->
+          <g style="opacity:{{op2}}">
+            <circle cx="436" cy="94" r="74" fill="none" stroke="{{ring2}}" stroke-width="1.5" stroke-dasharray="4 6"/>
+            <g style="animation:float2 4.4s ease-in-out infinite">
+              <ellipse cx="372" cy="82" rx="42" ry="7" fill="#1F3420" opacity=".22"/>
+              <ellipse cx="500" cy="82" rx="42" ry="7" fill="#1F3420" opacity=".22"/>
+              <path d="M414 96 L378 84 M458 96 L494 84" stroke="#26372A" stroke-width="6" stroke-linecap="round"/>
+              <rect x="410" y="86" width="52" height="26" rx="7" fill="#1F3420"/>
+              <rect x="428" y="112" width="16" height="12" rx="4" fill="#071408"/>
+              <circle cx="436" cy="119" r="4.4" fill="#0A1F0C" stroke="#4CAF50" stroke-width="1.4"/>
+              <text x="436" y="103" text-anchor="middle" font-family="Source Code Pro, monospace" font-size="8" letter-spacing="1" fill="#C8E6C9">JETSON</text>
+            </g>
+            <text x="392" y="192" font-family="Montserrat, sans-serif" font-size="12" font-weight="600" fill="#1B5E20">800 mm quad</text>
+          </g>
+
+          <!-- L3 field station -->
+          <g style="opacity:{{op3}}">
+            <circle cx="710" cy="228" r="62" fill="none" stroke="{{ring3}}" stroke-width="1.5" stroke-dasharray="4 6"/>
+            <rect x="662" y="212" width="96" height="50" rx="8" fill="#F8F5F0" stroke="#1B5E20" stroke-width="1.5"/>
+            <rect x="672" y="222" width="52" height="6" rx="3" fill="#C8E6C9"/>
+            <rect x="672" y="234" width="34" height="6" rx="3" fill="#C8E6C9"/>
+            <circle cx="746" cy="250" r="4" fill="#2E7D32"/>
+            <path d="M756 212 v -22 M748 190 h 16" stroke="#2E7D32" stroke-width="2"/>
+            <text x="654" y="286" font-family="Montserrat, sans-serif" font-size="12" font-weight="600" fill="#1B5E20">Field edge station</text>
+          </g>
+
+          <!-- L4 farmer interface -->
+          <g style="opacity:{{op4}}">
+            <circle cx="900" cy="222" r="60" fill="none" stroke="{{ring4}}" stroke-width="1.5" stroke-dasharray="4 6"/>
+            <rect x="864" y="192" width="42" height="72" rx="8" fill="#F8F5F0" stroke="#1B5E20" stroke-width="1.5"/>
+            <rect x="870" y="200" width="30" height="46" rx="3" fill="#E8F5E9"/>
+            <rect x="874" y="206" width="22" height="10" rx="2" fill="#4CAF50"/>
+            <rect x="874" y="220" width="22" height="3" rx="1.5" fill="#C8E6C9"/>
+            <rect x="874" y="228" width="14" height="3" rx="1.5" fill="#C8E6C9"/>
+            <rect x="918" y="206" width="52" height="40" rx="6" fill="#F8F5F0" stroke="#1B5E20" stroke-width="1.5"/>
+            <circle cx="944" cy="226" r="7" fill="none" stroke="#2E7D32" stroke-width="1.6"/>
+            <text x="922" y="264" font-family="Source Code Pro, monospace" font-size="9" fill="#6D4C41">SMS</text>
+            <text x="852" y="288" font-family="Montserrat, sans-serif" font-size="12" font-weight="600" fill="#1B5E20">Farmer interface</text>
+          </g>
+        </svg>
+
+        <!-- detail -->
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:34px;margin-top:24px;padding-top:22px;border-top:1px solid #E0D6C9">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:12px">
+              <span style="font-size:21px;font-weight:700;letter-spacing:-.02em;color:#3E2723">{{title}}</span>
+              <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#2E7D32">{{kicker}}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 28px;margin-top:14px">
+              <sc-for list="{{specs}}" as="s" hint-placeholder-count="6">
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                  <span style="width:4px;height:4px;margin-top:8px;flex-shrink:0;background:#4CAF50"></span>
+                  <span style="font-size:13.5px;line-height:1.52;color:#6D4C41">{{s.t}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{stats}}" as="st" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:1px solid #E0D6C9;border-radius:8px;background:#F0E9E0">
+                <span class="mono" style="font-size:10px;letter-spacing:.09em;color:#9A7F77">{{st.k}}</span>
+                <span class="mono" style="font-size:13px;color:#3E2723">{{st.v}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#2E7D32","options":["#2E7D32","#4CAF50","#1B5E20","#D08600"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var accent = this.props.accent ?? '#2E7D32';
+    var DATA = [
+      { kicker: 'LAYER 1 · GROUND', title: 'Field sensing',
+        specs: ['2 × ESP32 + LoRa SX1276 nodes','SEN0308 capacitive soil moisture via ADS1115','SHT31 air temp / RH, DS18B20 soil temp','Leaf wetness, rain gauge, water level','Reflectance panel for repeatable flights','Battery and solar, left standing in the field'],
+        stats: [['NODES','2 per field'],['RADIO','868 MHz LoRa'],['SIGNALS','5 measured']] },
+      { kicker: 'LAYER 2 · AIR', title: 'Aircraft',
+        specs: ['800 mm carbon quad, 15″ props, 6S 10 Ah','4 × Tarot 4008 330 KV, 40 A ESCs','Pixhawk + ArduPilot, M10 GPS, TFmini Plus','IMX219 nadir camera on a damped mount','Jetson Nano 4 GB — MAVLink sync + TensorRT','3.2–3.7 kg all-up weight'],
+        stats: [['SPAN','800 mm'],['PACK','6S 10 Ah'],['ENDURANCE','18–25 min']] },
+      { kicker: 'LAYER 3 · GROUND STATION', title: 'Field edge station',
+        specs: ['OpenDroneMap orthomosaic and RGB indices','U-Net / YOLO11n aerial segmentation on tiles','Rasterio + GeoPandas pixel-to-GPS projection','Duplicate merge, 2 m severity grid, GeoJSON','Rule-based fusion of imagery and sensors','SQLite mission history, kept locally'],
+        stats: [['RUNS','fully offline'],['GRID','2 m severity'],['OUTPUT','GeoJSON layers']] },
+      { kicker: 'LAYER 4 · DELIVERY', title: 'Farmer interface',
+        specs: ['MapLibre GL offline map with problem layers','Local-language advisory with evidence photo','Field display and SMS fallback via SIM7600','Mission history for week-on-week comparison','Inspection log closes the loop with ground truth','Confidence and “needs inspection” always shown'],
+        stats: [['PRIMARY','offline app'],['FALLBACK','field display'],['LAST RESORT','SMS']] }
+    ];
+    var active = (this.state && this.state.active != null) ? this.state.active : 1;
+    var self = this;
+    var cur = DATA[active];
+    var vals = {
+      accent: accent,
+      title: cur.title,
+      kicker: cur.kicker,
+      specs: cur.specs.map(function (t) { return { t: t }; }),
+      stats: cur.stats.map(function (p) { return { k: p[0], v: p[1] }; }),
+      layers: DATA.map(function (d, i) {
+        var on = i === active;
+        return {
+          kicker: d.kicker, title: d.title,
+          pick: function () { self.setState({ active: i }); },
+          rowBg: on ? '#E8F5E9' : 'transparent',
+          rowBorder: on ? '#C8E6C9' : 'transparent',
+          dotBg: on ? accent : '#E0D6C9',
+          kickerColor: on ? '#2E7D32' : '#B59F98',
+          titleColor: on ? '#3E2723' : '#9A7F77'
+        };
+      })
+    };
+    for (var i = 0; i < 4; i++) {
+      vals['op' + (i + 1)] = i === active ? '1' : '.3';
+      vals['ring' + (i + 1)] = i === active ? accent : 'transparent';
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

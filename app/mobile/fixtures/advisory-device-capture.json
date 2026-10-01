@@ -1,0 +1,324 @@
+{
+  "schema_version": "1.0",
+  "advisory_id": "2026-09-19T13:16:18Z_F01",
+  "seq": 84,
+  "generated_at_utc": "2026-09-19T13:16:18Z",
+  "inference_backend": "trt",
+  "replay": true,
+  "scan": {
+    "started_utc": "2026-09-19T13:16:09Z",
+    "ended_utc": "2026-09-19T13:16:18Z",
+    "mode": "handheld_pod",
+    "frames_captured": 12,
+    "frames_evaluated": 12,
+    "tiles_classified": 108,
+    "distance_walked_m": null,
+    "distance_reason": "GPS_TRACK_NOT_RECORDED"
+  },
+  "crop_health": {
+    "state": "DISEASE",
+    "reason": "MULTIPLE_CROPS_DETECTED",
+    "crop": null,
+    "frames_evaluated": 12,
+    "frames_agreeing": 2,
+    "frames_rejected_ood": 0,
+    "frames_rejected_not_crop": 3,
+    "frames_uncertain": 0,
+    "source": "measured"
+  },
+  "growth_stage": {
+    "crop": null,
+    "stage": null,
+    "stage_code": null,
+    "reason": "CROP_NOT_SPECIFIED",
+    "status": "CROP_NOT_SPECIFIED",
+    "days_since_planting": null,
+    "total_cycle_days": null,
+    "canopy_cover_measured": 0.6139,
+    "canopy_cover_expected_range": null,
+    "kc": null,
+    "verification_status": "UNSOURCED",
+    "source": "derived"
+  },
+  "vegetation": {
+    "interpretation_mode": "relative",
+    "canopy_cover": {
+      "mean": 0.6139,
+      "p10": 0.0264,
+      "p50": 0.7745,
+      "p90": 0.9744,
+      "min_fraction_threshold": 0.15,
+      "status": "OK",
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "vari": {
+      "mean": 0.1617,
+      "p10": 0.0735,
+      "p50": 0.1683,
+      "p90": 0.2754,
+      "field_median": 0.1683,
+      "band": "TYPICAL",
+      "band_basis": "within_scan_percentile",
+      "threshold_source": "PROVISIONAL — within-scan relative, no published absolute band exists for uncalibrated RGB VARI",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "exg": {
+      "mean": 91,
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "tgi": {
+      "mean": 49.96,
+      "threshold_source": "PROVISIONAL — uncalibrated RGB TGI regression",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "dgci": {
+      "mean": 0.4728,
+      "out_of_domain_fraction": 0.1642,
+      "threshold_source": "PROVISIONAL — narrowed foliage domain [60, 120] deg",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "ndvi": null,
+    "ndvi_status": "PENDING_HARDWARE_FINALIZATION",
+    "ndvi_reason": "Optical path and calib_matrix in progress. Field reserved; not estimated."
+  },
+  "thermal": {
+    "available": false,
+    "reason": "THERMAL_REFS_NOT_CONFIGURED",
+    "tc_c": 29.81,
+    "twet_c": null,
+    "tdry_c": null,
+    "cwsi": null,
+    "flag": null,
+    "thermal_source": "hardware",
+    "frame_utc": "2026-09-19T13:16:18Z"
+  },
+  "ndvi": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED (Target CSI camera /dev/video1 not found; available: ['/dev/video0'])"
+  },
+  "ndvi_satellite": {
+    "available": false,
+    "reason": "NO_SATELLITE_DATA_RECORDED",
+    "source": "SENTINEL2_L2A_CDSE",
+    "scene_date": null,
+    "age_days": null,
+    "ndvi_mean": null,
+    "ndvi_std": null,
+    "valid_pixel_count": null,
+    "cloud_masked_fraction": null,
+    "pixel_size_m": 10,
+    "reliability_note": null
+  },
+  "irrigation": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED (Ground mast SHT40 weather telemetry absent or stale)"
+  },
+  "detections": [
+    {
+      "class": "rice__bacterial_leaf_blight",
+      "confidence": 0.9817,
+      "cross_source_reliability": "TESTED_FAILED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:09.756865+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "sugarcane__red_rot",
+      "confidence": 0.9942,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:09.791136+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "rice__normal",
+      "confidence": 0.8556,
+      "cross_source_reliability": "TESTED_WEAK",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:09.820476+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "rice__hispa",
+      "confidence": 0.9617,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:11.769993+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "sugarcane__mosaic",
+      "confidence": 0.9957,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:12.242456+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "wheat__powdery_mildew",
+      "confidence": 0.4244,
+      "cross_source_reliability": "TESTED_WEAK",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:12.303038+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "rice__blast",
+      "confidence": 0.9817,
+      "cross_source_reliability": "TESTED_FAILED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:15.030902+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "wheat__brown_rust",
+      "confidence": 0.8941,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:15.345010+00:00",
+      "source": "measured"
+    },
+    {
+      "class": "wheat__brown_rust",
+      "confidence": 0.8622,
+      "cross_source_reliability": "UNTESTED",
+      "lat": null,
+      "lon": null,
+      "fix_quality": null,
+      "hdop": null,
+      "captured_utc": "2026-09-19T13:16:15.434650+00:00",
+      "source": "measured"
+    }
+  ],
+  "gps": {
+    "status": "ABSENT",
+    "point_count": 0,
+    "accuracy_note": "Point tagging only, approximately 2.5 m CEP. Not a survey-grade position."
+  },
+  "disease": [
+    {
+      "class": "rice__bacterial_leaf_blight",
+      "confidence": 0.9817,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "sugarcane__red_rot",
+      "confidence": 0.9942,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "rice__hispa",
+      "confidence": 0.9617,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "sugarcane__mosaic",
+      "confidence": 0.9957,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "wheat__powdery_mildew",
+      "confidence": 0.4244,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "rice__blast",
+      "confidence": 0.9817,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "wheat__brown_rust",
+      "confidence": 0.8941,
+      "media_ids": [],
+      "source": "measured"
+    },
+    {
+      "class": "wheat__brown_rust",
+      "confidence": 0.8622,
+      "media_ids": [],
+      "source": "measured"
+    }
+  ],
+  "pest": [],
+  "inputs": [
+    {
+      "name": "pod_camera_rgb",
+      "source_node": "POD",
+      "status": "OK"
+    },
+    {
+      "name": "pod_gps",
+      "source_node": "POD",
+      "status": "ABSENT"
+    },
+    {
+      "name": "pod_thermal",
+      "source_node": "POD",
+      "status": "PENDING_CALIBRATION"
+    }
+  ],
+  "actions": [
+    {
+      "rank": 1,
+      "template_id": "ACT_MULTICROP_INVESTIGATE",
+      "action": "Inspect plot boundaries or intercropped rows. The camera observed conflicting visual characteristics of multiple crops without a clear supermajority.",
+      "rationale": "Detections span multiple crop taxonomies without reaching the required 85% single-crop supermajority floor. Citation: SIH-TH10 Contract ans_for_vitthal.md §8 S2; edge/storage.py:108-115.",
+      "params": {
+        "crop": null,
+        "detected_crops": [
+          "rice",
+          "sugarcane",
+          "wheat"
+        ],
+        "state": "DISEASE",
+        "reason": "MULTIPLE_CROPS_DETECTED",
+        "verification_status": "VERIFIED"
+      },
+      "verification_status": "VERIFIED",
+      "url": null,
+      "document_reference": "SIH-TH10 Contract ans_for_vitthal.md §8 S2; edge/storage.py:108-115",
+      "offline_source_file": null,
+      "confidence": "low",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    }
+  ]
+}

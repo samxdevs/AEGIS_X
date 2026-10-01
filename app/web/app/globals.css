@@ -1,0 +1,317 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-montserrat), Montserrat, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-source-code), "Source Code Pro", ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-serif: Merriweather, serif;
+  --radius: 0.5rem;
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --tracking-normal: var(--tracking-normal);
+  --shadow-2xl: var(--shadow-2xl);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-md: var(--shadow-md);
+  --shadow: var(--shadow);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-2xs: var(--shadow-2xs);
+  --spacing: var(--spacing);
+  --letter-spacing: var(--letter-spacing);
+  --shadow-offset-y: var(--shadow-offset-y);
+  --shadow-offset-x: var(--shadow-offset-x);
+  --shadow-spread: var(--shadow-spread);
+  --shadow-blur: var(--shadow-blur);
+  --shadow-opacity: var(--shadow-opacity);
+  --color-shadow-color: var(--shadow-color);
+  --color-destructive-foreground: var(--destructive-foreground);
+}
+
+:root {
+  --background: oklch(0.9711 0.0074 80.7211);
+  --foreground: oklch(0.3000 0.0358 30.2042);
+  --card: oklch(0.9711 0.0074 80.7211);
+  --card-foreground: oklch(0.3000 0.0358 30.2042);
+  --popover: oklch(0.9711 0.0074 80.7211);
+  --popover-foreground: oklch(0.3000 0.0358 30.2042);
+  --primary: oklch(0.5234 0.1347 144.1672);
+  --primary-foreground: oklch(1.0000 0 0);
+  --secondary: oklch(0.9571 0.0210 147.6360);
+  --secondary-foreground: oklch(0.4254 0.1159 144.3078);
+  --muted: oklch(0.9370 0.0142 74.4218);
+  --muted-foreground: oklch(0.4495 0.0486 39.2110);
+  --accent: oklch(0.8952 0.0504 146.0366);
+  --accent-foreground: oklch(0.4254 0.1159 144.3078);
+  --destructive: oklch(0.5386 0.1937 26.7249);
+  --border: oklch(0.8805 0.0208 74.6428);
+  --input: oklch(0.8805 0.0208 74.6428);
+  --ring: oklch(0.5234 0.1347 144.1672);
+  --chart-1: oklch(0.6731 0.1624 144.2083);
+  --chart-2: oklch(0.5752 0.1446 144.1813);
+  --chart-3: oklch(0.5234 0.1347 144.1672);
+  --chart-4: oklch(0.4254 0.1159 144.3078);
+  --chart-5: oklch(0.2157 0.0453 145.7256);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.9370 0.0142 74.4218);
+  --sidebar-foreground: oklch(0.3000 0.0358 30.2042);
+  --sidebar-primary: oklch(0.5234 0.1347 144.1672);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.8952 0.0504 146.0366);
+  --sidebar-accent-foreground: oklch(0.4254 0.1159 144.3078);
+  --sidebar-border: oklch(0.8805 0.0208 74.6428);
+  --sidebar-ring: oklch(0.5234 0.1347 144.1672);
+  --destructive-foreground: oklch(1.0000 0 0);
+  --font-sans: var(--font-montserrat), Montserrat, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Merriweather, serif;
+  --font-mono: var(--font-source-code), "Source Code Pro", ui-monospace, SFMono-Regular, monospace;
+  --shadow-color: oklch(0 0 0);
+  --shadow-opacity: 0.1;
+  --shadow-blur: 3px;
+  --shadow-spread: 0px;
+  --shadow-offset-x: 0;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0em;
+  --spacing: 0.25rem;
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --tracking-normal: 0em;
+}
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
+  }
+  html {
+    @apply font-sans;
+  }
+}
+/* ============================================================
+   AEGIS extensions. Light mode only.
+   Everything below is derived in the nature theme's own oklch
+   idiom; nothing introduces a hue the theme does not already use
+   except the amber severity step, which the theme has no token for.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* severity scale */
+  --warning: oklch(0.6800 0.1600 75);
+  --warning-foreground: oklch(0.5386 0.1937 70);
+  --warning-muted: oklch(0.9300 0.0500 78);
+  --warning-border: oklch(0.8700 0.0750 78);
+  --destructive-muted: oklch(0.9300 0.0400 27);
+  --destructive-border: oklch(0.8700 0.0600 27);
+
+  /* neutral steps between muted-foreground and border */
+  --fg-subtle: oklch(0.6200 0.0350 39.2110);
+  --fg-faint: oklch(0.7200 0.0280 39.2110);
+
+  /* deep panel: chart-5 used as a surface, the way a map view
+     goes dark inside a light application */
+  --deep: oklch(0.2157 0.0453 145.7256);
+  --deep-elevated: oklch(0.3000 0.0450 145.7256);
+  --deep-border: oklch(0.3600 0.0400 145.7256);
+  --deep-foreground: oklch(0.9711 0.0074 80.7211);
+  --deep-muted: oklch(0.7200 0.0300 145.7256);
+
+  /* atmosphere */
+  --sky-high: oklch(0.9711 0.0074 80.7211);
+  --sky-mid: oklch(0.9640 0.0110 90);
+  --sky-low: oklch(0.9600 0.0180 130);
+  --canopy: oklch(0.7400 0.1450 145);
+}
+
+@theme inline {
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-border: var(--warning-border);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-destructive-border: var(--destructive-border);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-faint: var(--fg-faint);
+  --color-deep: var(--deep);
+  --color-deep-elevated: var(--deep-elevated);
+  --color-deep-border: var(--deep-border);
+  --color-deep-foreground: var(--deep-foreground);
+  --color-deep-muted: var(--deep-muted);
+  --color-canopy: var(--canopy);
+}
+
+@layer components {
+  .aegis-sky {
+    background: linear-gradient(
+      180deg,
+      var(--sky-high) 0%,
+      var(--sky-mid) 34%,
+      var(--sky-low) 60%,
+      var(--secondary) 84%
+    );
+  }
+  .aegis-field {
+    background: linear-gradient(
+      180deg,
+      var(--canopy) 0%,
+      var(--chart-1) 14%,
+      var(--chart-2) 38%,
+      var(--chart-3) 60%,
+      var(--chart-4) 84%,
+      var(--chart-5) 100%
+    );
+  }
+  .aegis-rows {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--chart-5) 0 4px,
+      transparent 4px 34px
+    );
+  }
+  .aegis-haze {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in oklab, var(--secondary) 92%, transparent) 62%,
+      color-mix(in oklab, var(--canopy) 40%, transparent) 100%
+    );
+  }
+  .aegis-vignette {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in oklab, var(--deep) 55%, transparent) 60%,
+      color-mix(in oklab, var(--deep) 88%, transparent) 100%
+    );
+  }
+  .aegis-dusk {
+    background: linear-gradient(
+      180deg,
+      var(--deep-elevated) 0%,
+      color-mix(in oklab, var(--deep) 70%, var(--deep-elevated)) 46%,
+      var(--deep) 100%
+    );
+  }
+  .aegis-crop-photo {
+    background:
+      repeating-linear-gradient(
+        86deg,
+        color-mix(in oklab, var(--deep) 42%, transparent) 0 6px,
+        transparent 6px 26px
+      ),
+      linear-gradient(180deg, var(--chart-1), var(--chart-4));
+  }
+}
+
+/* motion is decoration, never information */
+@media (prefers-reduced-motion: reduce) {
+  .aegis-idle {
+    animation: none !important;
+  }
+}
+
+@keyframes aegis-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-11px); }
+}
+@keyframes aegis-shimmer {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.62; }
+}
+@keyframes aegis-sweep {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  100% { transform: translateY(232px); opacity: 0; }
+}
+@keyframes aegis-led {
+  0%, 45% { opacity: 1; }
+  55%, 100% { opacity: 0.2; }
+}
+@keyframes aegis-fly {
+  to { stroke-dashoffset: -560; }
+}
+@keyframes aegis-flow {
+  to { stroke-dashoffset: -40; }
+}
+@keyframes aegis-pop {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.14); opacity: 1; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  /* anchor targets must clear the sticky nav */
+  section[id] {
+    scroll-margin-top: 6rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* the survey aircraft flies its own boustrophedon route via offset-path,
+   so it stops where it started under prefers-reduced-motion */
+@keyframes aegis-survey {
+  from { offset-distance: 0%; }
+  to { offset-distance: 100%; }
+}

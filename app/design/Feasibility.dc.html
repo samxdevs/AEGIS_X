@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:0em;-webkit-font-smoothing:antialiased}
+    a{color:#2E7D32;text-decoration:none} a:hover{color:#1B5E20}
+    .mono{font-family:"Source Code Pro",ui-monospace,"SF Mono",Menlo,monospace}
+  </style>
+</helmet>
+
+<div style="position:relative;width:1440px;height:1246px;overflow:hidden;background:#F8F5F0;padding:88px 64px 0">
+
+  <!-- header -->
+  <div style="display:flex;align-items:flex-end;justify-content:space-between">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:9px;height:29px;padding:0 12px;border-radius:8px;background:#E8F5E9;border:1px solid #C8E6C9">
+        <span style="width:5px;height:5px;border-radius:3px;background:#2E7D32"></span>
+        <span class="mono" style="font-size:10.5px;letter-spacing:.1em;color:#1B5E20">FEASIBILITY AND VIABILITY</span>
+      </div>
+      <h2 style="margin:22px 0 0;font-size:50px;line-height:1.09;font-weight:700;letter-spacing:-.025em;color:#3E2723">
+        One aircraft an FPO can<br>actually afford to own.
+      </h2>
+    </div>
+    <p style="width:500px;margin:0 0 8px;font-size:15.5px;line-height:1.68;color:#6D4C41">
+      No unproven parts: Pixhawk, Jetson Nano and ESP32 are already in hand, and ArduPilot, OpenDroneMap and pretrained encoders are reused. One crop and one district first — paddy, where open Indian disease data already exists.
+    </p>
+  </div>
+
+  <!-- cost + specs -->
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:24px;margin-top:44px">
+
+    <!-- cost -->
+    <div style="padding:26px 28px 24px;border:1px solid #E0D6C9;border-radius:12px;background:#F0E9E0">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:17px;font-weight:700;letter-spacing:-.015em;color:#3E2723">Capital cost of one complete unit</span>
+        <span class="mono" style="font-size:11px;color:#9A7F77">8.4× cheaper</span>
+      </div>
+
+      <div style="margin-top:22px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13.5px;font-weight:600;color:#1B5E20">AEGIS prototype</span>
+          <span class="mono" style="font-size:15px;color:#1B5E20">₹76,000 – ₹83,000</span>
+        </div>
+        <div style="height:34px;border-radius:6px;background:#E0D6C9;overflow:hidden">
+          <div style="width:12.4%;height:34px;border-radius:6px;background:#2E7D32"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13.5px;font-weight:600;color:#6D4C41">DJI Mavic 3M, imported multispectral</span>
+          <span class="mono" style="font-size:15px;color:#6D4C41">₹6,67,000</span>
+        </div>
+        <div style="height:34px;border-radius:6px;background:#E0D6C9;overflow:hidden">
+          <div style="width:100%;height:34px;border-radius:6px;background:#B59F98"></div>
+        </div>
+      </div>
+
+      <p style="margin:22px 0 0;font-size:13.5px;line-height:1.62;color:#6D4C41">
+        Per-acre scouting sold through FPOs and cooperatives keeps the capital cost off the individual smallholder. NIR, thermal and RTK are a modular upgrade path — they bolt on without redesigning the aircraft.
+      </p>
+      <div style="margin-top:14px;padding:9px 12px;border-radius:8px;border:1px dashed #B59F98;background:#F8F5F0">
+        <span class="mono" style="font-size:11px;color:#9A7F77">[ COMPONENT-LEVEL BOM — fill from your costing sheet ]</span>
+      </div>
+    </div>
+
+    <!-- specs -->
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+      <div style="padding:22px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F0E9E0">
+        <div class="mono" style="font-size:27px;font-weight:500;color:#3E2723">3.2–3.7 kg</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;color:#6D4C41">All-up weight, within the sub-4 kg class</div>
+      </div>
+      <div style="padding:22px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F0E9E0">
+        <div class="mono" style="font-size:27px;font-weight:500;color:#3E2723">18–25 min</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;color:#6D4C41">Endurance on one 6S 10 Ah pack</div>
+      </div>
+      <div style="padding:22px 22px;border:1px solid #E0D6C9;border-radius:12px;background:#F0E9E0">
+        <div class="mono" style="font-size:27px;font-weight:500;color:#3E2723">4–8 acres</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;color:#6D4C41">Mapped per survey flight</div>
+      </div>
+      <div style="padding:22px 22px;border:1px solid #C8E6C9;border-radius:12px;background:#E8F5E9">
+        <div class="mono" style="font-size:27px;font-weight:500;color:#2E7D32">6 weeks</div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.5;color:#1B5E20">Build order, ending in a live two-pass field demonstration</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- risks -->
+  <div style="margin-top:48px">
+    <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:14px;border-bottom:1px solid #E0D6C9">
+      <span style="font-size:20px;font-weight:700;letter-spacing:-.015em;color:#3E2723">Five ways this could fail</span>
+      <span style="font-size:14px;color:#6D4C41">— and what we did about each one</span>
+    </div>
+
+    <sc-for list="{{risks}}" as="r" hint-placeholder-count="5">
+      <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 40px minmax(0,1fr);gap:0 18px;align-items:start;padding:19px 0;border-bottom:1px solid #E0D6C9">
+        <span class="mono" style="font-size:12px;color:#B59F98;padding-top:2px">{{r.n}}</span>
+        <span style="font-size:15px;line-height:1.55;font-weight:600;color:#3E2723">{{r.risk}}</span>
+        <span style="display:flex;justify-content:center;padding-top:3px">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h11M10 4.5 14.5 9 10 13.5" stroke="#2E7D32" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span style="font-size:14.5px;line-height:1.6;color:#6D4C41">{{r.fix}}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    var R = [
+      ['Lab-trained disease models collapse on real field imagery.',
+       'Train and test on our own camera and altitudes, and split the data by field and by date so nothing leaks between the two.'],
+      ['A 5 mm insect is under one pixel at mapping altitude.',
+       'Detect canopy damage first, then confirm it on the 3–5 m revisit or a close-up phone image — never claim the insect from 25 m.'],
+      ['Hotspot coordinates drift away from the real plants.',
+       'Shared clock, calibrated camera intrinsics, logged attitude and AGL, and an orthomosaic correction before anything is written to the map.'],
+      ['Jetson Nano cannot carry heavy models in flight.',
+       'Nano-scale networks at 640 px, FP16 TensorRT, sampled frames and active cooling. The mosaic and the heavy passes run on the ground station.'],
+      ['Rural fields have no usable network for hours.',
+       'Imagery, models, map tiles and advisories all stay local. Sync and SMS fire opportunistically, whenever a network happens to appear.']
+    ];
+    return { risks: R.map(function (r, i) { return { n: '0' + (i + 1), risk: r[0], fix: r[1] }; }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "AEGIS",
+    "slug": "aegis",
+    "scheme": "aegis",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "in.sih.aegis",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "AEGIS connects directly to the field pod over local Wi-Fi to collect advisories. Nothing is sent anywhere else.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "in.sih.aegis",
+      "edgeToEdgeEnabled": true,
+      "allowBackup": false,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.CHANGE_NETWORK_STATE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

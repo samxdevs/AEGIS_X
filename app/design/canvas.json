@@ -1,0 +1,37 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Page sections" },
+    { "id": "page-2", "name": "System & motion" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",         "page": "page-1", "x": 0,    "y": 0,    "w": 1440, "h": 1020, "title": "01 · Hero" },
+    { "file": "TwoPass.dc.html",      "page": "page-1", "x": 1560, "y": 0,    "w": 1440, "h": 1191, "title": "02 · Two-pass" },
+    { "file": "Timeline.dc.html",     "page": "page-1", "x": 3120, "y": 0,    "w": 1440, "h": 681,  "title": "03 · Workflow timeline", "is_interactive": true },
+    { "file": "Layers.dc.html",       "page": "page-1", "x": 4680, "y": 0,    "w": 1440, "h": 960,  "title": "04 · Four layers", "is_interactive": true },
+    { "file": "Evidence.dc.html",     "page": "page-1", "x": 0,    "y": 1331, "w": 1440, "h": 1187, "title": "05 · Evidence" },
+    { "file": "Feasibility.dc.html",  "page": "page-1", "x": 1560, "y": 1331, "w": 1440, "h": 1246, "title": "06 · Feasibility" },
+    { "file": "ImpactClose.dc.html",  "page": "page-1", "x": 3120, "y": 1331, "w": 1440, "h": 1460, "title": "07 · Impact, close, footer" },
+    { "file": "Mobile.dc.html",       "page": "page-1", "x": 4680, "y": 1331, "w": 390,  "h": 1661, "title": "Mobile · 390px" },
+    { "file": "System.dc.html",       "page": "page-2", "x": 0,    "y": 0,    "w": 1440, "h": 1274, "title": "Design system" },
+    { "file": "Choreography.dc.html", "page": "page-2", "x": 1560, "y": 0,    "w": 1440, "h": 1342, "title": "Scroll choreography" }
+  ],
+  "annotations": [
+    {
+      "id": "brief-sections",
+      "page": "page-1",
+      "x": 0,
+      "y": -300,
+      "w": 620,
+      "text": "AEGIS landing page — the full section flow, left to right then down.\n\nTheme: tweakcn “nature”, light mode only. Type is Montserrat + Source Code Pro, radius 0.5rem, exactly as the theme ships.\n\nTwo surfaces go deep green (#0A1F0C): the two-pass diagram card and the closing band. Both use chart-5 from the light palette, the way a map view goes dark inside a light app — say the word and they flip to cream.\n\nEvery claim, number and spec is lifted from the SIH deck. The only invented values are the sample telemetry in the hero and alert card (labelled illustrative on the artboard) and the bracketed BOM line on Feasibility, which is yours to fill.\n\nTimeline and Four layers are clickable — pick a step or a layer to see the state we'll drive from scroll."
+    },
+    {
+      "id": "brief-motion",
+      "page": "page-2",
+      "x": 0,
+      "y": -300,
+      "w": 620,
+      "text": "The reference sheets for the build.\n\nLeft: every token, the type ramp, the component atoms and the drone's three states — hover, banked, scanning. One SVG, three configurations.\n\nRight: where the drone goes. The ribbon is the page at a glance — each block is one section from page 1, in order. The dashed line is the flight path, and each marker is the drone's state at that stop. The right-hand table is the spec we'll code against."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

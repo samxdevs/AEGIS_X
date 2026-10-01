@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "advisory_id": "2026-09-20T16:05:40Z_F03",
+  "seq": 95,
+  "generated_at_utc": "2026-09-20T16:05:40Z",
+  "inference_backend": "onnx",
+  "replay": false,
+  "scan": {
+    "started_utc": "2026-09-20T16:05:26Z",
+    "ended_utc": "2026-09-20T16:05:40Z",
+    "mode": "handheld_pod",
+    "frames_captured": 30,
+    "frames_evaluated": 9,
+    "tiles_classified": 81,
+    "distance_walked_m": null,
+    "distance_reason": "GPS_TRACK_NOT_RECORDED"
+  },
+  "crop_health": {
+    "state": "UNCERTAIN",
+    "reason": "HIGH_UNCERTAINTY",
+    "crop": null,
+    "frames_evaluated": 9,
+    "frames_agreeing": 1,
+    "frames_rejected_ood": 12,
+    "frames_rejected_not_crop": 9,
+    "frames_uncertain": 8,
+    "source": "measured"
+  },
+  "growth_stage": {
+    "crop": null,
+    "stage": null,
+    "stage_code": null,
+    "days_since_planting": null,
+    "total_cycle_days": null,
+    "canopy_cover_measured": 0.2214,
+    "canopy_cover_expected_range": null,
+    "kc": null,
+    "status": "CROP_NOT_SPECIFIED",
+    "reason": "CROP_NOT_SPECIFIED",
+    "verification_status": "UNSOURCED",
+    "source": "derived"
+  },
+  "vegetation": {
+    "interpretation_mode": "relative",
+    "canopy_cover": {
+      "mean": 0.2214,
+      "p10": 0.0331,
+      "p50": 0.2009,
+      "p90": 0.4412,
+      "min_fraction_threshold": 0.15,
+      "status": "OK",
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "vari": {
+      "mean": 0.0412,
+      "threshold_source": "PROVISIONAL — within-scan relative, no published absolute band exists for uncalibrated RGB VARI",
+      "threshold_confirmed": false,
+      "source": "measured",
+      "p10": -0.0208,
+      "p50": 0.0398,
+      "p90": 0.1122,
+      "field_median": 0.0398,
+      "band": "LOWER_TAIL",
+      "band_basis": "within_scan_percentile"
+    },
+    "exg": {
+      "mean": 31.4,
+      "threshold_source": "PROVISIONAL — uncalibrated ExG threshold = 20",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "tgi": {
+      "mean": 18.77,
+      "threshold_source": "PROVISIONAL — uncalibrated RGB TGI regression",
+      "threshold_confirmed": false,
+      "source": "measured"
+    },
+    "dgci": {
+      "mean": null,
+      "reason": "OUT_OF_DOMAIN_FRACTION_EXCEEDED",
+      "min_fraction_threshold": 0.15,
+      "threshold_source": "PROVISIONAL — narrowed foliage domain [60, 120] deg",
+      "threshold_confirmed": false,
+      "source": "measured",
+      "out_of_domain_fraction": 0.6603,
+      "threshold": 0.3
+    },
+    "ndvi": null,
+    "ndvi_status": "PENDING_HARDWARE_FINALIZATION",
+    "ndvi_reason": "Optical path and calib_matrix in progress. Field reserved; not estimated."
+  },
+  "thermal": {
+    "available": false,
+    "reason": "HARDWARE_NOT_CONNECTED",
+    "tc_c": null,
+    "twet_c": null,
+    "tdry_c": null,
+    "cwsi": null,
+    "flag": null,
+    "thermal_source": "hardware",
+    "frame_utc": null
+  },
+  "ndvi": {
+    "available": false,
+    "reason": "NOIR_CAMERA_NOT_DETECTED_ON_CSI_1"
+  },
+  "ndvi_satellite": {
+    "available": false,
+    "reason": "NO_CLEAR_SCENE",
+    "source": "SENTINEL2_L2A_CDSE",
+    "scene_date": null,
+    "age_days": null,
+    "ndvi_mean": null,
+    "ndvi_std": null,
+    "valid_pixel_count": null,
+    "cloud_masked_fraction": null,
+    "pixel_size_m": 10,
+    "reliability_note": null
+  },
+  "irrigation": {
+    "available": false,
+    "reason": "INSUFFICIENT_TEMPERATURE_HISTORY (4 of 6 required samples in 24h window)"
+  },
+  "detections": [],
+  "gps": {
+    "status": "ABSENT",
+    "point_count": 0,
+    "accuracy_note": "Point tagging only, approximately 2.5 m CEP. Not a survey-grade position."
+  },
+  "disease": [],
+  "pest": [],
+  "inputs": [
+    {
+      "name": "pod_camera_rgb",
+      "source_node": "POD",
+      "status": "OK"
+    },
+    {
+      "name": "pod_gps",
+      "source_node": "POD",
+      "status": "ABSENT"
+    },
+    {
+      "name": "pod_thermal",
+      "source_node": "POD",
+      "status": "ABSENT"
+    }
+  ],
+  "actions": [
+    {
+      "rank": 1,
+      "template_id": "ACT_RESCAN_AMBIGUOUS",
+      "action": "Re-scan the ambiguous area. Walk at a steady, slow pace (approx. 0.5 m/s) holding the sensor pod steady at 1.0 m above canopy height under diffuse daylight.",
+      "rationale": "Temporal consensus (k >= 2 agreeing frames) was not achieved or image quality was degraded. Citation: SIH PS 26180 Section 5; edge/pipeline.py:175-215; edge/storage.py:118-124.",
+      "params": {
+        "crop": null,
+        "state": "UNCERTAIN",
+        "reason": "HIGH_UNCERTAINTY",
+        "verification_status": "VERIFIED"
+      },
+      "verification_status": "VERIFIED",
+      "url": null,
+      "document_reference": "SIH PS 26180 Section 5; edge/pipeline.py:175-215; edge/storage.py:118-124",
+      "offline_source_file": null,
+      "confidence": "low",
+      "advisory_only": true,
+      "generated_by": "template",
+      "source": "derived"
+    }
+  ]
+}

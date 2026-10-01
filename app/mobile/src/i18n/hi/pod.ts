@@ -1,0 +1,111 @@
+/** Hindi: the Pod & sync screen. */
+export const POD: Record<string, string> = {
+  'Advisories held on this phone': 'इस फ़ोन में रखी सलाहें',
+  'Last successful pull': 'पिछली बार डेटा सफलतापूर्वक आया',
+  Connection: 'कनेक्शन',
+  State: 'स्थिति',
+  'Right now': 'अभी',
+  starting: 'शुरू हो रहा है',
+  'Why it failed': 'क्यों नहीं हुआ',
+  'The pod had been reset': 'पॉड रीसेट हो गया था',
+  "The pod's stored scans had been cleared since this phone last spoke to it, so its numbering had started again from the beginning. Everything was re-collected from scratch. Nothing on this phone was deleted. Any scan the pod no longer has is still here, and this phone may now be the only copy.":
+    'इस फ़ोन से पिछली बात के बाद पॉड के स्कैन मिटा दिए गए थे, इसलिए उसकी गिनती फिर से शुरू हो गई। सब कुछ शुरू से फिर लिया गया। इस फ़ोन से कुछ नहीं मिटा। जो स्कैन अब पॉड पर नहीं हैं वे यहाँ अब भी हैं, और हो सकता है अब यही फ़ोन उनकी अकेली प्रति हो।',
+  NEW: 'नए',
+  'ALREADY HELD': 'पहले से हैं',
+  FAILED: 'नहीं आए',
+  VIOLATIONS: 'नियम टूटे',
+  Pod: 'पॉड',
+  'How to connect': 'कैसे जोड़ें',
+  'Put this phone and the pod on the same WiFi network, then pull. Once the pod\'s own network ({ssid}) is set up, joining it will be all it takes. Android will say "connected, no internet" on that network, which is correct: the pod is not a route to the internet.':
+    'इस फ़ोन और पॉड को एक ही वाई-फ़ाई से जोड़ें, फिर डेटा लें। जब पॉड का अपना नेटवर्क ({ssid}) चालू हो जाएगा, तो बस उससे जुड़ना काफ़ी होगा। उस नेटवर्क पर एंड्रॉइड "कनेक्टेड, इंटरनेट नहीं" दिखाएगा, जो सही है: पॉड से इंटरनेट नहीं मिलता।',
+  'Not yet broadcasting': 'अभी चालू नहीं',
+  "The pod's own WiFi network ({ssid}) isn't set up yet. For now the phone and pod share a phone hotspot; enter the pod's address below.":
+    'पॉड का अपना वाई-फ़ाई नेटवर्क ({ssid}) अभी चालू नहीं है। अभी फ़ोन और पॉड एक फ़ोन हॉटस्पॉट से जुड़ते हैं; नीचे पॉड का पता डालें।',
+  'Network binding unavailable': 'नेटवर्क बाइंडिंग उपलब्ध नहीं',
+  'Pulling…': 'डेटा आ रहा है…',
+  'Pull from pod': 'पॉड से डेटा लें',
+  'Pulled {id}.': '{id} आ गया।',
+  'Pulled {id}. It breaks the schema. Open it to see how.': '{id} आ गया। यह तय नियमों पर खरा नहीं है। खोलकर देखें कैसे।',
+  'Just get the newest scan': 'बस सबसे नया स्कैन लें',
+  'Check the pod is reachable': 'जाँचें कि पॉड से जुड़ पा रहे हैं',
+  'Not reachable': 'पॉड से नहीं जुड़ पाया',
+  Device: 'उपकरण',
+  unnamed: 'बिना नाम',
+  'Advisories stored': 'रखी गई सलाहें',
+  unknown: 'पता नहीं',
+  'Newest on the pod': 'पॉड पर सबसे नया',
+  'Storage free': 'खाली जगह',
+  'Wire contract': 'डेटा प्रारूप',
+  'Contract mismatch': 'प्रारूप मेल नहीं खाता',
+  'This pod is speaking schema version {v}; this app was built against 1.0. Some blocks may be missing or may mean something different. Update one of the two before trusting what comes across.':
+    'यह पॉड प्रारूप {v} इस्तेमाल कर रहा है; यह ऐप 1.0 के लिए बना है। कुछ हिस्से गायब हो सकते हैं या उनका मतलब अलग हो सकता है। भरोसा करने से पहले दोनों में से एक को अपडेट करें।',
+  'Pod clock': 'पॉड की घड़ी',
+  'Clock not set': 'घड़ी सेट नहीं है',
+  'The pod has not set its clock from satellite or from its battery-backed clock, so it is using whatever time the last file write recorded. Every timestamp on anything it sends now is wrong by an unknown amount. Leaving it in open sky for a minute usually fixes it.':
+    'पॉड ने अपनी घड़ी सैटेलाइट या अपनी बैटरी वाली घड़ी से सेट नहीं की है, इसलिए वह आखिरी बार लिखी गई फ़ाइल का समय इस्तेमाल कर रहा है। अभी वह जो भी भेजेगा उसका समय गलत होगा, और कितना गलत, पता नहीं। उसे एक मिनट खुले आसमान के नीचे रखने से आमतौर पर ठीक हो जाता है।',
+  'Clocks disagree': 'घड़ियाँ मेल नहीं खातीं',
+  'This phone and the pod are about {m} minutes apart. Times shown against pod timestamps will be off by roughly that much.':
+    'इस फ़ोन और पॉड के समय में लगभग {m} मिनट का अंतर है। पॉड के समय से दिखाए गए समय लगभग इतने गलत होंगे।',
+  'Pod is away': 'पॉड अभी दूर है',
+  'The pod has dropped its own Wi-Fi to go and collect from the field station. It will be back in about half a minute. Nothing is wrong.':
+    'पॉड ने खेत के स्टेशन से डेटा लेने के लिए अपना वाई-फ़ाई बंद किया है। लगभग आधे मिनट में वापस आ जाएगा। कोई गड़बड़ नहीं है।',
+  'Field station': 'खेत का स्टेशन',
+  'Weather, soil and trap data': 'मौसम, मिट्टी और ट्रैप का डेटा',
+  'The station standing in your field does not talk to this phone. The pod fetches from it, and everything the station measures reaches you through an advisory. Air temperature and soil readings come from here; so does the sticky trap photo.':
+    'आपके खेत में लगा स्टेशन इस फ़ोन से सीधे बात नहीं करता। पॉड उससे डेटा लेता है, और स्टेशन जो भी मापता है वह सलाह के ज़रिए आप तक पहुँचता है। हवा का तापमान और मिट्टी की माप यहीं से आती है; चिपचिपे ट्रैप की फ़ोटो भी।',
+  'Not yet exercised on the device': 'असली उपकरण पर अभी नहीं आज़माया',
+  'The hardware team have not yet run this against the real Jetson. It is built to the contract and may work first time. If it fails, that is where to look before suspecting the phone.':
+    'हार्डवेयर टीम ने इसे अभी असली जेटसन पर नहीं चलाया है। यह तय नियमों के अनुसार बना है और पहली बार में चल सकता है। अगर नहीं चले, तो फ़ोन पर शक करने से पहले वहीं देखें।',
+  'Check the field station': 'खेत का स्टेशन जाँचें',
+  'The pod is going to collect from the field station now. It will drop its own Wi-Fi for about {s} seconds and this phone will lose it. That is expected. Wait, then pull again.':
+    'पॉड अब खेत के स्टेशन से डेटा लेगा। वह लगभग {s} सेकंड के लिए अपना वाई-फ़ाई बंद करेगा और यह फ़ोन उससे कट जाएगा। ऐसा होना ठीक है। रुकें, फिर से डेटा लें।',
+  'Collect from the field station now': 'अभी खेत के स्टेशन से डेटा लें',
+  'Could not do that': 'यह नहीं हो सका',
+  'Pod is going offline briefly': 'पॉड थोड़ी देर के लिए बंद हो रहा है',
+  'Remembered, not current': 'पुरानी जानकारी, अभी की नहीं',
+  'This is the last thing the pod told us about the field station, not a reading taken just now. Tap above to check it again.':
+    'यह खेत के स्टेशन के बारे में पॉड की आखिरी जानकारी है, अभी की माप नहीं। फिर से जाँचने के लिए ऊपर टैप करें।',
+  'Collecting right now': 'अभी डेटा ले रहा है',
+  YES: 'हाँ',
+  NO: 'नहीं',
+  'Last attempt': 'पिछली कोशिश',
+  NEVER: 'कभी नहीं',
+  'Last success': 'पिछली सफलता',
+  never: 'कभी नहीं',
+  READINGS: 'माप',
+  'TRAP PHOTOS': 'ट्रैप फ़ोटो',
+  'DATA AGE': 'डेटा कितना पुराना',
+  'Station data is old': 'स्टेशन का डेटा पुराना है',
+  "The newest reading from the field station is {age} old. Water-use figures worked out from it describe that weather, not today's. Check the station has power and is in range of the pod.":
+    "खेत के स्टेशन की सबसे नई माप {age} पुरानी है। उससे निकले पानी के आँकड़े उसी समय के मौसम के हैं, आज के नहीं। जाँचें कि स्टेशन में बिजली है और वह पॉड की पहुँच में है।",
+  'Station not found': 'स्टेशन नहीं मिला',
+  "The pod could not see the field station's network at all. Check it is powered, and that the pod was within range when it tried.":
+    'पॉड को खेत के स्टेशन का नेटवर्क बिल्कुल नहीं दिखा। जाँचें कि उसमें बिजली है, और कोशिश के समय पॉड पास में था।',
+  Recovery: 'बचाव',
+  'Import an advisory file': 'सलाह की फ़ाइल डालें',
+  'Paste the contents of an advisory JSON file. It is validated and stored exactly as a pulled one would be, and labelled as imported everywhere it appears, because a file someone put on this phone is a weaker claim than a record the phone collected itself.':
+    'सलाह की JSON फ़ाइल की सामग्री यहाँ चिपकाएँ। इसे पॉड से आई सलाह की तरह ही जाँचा और रखा जाता है, और हर जगह "आयात किया" लिखा जाता है, क्योंकि किसी की डाली फ़ाइल पर फ़ोन के खुद लिए रिकॉर्ड जितना भरोसा नहीं किया जा सकता।',
+  'Imported {id}. It satisfies the schema.': '{id} डाला गया। यह तय नियमों पर खरा है।',
+  'Imported {id}, but it breaks {n} schema rules. It is stored and flagged. Open it to see which.':
+    '{id} डाला गया, पर यह {n} नियम तोड़ता है। इसे निशान लगाकर रखा गया है। कौन से, यह खोलकर देखें।',
+  'Import pasted advisory': 'चिपकाई गई सलाह डालें',
+  'Check this': 'इसे जाँचें',
+  Done: 'हो गया',
+  Demo: 'डेमो',
+  'Replica controls': 'फ़ोन के डेटा की सेटिंग',
+  'The replica is seeded with six sample advisories so the app renders a full history with no pod present. Five are invented and are labelled SAMPLE DATA everywhere they appear. The sixth is the advisory the hardware team captured from the real device on 19 September, kept byte for byte.':
+    'फ़ोन में छह नमूना सलाहें पहले से डाली गई हैं ताकि बिना पॉड के भी ऐप पूरा इतिहास दिखा सके। पाँच बनावटी हैं और हर जगह उन पर "नमूना डेटा" लिखा है। छठी वह सलाह है जो हार्डवेयर टीम ने 19 सितंबर को असली उपकरण से ली थी, बिना किसी बदलाव के।',
+  'Accept simulated advisories': 'नकली सलाहें भी लें',
+  'Asks the pod for advisories produced by the simulated model backend, which it normally refuses to serve. For integration testing only.':
+    'पॉड से नकली मॉडल वाली सलाहें माँगता है, जिन्हें वह आमतौर पर नहीं देता। केवल जाँच के लिए।',
+  'Guard is off': 'सुरक्षा बंद है',
+  'This phone is currently asking the pod for simulated advisories. Anything pulled while this is on may be synthetic. Turn it off before showing the app to anyone.':
+    'यह फ़ोन अभी पॉड से नकली सलाहें माँग रहा है। इसके चालू रहते जो भी आए वह नकली हो सकता है। किसी को ऐप दिखाने से पहले इसे बंद करें।',
+  'Reload sample advisories': 'नमूना सलाहें फिर से डालें',
+  'Remove sample advisories (keeps real ones)': 'नमूना सलाहें हटाएँ (असली रहेंगी)',
+  'Clear replica (back to never synced)': 'फ़ोन का डेटा साफ़ करें (शुरुआत से)',
+  '{n} s': '{n} सेकंड',
+  '{n} min': '{n} मिनट',
+  '{n} h': '{n} घंटे',
+  '{n} days': '{n} दिन',
+};
