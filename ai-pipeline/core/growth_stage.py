@@ -18,7 +18,7 @@ Architectural Design:
   - Python 3.6 compatible (no walrus, no dataclasses, no union type operator).
 """
 from typing import Dict, Any, Optional, Tuple, List
-from configs.train_config import PROVISIONAL_DEFAULT_CYCLE_DAYS
+from configs.model_settings import PROVISIONAL_DEFAULT_CYCLE_DAYS
 
 # Frozen Verification Status Enum values per ans_for_vitthal.md & docs/TEMPLATE_ID_REGISTRY.md
 STATUS_VERIFIED = "VERIFIED"
@@ -26,7 +26,7 @@ STATUS_WEB_VERIFIED = "WEB_VERIFIED"
 STATUS_RECALLED_UNVERIFIED = "RECALLED_UNVERIFIED"
 STATUS_UNSOURCED = "UNSOURCED"
 
-# Supported crops aligned with configs/classes.py
+# Supported crops aligned with configs/disease_classes_model_a.py
 SUPPORTED_CROPS = ("rice", "wheat", "sugarcane")
 
 # FAO-56 Table 11 Base Stage Lengths in Days: [L_ini, L_dev, L_mid, L_late]
@@ -106,7 +106,7 @@ def estimate_growth_stage(
         crop: Target crop name ('rice', 'wheat', 'sugarcane'). Case-insensitive.
         days_since_planting: Farmer-reported elapsed days since planting/sowing.
             If None, stage is emitted as None with reason 'DAYS_SINCE_PLANTING_REQUIRED'.
-        canopy_cover: Measured canopy cover fraction [0.0, 1.0] from core/indices.py.
+        canopy_cover: Measured canopy cover fraction [0.0, 1.0] from core/vegetation_indices.py.
             Optional; handled gracefully if 0.0 or None.
         total_cycle_days: Optional variety maturity cycle duration in days.
             If None, uses PROVISIONAL_DEFAULT_CYCLE_DAYS from config.

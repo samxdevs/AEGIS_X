@@ -17,7 +17,8 @@ import { Children, createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { color, font, radius, shadow, space, type } from './theme.ts';
+import { animateLayout } from './motion.tsx';
+import { color, font, radius, shadow, space, type, themed, live } from './theme.ts';
 import type { SourceKind, VerificationStatus } from '../schema/advisory.ts';
 import { presentVerification } from '../schema/templates.ts';
 import { currentLanguage, tr } from '../i18n/tr.ts';
@@ -28,13 +29,13 @@ import type { Language } from '../schema/templates.ts';
 export type Tone = 'neutral' | 'good' | 'warn' | 'bad' | 'unknown';
 
 /** border / surface / text for each tone, matching the site's chip variants. */
-export const TONE: Record<Tone, { border: string; bg: string; fg: string }> = {
+export const TONE: Record<Tone, { border: string; bg: string; fg: string }> = live(() => ({
   neutral: { border: color.border, bg: color.muted, fg: color.mutedForeground },
   good: { border: color.accent, bg: color.secondary, fg: color.secondaryForeground },
   warn: { border: color.warningBorder, bg: color.warningMuted, fg: color.warningForeground },
   bad: { border: color.destructiveBorder, bg: color.destructiveMuted, fg: color.destructive },
   unknown: { border: color.unknownBorder, bg: color.unknownSurface, fg: color.unknown },
-};
+}));
 
 // ---- Eyebrow --------------------------------------------------------------
 
@@ -272,7 +273,10 @@ function Tile({ spec, title, children }: { spec: TileSpec; title: string; childr
   return (
     <View style={[s.tile, { backgroundColor: bg, borderColor: t.border }, open && s.tileOpen]}>
       <Pressable
-        onPress={() => setOpen((o) => !o)}
+        onPress={() => {
+          animateLayout();
+          setOpen((o) => !o);
+        }}
         accessibilityRole="button"
         accessibilityLabel={`${title}: ${spec.value}${spec.unit ? ` ${spec.unit}` : ''}`}
         accessibilityState={{ expanded: open }}
@@ -313,6 +317,49 @@ function Tile({ spec, title, children }: { spec: TileSpec; title: string; childr
   );
 }
 
+/**
+ * Everything below the advice, behind one tap.
+ *
+ * The scan screen used to open every card at once and ran to five phone-heights.
+ * A farmer comes for the verdict and the first step; the map, readings and scan
+ * facts are for checking, so they sit here, closed, with nothing removed.
+ */
+export function DetailsSection({
+  title,
+  note,
+  children,
+}: {
+  /** Defaults to "Details". */
+  title?: string;
+  note?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginBottom: space.lg }}>
+      <Pressable
+        onPress={() => {
+          animateLayout();
+          setOpen((o) => !o);
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityHint={open ? tr('Hides the details') : tr('Shows the details')}
+        style={({ pressed }) => [s.card, s.detailsHead, pressed && { opacity: 0.7 }]}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={[type.cardTitle, { color: color.foreground }]}>{title ?? tr('Details')}</Text>
+          {note ? (
+            <Text style={[type.small, { color: color.mutedForeground, marginTop: 2 }]}>{note}</Text>
+          ) : null}
+        </View>
+        <Text style={[type.chipValue, { color: color.primary, fontSize: 20 }]}>{open ? '−' : '+'}</Text>
+      </Pressable>
+      {open ? <View style={{ marginTop: space.md }}>{children}</View> : null}
+    </View>
+  );
+}
+
 /** A row that shows a summary and opens to its full content on tap. */
 export function Fold({
   title,
@@ -334,7 +381,10 @@ export function Fold({
   return (
     <View>
       <Pressable
-        onPress={() => setOpen((o) => !o)}
+        onPress={() => {
+          animateLayout();
+          setOpen((o) => !o);
+        }}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityHint={open ? tr('Hides the details') : tr('Shows the details')}
@@ -627,6 +677,10 @@ export function humaniseStatus(status?: string): string {
     case 'GPS_TRACK_NOT_RECORDED':
       return tr('No satellite track was recorded during the walk, so the distance covered is not known.');
 
+    // -- Field station, on a walk ----------------------------------------------
+    case 'NO_VALID_MAST_READING':
+      return tr('The field station gave no valid reading for this walk, so there are no weather or soil figures. Nothing is estimated in their place.');
+
     default:
       return status ?? tr('Not available.');
   }
@@ -789,7 +843,7 @@ export function ChipRow({ children }: { children: ReactNode }) {
   return <View style={s.chipRow}>{children}</View>;
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   eyebrow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -830,6 +884,7 @@ const s = StyleSheet.create({
     marginBottom: space.md,
     ...shadow.card,
   },
+  detailsHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: 0 },
   cardHead: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -924,4 +979,4 @@ const s = StyleSheet.create({
     gap: space.sm,
   },
   divider: { height: 1, backgroundColor: color.border, marginVertical: space.sm },
-});
+}));

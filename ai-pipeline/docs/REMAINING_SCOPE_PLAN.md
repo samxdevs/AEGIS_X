@@ -3,7 +3,7 @@
 **Document ID:** `docs/REMAINING_SCOPE_PLAN.md`  
 **Date:** 16 September 2026  
 **Final Submission Deadline:** 30 September 2026 (**14 days remaining**)  
-**Current System State:** Model A FP16 TensorRT pipeline, SQLite storage (`edge/storage.py`), and offline HTTP Gateway (`gateway/server.py`) complete and verified with 239 passing regression tests. Physical Jetson Nano execution is under active verification via `docs/NANO_DEPLOYMENT_RUNBOOK.md`.
+**Current System State:** Model A FP16 TensorRT pipeline, SQLite storage (`edge/scan_database.py`), and offline HTTP Gateway (`gateway/server.py`) complete and verified with 239 passing regression tests. Physical Jetson Nano execution is under active verification via `docs/NANO_DEPLOYMENT_RUNBOOK.md`.
 
 ---
 
@@ -38,14 +38,14 @@ In hackathon judging, the single fastest way to lose credibility is to claim har
 ## 2. Detailed Accounting of Remaining Scope Items
 
 ### Item 1: Model B (Sticky Trap Pest CNN)
-- **What it is:** A lightweight CNN (~150k parameters, 4 conv blocks) running on the gateway (laptop/Nano) to classify 64×64 cropped insect blobs extracted by `core/trap_segmentation.py` into specific pest species (whitefly, aphid, leafhopper, planthopper) vs. `not_pest` (dust, debris, paper fiber, beneficials).
+- **What it is:** A lightweight CNN (~150k parameters, 4 conv blocks) running on the gateway (laptop/Nano) to classify 64×64 cropped insect blobs extracted by `core/trap_insect_segmentation.py` into specific pest species (whitefly, aphid, leafhopper, planthopper) vs. `not_pest` (dust, debris, paper fiber, beneficials).
 - **What currently exists in code:**
-  - [`core/trap_segmentation.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/core/trap_segmentation.py): **Fully built and tested.** Implements ArUco fiducial homography, perspective correction, adaptive thresholding, watershed segmentation, 4-corner marker exclusion, and ICAR-compliant relative trend tracking.
+  - [`core/trap_insect_segmentation.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/core/trap_insect_segmentation.py): **Fully built and tested.** Implements ArUco fiducial homography, perspective correction, adaptive thresholding, watershed segmentation, 4-corner marker exclusion, and ICAR-compliant relative trend tracking.
   - Directory [`firmware/esp32cam_trap/`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/firmware/esp32cam_trap): Empty directory.
-  - `configs/trap_config.py`, `train/train_model_b.py`, `gateway/trap_receiver.py`, `gateway/trap_count.py`: **Do not exist.**
+  - `configs/trap_config.py`, `train/train_insect_model_b.py`, `gateway/trap_receiver.py`, `gateway/trap_count.py`: **Do not exist.**
 - **What is missing:**
   1. `configs/trap_config.py`: Taxonomy mapping, minimum/maximum blob dimensions, and target pest classes.
-  2. `train/train_model_b.py`: Training pipeline for `TrapPestCNN`.
+  2. `train/train_insect_model_b.py`: Training pipeline for `TrapPestCNN`.
   3. `gateway/trap_receiver.py`: Endpoint accepting POSTed JPEGs from the field camera.
   4. `gateway/trap_count.py`: Orchestrator calling segmentation $\rightarrow$ Model B classification $\rightarrow$ SQLite logging.
 - **What blocks it:** **Data and Hardware.** The ESP32-CAM physical trap station has not been deployed in an active field. Real physical sticky trap images from Indian fields do not exist in the repository.
@@ -56,20 +56,20 @@ In hackathon judging, the single fastest way to lose credibility is to claim har
   - **Limitation:** Models trained on clean greenhouse sticky cards fail when exposed to outdoor Indian dust storms, morning dew, and insect degradation.
 - **Estimated effort:** 2.5–3 days.
 - **30 Sept Demonstration vs. Honest Fallback:**
-  - **Viable Demo:** Train `TrapPestCNN` on public sticky-trap data + synthetic composites. Feed real public sticky-trap validation images through `core/trap_segmentation.py` $\rightarrow$ Model B $\rightarrow$ daily count aggregation.
+  - **Viable Demo:** Train `TrapPestCNN` on public sticky-trap data + synthetic composites. Feed real public sticky-trap validation images through `core/trap_insect_segmentation.py` $\rightarrow$ Model B $\rightarrow$ daily count aggregation.
   - **Honest Disclosure to Judges:** *"Model B was trained on public greenhouse sticky-trap benchmarks and synthetic field composites. Because the physical ESP32-CAM field trap node was bench-tested without long-term outdoor exposure, Model B's weights are presented as a pre-trained baseline requiring on-farm fine-tuning for glue weathering and local insect morphs."*
 
 ---
 
-### Item 2: Step 27 — `edge/rules_engine.py` (Agronomic Rules Engine)
+### Item 2: Step 27 — `edge/advice_rules_engine.py` (Agronomic Rules Engine)
 - **What it is:** The deterministic agronomic decision engine that transforms raw Model A classification verdicts, spatial cell consensus, and environmental inputs into actionable, explainable farmer advisories. It replaces the current provisional placeholder in `actions[]` (`ACT_RESCAN_AMBIGUOUS` / `ACT_INSPECT_CONFIRM`).
 - **What currently exists in code:**
-  - [`core/aggregate.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/core/aggregate.py): Outputs frame and cell consensus states (`DISEASE`, `HEALTHY`, `UNCERTAIN`, `NO_DATA`).
-  - [`edge/storage.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/edge/storage.py): Contains `create_advisory()`, which currently emits a placeholder action with `"generated_by": "placeholder"`.
-  - [`configs/classes.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/configs/classes.py): Full 31-class taxonomy.
-  - `edge/rules_engine.py`: **Does not exist.**
+  - [`core/verdict_aggregation.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/core/verdict_aggregation.py): Outputs frame and cell consensus states (`DISEASE`, `HEALTHY`, `UNCERTAIN`, `NO_DATA`).
+  - [`edge/scan_database.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/edge/scan_database.py): Contains `create_advisory()`, which currently emits a placeholder action with `"generated_by": "placeholder"`.
+  - [`configs/disease_classes_model_a.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/configs/disease_classes_model_a.py): Full 31-class taxonomy.
+  - `edge/advice_rules_engine.py`: **Does not exist.**
 - **What is missing:**
-  - `edge/rules_engine.py` implementing:
+  - `edge/advice_rules_engine.py` implementing:
     1. **Disease Action Rules:** Specific, research-backed management interventions sourced directly from ICAR / TNAU / PAU Package of Practices (e.g., `rice__bacterial_leaf_blight` $\rightarrow$ spray Streptocycline 100g + Copper Oxychloride 500g in 200L water per acre; drain field; halt top-dressing nitrogen).
     2. **Consensus Degradation Rules:** When `crop_health.state == "UNCERTAIN"` or `MULTIPLE_CROPS_DETECTED`, generate structured scouting and re-scan instructions rather than generic errors.
     3. **Healthy Maintenance Rules:** When `crop_health.state == "HEALTHY"`, emit crop-specific preventive guidance and scouting intervals.
@@ -85,19 +85,19 @@ In hackathon judging, the single fastest way to lose credibility is to claim har
 ---
 
 ### Item 3: The Unwired Deterministic Modules
-Four modules were built, audited, and tested, but currently sit uncalled by `edge/pipeline.py`.
+Four modules were built, audited, and tested, but currently sit uncalled by `edge/scan_pipeline.py`.
 
-#### 3.1 `core/indices.py` (RGB Visible Vegetation Indices)
+#### 3.1 `core/vegetation_indices.py` (RGB Visible Vegetation Indices)
 - **What exists:** Complete implementation of Excess Green (`ExG`), `VARI`, `TGI`, `NGRDI`, `DGCI`, and absolute vegetation masking.
 - **Wiring requirements:** Trivial. Can be called directly in Thread 2 (`GateTileThread`) or Thread 4 (`DecisionAggregateStoreThread`) on the RGB camera frames.
 - **What it produces TODAY:** **100% REAL MEASUREMENTS.** Standard RGB camera video/stills are already streaming through the pipeline. It calculates real canopy green fraction and RGB vegetation indices per frame and per cell.
 - **30 Sept Strategy:** **WIRE IMMEDIATELY.** Displays real crop vigour and canopy coverage alongside disease classification.
 
-#### 3.2 `core/thermal.py` (Canopy Temperature & CWSI)
+#### 3.2 `core/water_stress_thermal.py` (Canopy Temperature & CWSI)
 - **What exists:** Bimodal Otsu canopy thermal segmentation, MLX90614 cross-check validation, and Idso CWSI formulas.
 - **Wiring requirements:** Requires thermal sensor array data (`MLX90640` 32×24 grid) + air temperature ($T_a$) + vapor pressure deficit (VPD).
 - **What it produces TODAY:** **NULL-WITH-REASON.** Without physical thermal array hardware connected via I2C to the Nano, canopy temperature cannot be measured.
-- **30 Sept Strategy:** **HONEST DISCLOSURE.** Wire `core/thermal.py` into the advisory schema so that in the absence of hardware it emits:
+- **30 Sept Strategy:** **HONEST DISCLOSURE.** Wire `core/water_stress_thermal.py` into the advisory schema so that in the absence of hardware it emits:
   ```json
   "thermal_cwsi": {
     "status": "UNATTACHED",
@@ -108,24 +108,24 @@ Four modules were built, audited, and tested, but currently sit uncalled by `edg
   ```
   Provide a `--simulate-sensors` flag for offline verification so judges can see the math run, but label live runs honestly.
 
-#### 3.3 `core/ndvi.py` (Dual-Bandpass NIR/Red NDVI)
+#### 3.3 `core/ndvi_nir_camera.py` (Dual-Bandpass NIR/Red NDVI)
 - **What exists:** MidOpt DB660/850 dual-bandpass channel mapping (Blue=NIR, Red=Visible Red), cross-talk architecture, empirical line calibration scaffolding.
 - **Wiring requirements:** Requires a second CSI camera (`IMX219-77IR` NoIR) with physical dual-bandpass optical filter, plus a bench-measured silicon cross-talk matrix $K^{-1}$.
-- **What it produces TODAY:** **NULL-WITH-REASON.** `core/ndvi.py` explicitly raises `NotImplementedError` if the cross-talk matrix is missing, because calculating "NDVI" from raw RGB or uncalibrated NoIR without cross-talk correction is scientifically invalid.
-- **30 Sept Strategy:** **HONEST DISCLOSURE.** Emphasize visible RGB indices (`VARI`, `ExG` from `core/indices.py`) as the operational vigour metric for the single RGB camera pod. Disclose dual-camera NoIR NDVI as a planned multi-spectral hardware upgrade.
+- **What it produces TODAY:** **NULL-WITH-REASON.** `core/ndvi_nir_camera.py` explicitly raises `NotImplementedError` if the cross-talk matrix is missing, because calculating "NDVI" from raw RGB or uncalibrated NoIR without cross-talk correction is scientifically invalid.
+- **30 Sept Strategy:** **HONEST DISCLOSURE.** Emphasize visible RGB indices (`VARI`, `ExG` from `core/vegetation_indices.py`) as the operational vigour metric for the single RGB camera pod. Disclose dual-camera NoIR NDVI as a planned multi-spectral hardware upgrade.
 
 #### 3.4 `edge/irrigation_model.py` (FAO-56 Crop Water Balance)
 - **What exists:** FAO-56 Penman-Monteith reference evapotranspiration ($ET_0$), Hargreaves-Samani temperature equation, and Table 12 crop coefficients ($K_c$) for rice, sugarcane, and wheat.
 - **Wiring requirements:** Pure algorithmic math. Requires daily weather inputs ($T_{max}, T_{min}, RH$, wind, solar radiation) and planting dates.
 - **What it produces TODAY:** Real reference evapotranspiration ($ET_0$) and crop water demand ($ET_c$) if weather data is supplied via offline table or local weather API. Soil moisture deficit, however, requires physical soil probes and must emit `soil_deficit: null`.
-- **30 Sept Strategy:** **DEMO SCRIPT.** Wire as an advisory calculator in `edge/rules_engine.py`: given local weather inputs, compute daily crop water demand in mm/day and prescribe manual irrigation volume to the farmer (autonomous actuation was already formally dropped).
+- **30 Sept Strategy:** **DEMO SCRIPT.** Wire as an advisory calculator in `edge/advice_rules_engine.py`: given local weather inputs, compute daily crop water demand in mm/day and prescribe manual irrigation volume to the farmer (autonomous actuation was already formally dropped).
 
 ---
 
 ### Item 4: Growth Staging (Canopy Cover + Days After Sowing)
 - **What it is:** Deterministic agronomic lookup mapping canopy cover percentage (derived from RGB camera frames) + farmer-entered planting date into phenological growth stages (e.g. Rice: Vegetative/Tillering $\rightarrow$ Panicle Initiation $\rightarrow$ Flowering $\rightarrow$ Ripening).
 - **What currently exists:**
-  - `core/indices.py` computes exact canopy vegetation fraction.
+  - `core/vegetation_indices.py` computes exact canopy vegetation fraction.
   - Dedicated module `core/growth_stage.py`: **Does not exist.**
 - **What is missing:** A clean lookup module `core/growth_stage.py` containing validated phenological growth tables for Rice, Sugarcane, and Wheat based on FAO/ICAR crop calendars.
 - **What blocks it:** **NOTHING.** Software and agronomic tables only.
@@ -141,7 +141,7 @@ Four modules were built, audited, and tested, but currently sit uncalled by `edg
   - Captures sticky trap images via ESP32-CAM.
   - Serves telemetry history over local HTTP GET endpoints when the farmer walks nearby with the handheld pod.
 - **What currently exists:**
-  - Mock drivers in `edge/adc.py` and `edge/thermal_point.py`.
+  - Mock drivers in `edge/soil_moisture_adc.py` and `edge/ir_thermometer_mlx90614.py`.
   - Firmware directory: Empty.
 - **What is missing:** Complete Arduino/ESP-IDF firmware sketch.
 - **What blocks it:** **HARDWARE DEPENDENT.** Physical ESP32, ESP32-CAM, sensors, and power management circuit.
@@ -158,7 +158,7 @@ Four modules were built, audited, and tested, but currently sit uncalled by `edg
 | Step | Item | Current Code Status | 30 Sept Strategy |
 | :--- | :--- | :--- | :--- |
 | **Step 22** | Autonomous Actuation (`edge/actuation.py`, `flow.py`) | Reference implementations exist and pass tests. | **FORMALLY DROPPED** (7 Sep 2026). Autonomous valves/pumps are out of scope. Prescriptions are advisory-only. |
-| **Step 23** | Unified Sensors Facade (`edge/sensors.py`) | Does not exist. | **BUILD.** Create a clean sensor reader that detects I2C devices and cleanly emits `null-with-reason` when absent. |
+| **Step 23** | Unified Sensors Facade (`edge/gps_and_mast_sensors.py`) | Does not exist. | **BUILD.** Create a clean sensor reader that detects I2C devices and cleanly emits `null-with-reason` when absent. |
 | **Step 24** | Crop Baselines Config (`configs/crop_baselines.py`) | Does not exist. | **BUILD.** Document published Idso CWSI baseline slopes and intercepts for Rice and Sugarcane. |
 | **Step 25-26**| Leaf Colour Chart Nutrient Mapping (`edge/agronomy.py`) | Does not exist. | **BUILD.** Map CIELAB $b^*$ to IRRI 4-panel Leaf Colour Chart (LCC) for nitrogen status. |
 | **Step 28** | Multilingual Advisory Rendering (`edge/advisory.py`) | Storage currently formats JSON. | **BUILD.** Standalone offline template generator rendering structured findings into Hindi and English text strings. |
@@ -190,7 +190,7 @@ We recommend dividing the remaining 14 days into **four distinct phases**, prior
 | Phase 2: Trap Pest Pipeline        | Model B CNN, Public Data    | 20 Sep - 23 Sep      |
 |                                    | Segmentation & Aggregation  | (4 days)             |
 |                                    |                             |                      |
-| Phase 3: Sensor Facade & Firmware  | edge/sensors.py, Mast Node  | 24 Sep - 26 Sep      |
+| Phase 3: Sensor Facade & Firmware  | edge/gps_and_mast_sensors.py, Mast Node  | 24 Sep - 26 Sep      |
 |                                    | ESP32 Bench Firmware        | (3 days)             |
 |                                    |                             |                      |
 | Phase 4: Integration & Rehearsal   | End-to-End Tests, App Sync, | 27 Sep - 29 Sep      |
@@ -204,11 +204,11 @@ We recommend dividing the remaining 14 days into **four distinct phases**, prior
 
 #### Phase 1: Close the Core Agronomic Loop (16–19 September)
 *Goal: Every video scan generates a real, scientifically grounded, multilingual farmer advisory.*
-1. **Build `configs/crop_disease_rules.py` & `edge/rules_engine.py` (Step 27):**
+1. **Build `configs/crop_disease_rules.py` & `edge/advice_rules_engine.py` (Step 27):**
    - Source exact ICAR-IIRR (rice) and ICAR-SBI (sugarcane) disease treatment packages.
-   - Replace the provisional placeholder in `edge/storage.py` with real, explainable actions.
-2. **Build `core/growth_stage.py` & Wire `core/indices.py`:**
-   - Call `vegetation_mask` and `indices_from_bgr` in `edge/pipeline.py`.
+   - Replace the provisional placeholder in `edge/scan_database.py` with real, explainable actions.
+2. **Build `core/growth_stage.py` & Wire `core/vegetation_indices.py`:**
+   - Call `vegetation_mask` and `indices_from_bgr` in `edge/scan_pipeline.py`.
    - Compute real canopy cover percentage and visible crop vigour (ExG, VARI) from the camera frames.
    - Map canopy cover + planting date to phenological growth stage.
 3. **Build `edge/agronomy.py` (Steps 25–26):**
@@ -220,16 +220,16 @@ We recommend dividing the remaining 14 days into **four distinct phases**, prior
 *Goal: Demonstrate automated pest counting and trend alerting on yellow sticky card imagery.*
 1. **Build `configs/trap_config.py` & `configs/etl_thresholds.py`:**
    - Define pest classes (whitefly, aphid, leafhopper, planthopper, `not_pest`) and published ICAR economic thresholds.
-2. **Build `train/train_model_b.py` & Train `TrapPestCNN`:**
+2. **Build `train/train_insect_model_b.py` & Train `TrapPestCNN`:**
    - Train on public sticky-trap datasets (Mendeley/Roboflow) combined with synthetic insect composites.
    - Export to ONNX / TensorRT.
 3. **Build `gateway/trap_receiver.py` & `gateway/trap_count.py`:**
-   - Connect image upload $\rightarrow$ `core/trap_segmentation.py` $\rightarrow$ Model B classification $\rightarrow$ daily rate logging.
+   - Connect image upload $\rightarrow$ `core/trap_insect_segmentation.py` $\rightarrow$ Model B classification $\rightarrow$ daily rate logging.
    - Test against sample sticky trap imagery.
 
 #### Phase 3: Sensor Architecture & Firmware (24–26 September)
 *Goal: Provide a robust hardware abstraction layer that runs live when sensors exist and degrades cleanly when absent.*
-1. **Build `edge/sensors.py` (Step 23):**
+1. **Build `edge/gps_and_mast_sensors.py` (Step 23):**
    - Unified interface querying sensors (ADS1115 soil moisture, MLX90640 thermal array, SHT40 air temp/RH [early draft referenced SHT31], GPS).
    - Enforce explicit `null-with-reason` flags (`THERMAL_UNATTACHED`, `SOIL_PROBE_UNATTACHED`, `GPS_UNATTACHED`) when hardware is missing.
    - Include a `--simulate` flag strictly for bench testing and dry runs.
@@ -287,5 +287,5 @@ When presenting to judges on 30 September, maintain absolute transparency. Frame
 Before any code is written, confirm or adjust the following three architectural decisions:
 
 1. **Model B Scope:** Do you approve training `TrapPestCNN` on public sticky-trap benchmarks + synthetic composites, or should we restrict Model B to pure watershed blob density tracking (which has zero synthetic domain-shift risk)?
-2. **Phase 1 Priority:** Do you approve building `edge/rules_engine.py` (Step 27) and `core/growth_stage.py` first, replacing the advisory placeholder and wiring visible RGB indices into the live pipeline?
+2. **Phase 1 Priority:** Do you approve building `edge/advice_rules_engine.py` (Step 27) and `core/growth_stage.py` first, replacing the advisory placeholder and wiring visible RGB indices into the live pipeline?
 3. **Sensor Policy:** Do you confirm that all hardware-dependent modules (`thermal.py`, `ndvi.py`, `adc.py`) must strictly emit `null-with-reason` in live execution, with `--simulate` restricted strictly to offline test flags?

@@ -108,7 +108,7 @@ Requires=sih-gateway.service
 Type=simple
 User=nvidia
 WorkingDirectory=/home/nvidia/sih-smart-farming
-ExecStart=/usr/bin/python3 -u edge/pipeline.py --source /dev/video0 --db-path data/edge.db
+ExecStart=/usr/bin/python3 -u edge/scan_pipeline.py --source /dev/video0 --db-path data/edge.db
 Restart=on-failure
 RestartSec=10
 KillMode=process
@@ -128,7 +128,7 @@ After=network-online.target
 Type=oneshot
 User=nvidia
 WorkingDirectory=/home/nvidia/sih-smart-farming
-ExecStart=/usr/bin/flock -n /run/lock/sih-collector.lock /usr/bin/python3 edge/mast_collector.py --db-path data/edge.db
+ExecStart=/usr/bin/flock -n /run/lock/sih-collector.lock /usr/bin/python3 edge/mast_data_collector.py --db-path data/edge.db
 StandardOutput=journal
 StandardError=journal
 EOF
@@ -145,7 +145,7 @@ Requires=sih-gateway.service
 Type=oneshot
 User=nvidia
 WorkingDirectory=/home/nvidia/sih-smart-farming
-ExecStart=/usr/bin/flock -n /run/lock/sih-collector.lock /usr/bin/python3 edge/mast_collector.py --db-path data/edge.db
+ExecStart=/usr/bin/flock -n /run/lock/sih-collector.lock /usr/bin/python3 edge/mast_data_collector.py --db-path data/edge.db
 StandardOutput=journal
 StandardError=journal
 

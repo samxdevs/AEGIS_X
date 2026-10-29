@@ -6,7 +6,6 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "in.sih.aegis",
@@ -19,17 +18,29 @@
     },
     "android": {
       "package": "in.sih.aegis",
-      "edgeToEdgeEnabled": true,
       "allowBackup": false,
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
         "android.permission.ACCESS_WIFI_STATE",
-        "android.permission.CHANGE_NETWORK_STATE"
+        "android.permission.CHANGE_NETWORK_STATE",
+        "android.permission.VIBRATE"
       ]
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "AEGIS listens only after you tap the microphone on the Ask tab, so you can ask about your fields in your own language."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "AEGIS uses this phone's location while you walk a field, so it can mark on the map where problems are. It is only read while a scan is running."
+        }
+      ],
       [
         "expo-build-properties",
         {
@@ -37,7 +48,9 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

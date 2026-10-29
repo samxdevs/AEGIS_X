@@ -79,11 +79,11 @@ export type InferenceBackend = Open<'trt' | 'onnx' | 'mock'>;
  */
 export type InputStatus = Open<'OK' | 'PENDING_CALIBRATION' | 'MOCK_PROVISIONAL' | 'ABSENT'>;
 
-/** `POD` for pod-borne sensors, `MAST` for the ground station. Never parsed. */
-export type SourceNode = Open<'POD' | 'MAST'>;
+/** `POD` for pod-borne sensors, `MAST` for the ground station, `PHONE` for the farmer's phone. Never parsed. */
+export type SourceNode = Open<'POD' | 'MAST' | 'PHONE'>;
 
 export type AdvisoryInput = {
-  name: Open<'pod_camera_rgb' | 'pod_gps' | 'pod_thermal'>;
+  name: Open<'pod_camera_rgb' | 'pod_gps' | 'pod_thermal' | 'phone_gps'>;
   source_node: SourceNode;
   status: InputStatus;
 };
@@ -93,8 +93,11 @@ export type AdvisoryInput = {
 export type Scan = {
   started_utc: string;
   ended_utc: string;
-  /** The only mode. A handheld pod walked through the crop. */
-  mode: Open<'handheld_pod'>;
+  /**
+   * `handheld_pod` on a single scan; `walk` on a scan the farmer started and
+   * stopped from the app (SCAN_CONTROL_API.md §2).
+   */
+  mode: Open<'handheld_pod' | 'walk'>;
   frames_captured: number;
   /** Frames that passed quality gates 1–4. */
   frames_evaluated: number;
@@ -103,6 +106,100 @@ export type Scan = {
   distance_walked_m: number | null;
   /** Rule 1 — present whenever the distance is null. */
   distance_reason?: string | null;
+  /** Walk only: the crop the farmer declared at Start. */
+  crop_declared?: Open<'rice' | 'wheat' | 'sugarcane'> | null;
+  /** Walk only: how long the walk lasted, seconds. */
+  duration_s?: number | null;
+  /** Walk only: why it ended. `interrupted` is a power cut finished on next boot. */
+  stop_reason?: Open<'user' | 'time_limit' | 'error' | 'interrupted'> | null;
+};
+
+// ---- Walk report ----------------------------------------------------------
+
+/** Where the clock or a position came from. Shown neutrally, never as a warning. */
+export type TimeSource = Open<'gps' | 'phone' | 'filesystem'>;
+
+export type StretchVerdict = Open<'HEALTHY' | 'DISEASE' | 'UNCERTAIN' | 'NOT_CROP' | 'NO_DATA'>;
+
+/** A stretch is 20 s of walking. Healthy ones are counted, not listed. */
+export type Stretch = {
+  index: number;
+  start_utc: string;
+  end_utc: string;
+  frames_used: number;
+  verdict: StretchVerdict;
+  top_class: string | null;
+  frames_agreeing: number;
+  /** Null in a replay or without a thermal reading. */
+  thermal_median_c?: number | null;
+  lat?: number | null;
+  lon?: number | null;
+  pos_accuracy_m?: number | null;
+  pos_source?: Open<'pod_gps' | 'phone_gps'> | null;
+};
+
+export type WalkSummary = {
+  stretches_total: number;
+  healthy: number;
+  need_look: number;
+  unclear: number;
+  not_crop?: number;
+  no_data?: number;
+};
+
+/** An alert raised during the walk; the same shape the status endpoint streams. */
+export type WalkAlert = {
+  alert_id: number;
+  utc: string;
+  class: string;
+  frames_agreeing: number;
+  lat: number | null;
+  lon: number | null;
+  pos_accuracy_m: number | null;
+};
+
+/**
+ * One photo the farmer took with Capture during the walk (SCAN_CONTROL_API.md
+ * §1.8): a single full-resolution frame, checked on its own. Weaker evidence
+ * than an alert, which needs several frames to agree, and never counted in the
+ * stretches.
+ */
+export type Capture = {
+  capture_id: number;
+  utc: string;
+  media_id: string;
+  /** Path on the pod to the full-resolution JPEG. */
+  image_path: string;
+  quality: Open<'OK' | 'BLURRY' | 'TOO_DARK' | 'TOO_BRIGHT'>;
+  /** NO_DATA when the photo failed its quality check. */
+  verdict: StretchVerdict;
+  top_class: string | null;
+  confidence: number | null;
+  cross_source_reliability: CrossSourceReliability | null;
+  lat?: number | null;
+  lon?: number | null;
+  pos_accuracy_m?: number | null;
+  pos_source?: Open<'pod_gps' | 'phone_gps'> | null;
+};
+
+/**
+ * Field station readings at the time of the walk. Soil is raw volts and says so:
+ * no calibration turns them into a moisture figure yet.
+ */
+export type FieldConditions = {
+  available: boolean;
+  reason?: string | null;
+  node_id?: string | null;
+  reading_utc?: string | null;
+  age_minutes?: number | null;
+  air_temp_c?: number | null;
+  rh_pct?: number | null;
+  lux?: number | null;
+  soil1_v?: number | null;
+  soil2_v?: number | null;
+  battery_v?: number | null;
+  soil_units?: Open<'raw_volts_uncalibrated'> | null;
+  source?: SourceKind | null;
 };
 
 // ---- Crop health ----------------------------------------------------------
@@ -418,6 +515,8 @@ export type Gps = {
   point_count: number;
   /** Handheld, no RTK. Roughly 2.5 m CEP — a corner of a field, not a plant. */
   accuracy_note?: string | null;
+  /** Walk only: which receiver the positions came from. */
+  source?: Open<'pod_gps' | 'phone_gps'> | null;
 };
 
 // ---- Disease --------------------------------------------------------------
@@ -596,6 +695,16 @@ export type Advisory = {
   pest: PestFinding[];
   inputs: AdvisoryInput[];
   actions: Action[];
+
+  // ---- Walk report. Present only on a scan run from the app; every older
+  // advisory simply lacks them, and the screen reads them as optional. ----
+  /** Where the pod's clock came from: gps, phone or filesystem. */
+  time_source?: TimeSource | null;
+  summary?: WalkSummary | null;
+  stretches?: Stretch[] | null;
+  alerts?: WalkAlert[] | null;
+  captures?: Capture[] | null;
+  field_conditions?: FieldConditions | null;
 };
 
 export const SUPPORTED_SCHEMA_VERSIONS = ['1.0'] as const;
@@ -608,6 +717,23 @@ export const SUPPORTED_SCHEMA_VERSIONS = ['1.0'] as const;
  */
 export function isReplay(advisory: { replay?: boolean } | null | undefined): boolean {
   return advisory?.replay !== false;
+}
+
+/**
+ * The pod's GPS input on a report whose positions came from the phone.
+ *
+ * The pod's receiver was not what this report was built from, so the input is
+ * "not used" rather than "not connected". Keyed on `gps.source`, so an older
+ * advisory without it keeps the status the pod gave. A simulated sensor still
+ * says SIMULATED, which matters more.
+ */
+export function isPhoneGpsPod(
+  input: { name: string; status: string },
+  gpsSource?: string | null,
+): boolean {
+  return (
+    input.name === 'pod_gps' && input.status !== 'MOCK_PROVISIONAL' && gpsSource === 'phone_gps'
+  );
 }
 
 /** ISO-8601, UTC, Z suffix, second resolution. No offsets, no epoch seconds. */

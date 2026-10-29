@@ -45,7 +45,7 @@ import {
   toMetres,
   toUnitSquare,
 } from './field-geometry.ts';
-import { color, space, type } from './theme.ts';
+import { color, space, type, themed } from './theme.ts';
 import { dateLocale, msg, tr } from '../i18n/tr.ts';
 import type { Advisory, CrossSourceReliability, Detection } from '../schema/advisory.ts';
 import { describeClass } from '../schema/classes.ts';
@@ -456,7 +456,7 @@ export function DetectionsCard({ advisory }: { advisory: Advisory }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   verdictRow: { marginBottom: space.md },
   plotWrap: { alignItems: 'center', paddingVertical: space.sm },
@@ -469,4 +469,4 @@ const s = StyleSheet.create({
     paddingVertical: space.md,
   },
   more: { paddingVertical: space.sm, alignSelf: 'flex-start' },
-});
+}));

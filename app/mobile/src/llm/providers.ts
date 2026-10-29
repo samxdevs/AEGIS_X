@@ -23,6 +23,7 @@ export type ProviderId =
   | 'mistral'
   | 'deepseek'
   | 'openrouter'
+  | 'sarvam'
   | 'custom';
 
 export type Provider = {
@@ -125,6 +126,20 @@ export const PROVIDERS: Provider[] = [
     defaultModel: 'anthropic/claude-sonnet-4.5',
     keyHint: 'sk-or-...',
     keyPage: 'openrouter.ai',
+    maxTokensParam: 'max_tokens',
+  },
+  {
+    // Built in India for Indian languages. Its key also powers the Ask tab's
+    // ears and voice (src/voice/), so one key covers the whole voice loop.
+    // The "-conversations" variant is the low-latency one: a farmer is
+    // waiting on a reply to something they just said out loud.
+    id: 'sarvam',
+    name: 'Sarvam',
+    format: 'openai',
+    baseUrl: 'https://api.sarvam.ai/v1',
+    defaultModel: 'sarvam-105b-conversations',
+    keyHint: 'sk_...',
+    keyPage: 'dashboard.sarvam.ai',
     maxTokensParam: 'max_tokens',
   },
   {

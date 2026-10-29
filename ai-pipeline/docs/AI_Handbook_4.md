@@ -1632,7 +1632,7 @@ Ordered so the highest-risk item (export) is attempted early, while you can stil
 **Day 1 — data, no training**
 - Download Paddy Doctor (Kaggle CLI), both sugarcane sets, PlantDoc
 - Assemble `not_crop` (~1,800 images) — outlier exposure for training. Keep the **open-set calibration set separate and category-disjoint** (§8.5)
-- Write `configs/classes.py`
+- Write `configs/disease_classes_model_a.py`
 - Dedup (§6.2) → grouped stratified split (§6.3) → CSV manifests
 - Pre-resize everything to max side 512
 
@@ -1756,7 +1756,7 @@ Across three red-team rounds, roughly two-thirds of findings were real, and **mo
 
 ```
 sih_pipeline_v4/
-├── configs/classes.py        31-class taxonomy, column groups (ONE source of truth)
+├── configs/disease_classes_model_a.py        31-class taxonomy, column groups (ONE source of truth)
 ├── rejection.py              open_set_energy (1D/2D safe), posthoc_logit_adjust, decide()
 ├── aggregate.py              aggregate_frame (MIL max-pool), aggregate_cell (explicit states)
 ├── thermal.py                canopy_temperature (corrected gates), vegetation_mask (absolute)

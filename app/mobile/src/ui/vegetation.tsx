@@ -33,7 +33,7 @@ import { Card, Divider, Measurement, Panel, StatusChip, humaniseStatus } from '.
 import type { Tone } from './components.tsx';
 import { DistributionStrip, Meter } from './charts.tsx';
 import { LeafIcon, ProgressBar } from './tiles.tsx';
-import { color, space, type } from './theme.ts';
+import { color, space, type, themed } from './theme.ts';
 import type { CanopyCover, Vegetation, VegetationIndex } from '../schema/advisory.ts';
 import { VEGETATION_CAVEAT } from '../schema/advisory.ts';
 import { msg, tr } from '../i18n/tr.ts';
@@ -341,7 +341,7 @@ export function VegetationCard({ vegetation }: { vegetation: Vegetation }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   cells: { flexDirection: 'row', gap: space.md, marginTop: space.sm },
   indexRow: {
@@ -351,4 +351,4 @@ const s = StyleSheet.create({
     gap: space.sm,
     marginTop: space.sm,
   },
-});
+}));

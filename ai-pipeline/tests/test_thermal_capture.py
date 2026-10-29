@@ -5,14 +5,14 @@ tests/test_thermal_capture.py -- Unit Tests for MLX90640 Thermal Capture & Refer
 import numpy as np
 import pytest
 
-from core.thermal import (
+from core.water_stress_thermal import (
     calculate_cwsi_reference_based,
     evaluate_reference_cwsi_from_frame,
     PROVISIONAL_MIN_REF_GAP_C,
     PROVISIONAL_MAX_REF_STD_C,
 )
-from edge.thermal_capture import MLX90640, load_thermal_refs
-from edge.storage import EdgeStorage
+from edge.thermal_camera_mlx90640 import MLX90640, load_thermal_refs
+from edge.scan_database import EdgeStorage
 
 
 def test_l6_1_mlx90640_mock_capture_and_dimensions():

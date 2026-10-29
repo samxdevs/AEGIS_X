@@ -5,7 +5,7 @@
 **Target OS:** JetPack 4.6.4 (L4T R32.7.4) / JetPack 4.6.1 (L4T R32.7.1) — Ubuntu 18.04 LTS (aarch64)  
 **Target Python:** Python 3.6.9 (System Python, `/usr/bin/python3`)  
 **Target Accelerators:** NVIDIA Maxwell GPU (128 CUDA cores), CUDA 10.2, TensorRT 8.2.1.9  
-**Scope:** Model A Handheld Pod Pipeline (`edge/pipeline.py`), Edge SQLite Storage (`edge/storage.py`), Rules Engine (`edge/rules_engine.py`), RGB Vegetation Indices (`core/indices.py`), Phenological Growth Stage Engine (`core/growth_stage.py`), and Offline Gateway API Server (`gateway/server.py`).
+**Scope:** Model A Handheld Pod Pipeline (`edge/scan_pipeline.py`), Edge SQLite Storage (`edge/scan_database.py`), Rules Engine (`edge/advice_rules_engine.py`), RGB Vegetation Indices (`core/vegetation_indices.py`), Phenological Growth Stage Engine (`core/growth_stage.py`), and Offline Gateway API Server (`gateway/server.py`).
 
 ---
 
@@ -59,7 +59,7 @@ The `docs/sources/` directory contains 4 official PDF publications:
 - **Combined PDF Size:** 6.76 MB (Total directory with markdown: 7.02 MB)
 
 **Runtime Dependency Analysis:**
-- The Python modules (`edge/rules_engine.py` and `core/growth_stage.py`) have all web-verified doses, trade formulations, active ingredients, and FAO-56 stage boundary thresholds compiled directly into Python source code.
+- The Python modules (`edge/advice_rules_engine.py` and `core/growth_stage.py`) have all web-verified doses, trade formulations, active ingredients, and FAO-56 stage boundary thresholds compiled directly into Python source code.
 - **The edge runtime does NOT open or parse these PDFs at runtime.**
 
 **Copy Decision:**
@@ -139,7 +139,7 @@ rsync -avz --progress \
 ### 2.5 Model B Sticky-Trap Deployment & ONNX Runtime Wheel Policy
 
 Sticky-trap pest classification (Model B) has fundamentally different operational characteristics than Model A:
-1. **Separation of Execution Contexts:** Model A runs continuously at 30 fps on the real-time handheld video stream (`edge/pipeline.py`) using TensorRT. In contrast, Model B runs intermittently (once daily or per card inspection) on sticky-trap images captured by station nodes (ESP32-CAM) via `core/trap_segmentation.py` (`classify_trap_blobs`).
+1. **Separation of Execution Contexts:** Model A runs continuously at 30 fps on the real-time handheld video stream (`edge/scan_pipeline.py`) using TensorRT. In contrast, Model B runs intermittently (once daily or per card inspection) on sticky-trap images captured by station nodes (ESP32-CAM) via `core/trap_insect_segmentation.py` (`classify_trap_blobs`).
 2. **Runtime Engine Recommendation:**
    - **Recommendation:** Deploy Model B using **ONNX Runtime (Python 3.6 aarch64 wheel)** rather than compiling a TensorRT engine.
    - **Rationale:** Sticky cards yield dynamic batches of arbitrary numbers of segmented insect crops (ranging from 0 to 500+ blobs per card). ONNX Runtime executes dynamic batch sizes out of the box with zero compilation overhead. Building a dynamic TensorRT profile for sub-millisecond throughput on a task evaluated once per day introduces needless driver and memory profile fragility without operational benefit.
@@ -298,7 +298,7 @@ sudo reboot
 
 ---
 
-## 6. Running `edge/pipeline.py` on Jetson Nano (Real Inference)
+## 6. Running `edge/scan_pipeline.py` on Jetson Nano (Real Inference)
 
 Run the edge processing pipeline **WITHOUT** `--dry-run`, executing real TensorRT inference on the Maxwell GPU alongside real vegetation indices and phenology lookup.
 
@@ -312,7 +312,7 @@ sudo jetson_clocks
 
 #### Case A: Standard Rice Crop (Day 75 post-planting, default 150d cycle)
 ```bash
-python3 edge/pipeline.py \
+python3 edge/scan_pipeline.py \
   --source test_video_from_dataset_images.mp4 \
   --engine artifacts/engines/model_a_fp16.engine \
   --days-since-planting 75 \
@@ -323,7 +323,7 @@ python3 edge/pipeline.py \
 
 #### Case B: Short-Duration Cultivar Override (Day 45 post-planting, 110d cycle override)
 ```bash
-python3 edge/pipeline.py \
+python3 edge/scan_pipeline.py \
   --source test_video_from_dataset_images.mp4 \
   --engine artifacts/engines/model_a_fp16.engine \
   --days-since-planting 45 \
@@ -335,7 +335,7 @@ python3 edge/pipeline.py \
 
 #### Case C: Missing Planting Date (Normal operational state before farmer input)
 ```bash
-python3 edge/pipeline.py \
+python3 edge/scan_pipeline.py \
   --source test_video_from_dataset_images.mp4 \
   --engine artifacts/engines/model_a_fp16.engine \
   --db-path data/edge.db \
@@ -346,7 +346,7 @@ python3 edge/pipeline.py \
 ### 6.3 Execute Pipeline on Live Pod Camera (USB / CSI V4L2)
 ```bash
 # Assuming USB or CSI camera enumerates at /dev/video0
-python3 edge/pipeline.py \
+python3 edge/scan_pipeline.py \
   --source 0 \
   --engine artifacts/engines/model_a_fp16.engine \
   --days-since-planting 75 \
@@ -562,7 +562,7 @@ To verify that the mobile app polling the gateway does not block or crash the sc
 1. Start the gateway in background.
 2. In terminal 1, launch the pipeline:
    ```bash
-   python3 edge/pipeline.py --source test_video_from_dataset_images.mp4 --engine artifacts/engines/model_a_fp16.engine --db-path data/edge.db
+   python3 edge/scan_pipeline.py --source test_video_from_dataset_images.mp4 --engine artifacts/engines/model_a_fp16.engine --db-path data/edge.db
    ```
 3. In terminal 2, loop curls while the pipeline is actively writing:
    ```bash
@@ -629,7 +629,7 @@ sqlite3 data/edge.db "PRAGMA integrity_check;"
 rm -f data/edge.db data/edge.db-wal data/edge.db-shm
 
 # Re-run a dry-run or live scan to rebuild fresh schema
-python3 edge/pipeline.py --source test_video_from_dataset_images.mp4 --dry-run
+python3 edge/scan_pipeline.py --source test_video_from_dataset_images.mp4 --dry-run
 ```
 
 ### 10.3 Brownout or System Freeze Remediation

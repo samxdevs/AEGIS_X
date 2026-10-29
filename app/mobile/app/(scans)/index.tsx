@@ -1,11 +1,11 @@
 /**
- * Home: what happened on the latest scan, where the problems are, and what
- * else is recent.
+ * Home: start a walk, what happened on the latest scan, where the problems are,
+ * and what else is recent.
  *
+ *   0. Scan a field  is the pod ready, and Start (or the walk already running)
  *   1. Latest scan   its verdict, how far to trust it, and the first thing to do
  *   2. Where to look  every flagged finding with a GPS fix, on one map
- *   3. Counts         need a look / healthy / unclear, each opening the list
- *   4. Recent scans   the newest few, then "See all"
+ *   3. Recent scans   the newest few, then "See all" (the counts live there)
  *
  * Everything comes from the local replica. The map's satellite picture needs
  * internet; without it the same positions are drawn on the offline plot.
@@ -17,7 +17,6 @@
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { listAdvisories, listRecentAdvisories, topFinding } from '../../src/db/advisories.ts';
 import type { AdvisorySummary, StoredAdvisory } from '../../src/db/advisories.ts';
@@ -27,25 +26,31 @@ import { presentVerification, renderAction } from '../../src/schema/templates.ts
 import { fieldIdFromAdvisoryId } from '../../src/schema/advisory.ts';
 import { describeAge, useSync } from '../../src/sync/state.ts';
 import { formatWhen } from '../../src/ui/advisory.tsx';
-import { AegisMark, AegisWordmark } from '../../src/ui/brand.tsx';
 import { FieldMap, MapLegend } from '../../src/ui/charts.tsx';
-import { Eyebrow, Muted, StatusChip, TONE } from '../../src/ui/components.tsx';
+import { Muted, StatusChip, TONE } from '../../src/ui/components.tsx';
 import type { Tone } from '../../src/ui/components.tsx';
-import { CountTiles } from '../../src/ui/count-tiles.tsx';
+import { PressScale, Reveal } from '../../src/ui/motion.tsx';
+import { BandPill, TopBar } from '../../src/ui/top-bar.tsx';
+import type { PillTone } from '../../src/ui/top-bar.tsx';
+import { VerdictIcon } from '../../src/ui/verdict-icon.tsx';
 import { extentMetres, pickScaleMetres, toMetres, toUnitSquare } from '../../src/ui/field-geometry.ts';
-import { FIX_RADIUS_M, SatelliteMap } from '../../src/ui/satellite-map.tsx';
+import { SatelliteMap } from '../../src/ui/satellite-map.tsx';
 import type { GeoPoint } from '../../src/ui/satellite-map.tsx';
+import { ScanPanel } from '../../src/ui/scan-panel.tsx';
 import { ScanRow, rowVerdict } from '../../src/ui/scan-row.tsx';
+import { useBarClearance } from '../../src/ui/floating-bar.ts';
 import { useStatusBarStyle } from '../../src/ui/status-bar.ts';
-import { color, radius, shadow, space, type } from '../../src/ui/theme.ts';
+import { color, radius, shadow, space, type, themed } from '../../src/ui/theme.ts';
 import { useLanguage } from '../../src/i18n/language.tsx';
 import { currentLanguage, msg, tr } from '../../src/i18n/tr.ts';
 
-const CONNECTION = {
-  never_synced: { label: msg('NEVER SYNCED'), note: msg('Nothing has been pulled from a pod on this phone yet.') },
-  idle: { label: msg('SYNCED'), note: null },
-  syncing: { label: msg('SYNCING'), note: msg('Pulling from the pod.') },
-  failed: { label: msg('SYNC FAILED'), note: msg('Last pull did not finish. Open the Pod tab for the reason.') },
+// The pill already says the state, so a line under it only earns its place
+// when there is something to do about it.
+const CONNECTION: Record<string, { label: string; note: string | null; tone: PillTone }> = {
+  never_synced: { label: msg('NEVER SYNCED'), note: null, tone: 'idle' },
+  idle: { label: msg('SYNCED'), note: null, tone: 'good' },
+  syncing: { label: msg('SYNCING'), note: null, tone: 'warn' },
+  failed: { label: msg('SYNC FAILED'), note: msg('Last pull did not finish. Open the Pod tab for the reason.'), tone: 'bad' },
 };
 
 /** How many recent scans the home page lists before "See all". */
@@ -59,13 +64,13 @@ export default function HomeScreen() {
   const [rows, setRows] = useState<AdvisorySummary[]>([]);
   const [recent, setRecent] = useState<StoredAdvisory[]>([]);
   const { state, lastSyncUtc, refresh } = useSync();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   // Re-renders this screen, and everything on it, when the language changes.
   useLanguage();
 
-  // The band behind the status bar is dark on this screen only.
+  // The band behind the status bar is dark on every screen.
   useStatusBarStyle('light');
+  const clearance = useBarClearance();
 
   useFocusEffect(
     useCallback(() => {
@@ -90,28 +95,27 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: color.background }}
-      contentContainerStyle={{ paddingBottom: space.xl }}
+      contentContainerStyle={{ paddingBottom: clearance }}
       stickyHeaderIndices={[0]}
     >
-      <View style={[s.band, { paddingTop: insets.top + space.md }]}>
-        <View style={s.bandRow}>
-          <View style={s.brand}>
-            <AegisMark size={22} color={color.primary} />
-            <AegisWordmark height={15} color={color.deepForeground} />
-          </View>
-          <Pressable onPress={() => router.navigate('/sync')} accessibilityRole="button">
-            <Eyebrow onDeep>
-              {tr(conn.label)}
-              {state === 'idle' ? ` · ${describeAge(lastSyncUtc).toUpperCase()}` : ''}
-            </Eyebrow>
-          </Pressable>
-        </View>
-        {conn.note ? (
-          <Text style={[type.small, { color: color.deepMuted, marginTop: space.sm }]}>{tr(conn.note)}</Text>
-        ) : null}
-      </View>
+      <TopBar
+        brand
+        note={conn.note ? tr(conn.note) : null}
+        right={
+          <BandPill
+            tone={conn.tone}
+            label={tr(conn.label) + (state === 'idle' ? ` · ${describeAge(lastSyncUtc).toUpperCase()}` : '')}
+            onPress={() => router.navigate('/sync')}
+          />
+        }
+      />
 
       <View style={{ padding: space.lg }}>
+        {/* Is the pod ready, and the button that starts a walk. */}
+        <Reveal index={0}>
+          <ScanPanel />
+        </Reveal>
+
         {rows.length === 0 ? (
           <View style={s.card}>
             <Text style={[type.cardTitle, { color: color.foreground }]}>{tr('No scans yet')}</Text>
@@ -122,10 +126,13 @@ export default function HomeScreen() {
         ) : null}
 
         {latest && latestRow ? (
-          <LatestCard stored={latest} row={latestRow} onOpen={() => open(latestRow.advisoryId)} />
+          <Reveal index={1}>
+            <LatestCard stored={latest} row={latestRow} onOpen={() => open(latestRow.advisoryId)} />
+          </Reveal>
         ) : null}
 
         {rows.length > 0 ? (
+          <Reveal index={2}>
           <View style={s.card}>
             <View style={s.cardHead}>
               <Text style={[type.cardTitle, { color: color.foreground, flex: 1 }]}>{tr('Where to look')}</Text>
@@ -134,16 +141,13 @@ export default function HomeScreen() {
               </Text>
             </View>
             <Text style={[type.small, { color: color.mutedForeground, marginBottom: space.md }]}>
-              {tr('Every flagged finding with a GPS position from your recent scans. Tap a circle to open its scan.')}
+              {tr('Tap a circle to open its scan.')}
             </Text>
 
             {spots.length > 0 ? (
               <>
                 <SatelliteMap points={spots} height={300} onOpen={open} fallback={<OfflinePlot spots={spots} />} />
                 <MapLegend items={legendFor(spots)} />
-                <Text style={[type.small, { color: color.fgSubtle, marginTop: space.xs }]}>
-                  {tr('Circles are about {m} m across the GPS error: a patch of field, not one plant.', { m: FIX_RADIUS_M })}
-                </Text>
               </>
             ) : (
               <View style={s.emptyMap}>
@@ -162,18 +166,13 @@ export default function HomeScreen() {
               </Text>
             ) : null}
           </View>
+          </Reveal>
         ) : null}
 
         {rows.length > 0 ? (
-          <>
-            <Text style={[type.micro, { color: color.fgSubtle, marginBottom: space.sm }]}>
-              {tr('ALL {n} SCANS ON THIS PHONE', { n: rows.length })}
-            </Text>
-            <CountTiles
-              rows={rows}
-              onChange={(f) => router.push({ pathname: '/all', params: { filter: f } })}
-            />
-
+          <Reveal index={3}>
+            {/* The need-a-look / healthy / unclear counts live on All scans,
+                where they filter the list; here they only repeated the rows. */}
             <Text style={[type.micro, { color: color.fgSubtle, marginBottom: space.sm }]}>{tr('RECENT')}</Text>
             {rows.slice(0, RECENT).map((row) => (
               <ScanRow key={row.advisoryId} row={row} />
@@ -185,7 +184,7 @@ export default function HomeScreen() {
             >
               <Text style={[type.label, { color: color.primary }]}>{tr('See all {n} scans ›', { n: rows.length })}</Text>
             </Pressable>
-          </>
+          </Reveal>
         ) : null}
       </View>
     </ScrollView>
@@ -220,21 +219,26 @@ function LatestCard({
   const crop = top ? describeClass(top).crop : a.crop_health?.crop;
 
   return (
-    <Pressable onPress={onOpen} accessibilityRole="button" accessibilityHint={tr('Opens the latest scan')}>
-      {({ pressed }) => (
-        <View style={[s.latest, { borderColor: t.border }, pressed && { opacity: 0.8 }]}>
+    <PressScale onPress={onOpen} scaleTo={0.985} accessibilityRole="button" accessibilityHint={tr('Opens the latest scan')}>
+      {(
+        <View style={[s.latest, { borderColor: t.border }]}>
           <View style={[s.latestBand, { backgroundColor: t.bg }]}>
             <Text style={[type.micro, { color: t.fg }]}>
               {[tr('LATEST'), fieldId ? tr('FIELD {id}', { id: fieldId }) : null, formatWhen(a.generated_at_utc).toUpperCase()]
                 .filter(Boolean)
                 .join(' · ')}
             </Text>
-            <Text style={[type.title, { color: t.fg, marginTop: 6 }]}>{verdict.text}</Text>
-            {crop ? (
-              <Text style={[type.label, { color: t.fg, marginTop: 2 }]}>
-                {crop.charAt(0).toUpperCase() + crop.slice(1)}
-              </Text>
-            ) : null}
+            <View style={s.latestHead}>
+              <VerdictIcon tone={verdict.tone} size={48} plate={color.card} />
+              <View style={{ flex: 1 }}>
+                <Text style={[type.title, { color: t.fg, fontSize: 21, lineHeight: 26 }]}>{verdict.text}</Text>
+                {crop ? (
+                  <Text style={[type.label, { color: t.fg, marginTop: 2 }]}>
+                    {crop.charAt(0).toUpperCase() + crop.slice(1)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
             {stored.origin !== 'synced' ? (
               <View style={{ marginTop: space.sm }}>
                 <StatusChip
@@ -262,22 +266,38 @@ function LatestCard({
               <>
                 <Text style={[type.micro, { color: color.fgSubtle }]}>{tr('FIRST THING TO DO')}</Text>
                 <Text
-                  style={[type.body, { color: color.foreground, marginTop: 4, lineHeight: 21 }]}
-                  numberOfLines={3}
+                  style={[type.body, { color: color.foreground, marginTop: 4, lineHeight: 22 }]}
+                  numberOfLines={4}
                 >
-                  {action.action}
+                  {leadSentences(action.action)}
                 </Text>
               </>
             ) : (
               <Muted>{tr('No action in this scan.')}</Muted>
             )}
 
-            <Text style={[type.label, { color: color.primary, marginTop: space.md }]}>{tr('Open scan ›')}</Text>
+            <View style={s.openBtn}>
+              <Text style={[type.label, { color: color.primaryForeground }]}>{tr('Open scan ›')}</Text>
+            </View>
           </View>
         </View>
       )}
-    </Pressable>
+    </PressScale>
   );
+}
+
+/**
+ * The first one or two sentences of an action, so the card ends where a
+ * sentence ends instead of in the middle of one. The full text is one tap away.
+ */
+function leadSentences(text: string, max = 150): string {
+  // A full stop ends a sentence only before a capital or a Devanagari letter,
+  // so "approx. 0.5 m/s" and "e.g. rows" do not cut it short.
+  const sentences = text.match(/.+?[.!?।](?=\s+[A-Zऀ-ॿ]|\s*$)/gs);
+  if (!sentences) return text;
+  let out = sentences[0].trim();
+  if (sentences[1] && (out + ' ' + sentences[1].trim()).length <= max) out += ' ' + sentences[1].trim();
+  return out;
 }
 
 /** Every located, non-healthy detection in the given scans. */
@@ -328,16 +348,7 @@ function OfflinePlot({ spots }: { spots: Spot[] }) {
   );
 }
 
-const s = StyleSheet.create({
-  band: {
-    backgroundColor: color.deep,
-    paddingHorizontal: space.lg,
-    paddingBottom: space.md,
-    borderBottomWidth: 1,
-    borderBottomColor: color.deepBorder,
-  },
-  bandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+const s = themed(() => StyleSheet.create({
   card: {
     backgroundColor: color.card,
     borderRadius: radius.xl,
@@ -357,6 +368,15 @@ const s = StyleSheet.create({
     ...shadow.card,
   },
   latestBand: { paddingHorizontal: space.lg, paddingVertical: space.md },
+  latestHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: 8 },
+  openBtn: {
+    alignSelf: 'flex-start',
+    marginTop: space.md,
+    backgroundColor: color.primary,
+    borderRadius: radius.pill,
+    paddingVertical: 9,
+    paddingHorizontal: space.lg,
+  },
   emptyMap: {
     backgroundColor: color.unknownSurface,
     borderColor: color.unknownBorder,
@@ -365,4 +385,4 @@ const s = StyleSheet.create({
     padding: space.lg,
   },
   seeAll: { alignSelf: 'center', paddingVertical: space.md, paddingHorizontal: space.lg },
-});
+}));

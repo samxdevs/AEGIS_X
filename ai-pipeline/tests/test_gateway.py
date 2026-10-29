@@ -27,7 +27,7 @@ import urllib.request
 
 import pytest
 
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 from gateway.server import EdgeGateway
 
 

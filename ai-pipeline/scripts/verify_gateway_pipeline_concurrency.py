@@ -4,7 +4,7 @@ scripts/verify_gateway_pipeline_concurrency.py
 
 Verifies simultaneous live concurrency:
 1. Boots EdgeGateway on 127.0.0.1:8888 backed by data/edge.db.
-2. Spawns edge/pipeline.py against test_video_from_dataset_images.mp4.
+2. Spawns edge/scan_pipeline.py against test_video_from_dataset_images.mp4.
 3. While the pipeline is actively running and writing to SQLite, issues real
    `curl` commands to every endpoint, printing full HTTP headers and response bodies.
 """
@@ -47,7 +47,7 @@ def main():
     # Launch pipeline dry-run in background
     pipeline_cmd = [
         sys.executable,
-        str(ROOT / "edge" / "pipeline.py"),
+        str(ROOT / "edge" / "scan_pipeline.py"),
         "--source",
         str(ROOT / "test_video_from_dataset_images.mp4"),
         "--dry-run",

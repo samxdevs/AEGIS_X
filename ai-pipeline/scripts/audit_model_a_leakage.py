@@ -27,8 +27,8 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from configs.classes import CLASS_NAMES, NUM_CLASSES
-from core.rejection import stable_logsumexp
+from configs.disease_classes_model_a import CLASS_NAMES, NUM_CLASSES
+from core.unknown_object_rejection import stable_logsumexp
 
 AUDIT_DIR = ROOT / "artifacts" / "audit" / "2026-09-16"
 AUDIT_DIR.mkdir(parents=True, exist_ok=True)

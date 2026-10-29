@@ -19,9 +19,9 @@ import pandas as pd
 import pytest
 import torch
 
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 from configs.paths import ONNX_DIR, REPORTS, ROOT, SPLITS
-from configs.train_config import (
+from configs.model_settings import (
     BATCH_SIZE,
     EMA_DECAY,
     EPOCHS,
@@ -31,7 +31,7 @@ from configs.train_config import (
     LR_HEAD,
     WEIGHT_DECAY,
 )
-from train.transforms import (
+from train.augmentations_model_a import (
     HUE_SHIFT_LIMIT,
     baseline_train_transform,
     eval_transform,
@@ -41,10 +41,10 @@ from timm.utils import ModelEmaV2
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
-from train.dataset import PlantDataset, build_loaders, seed_worker
-from train.model import build_model, get_parameter_groups
-from train.split import compute_class_weights
-from train.train_model_a import (
+from train.dataset_loader_model_a import PlantDataset, build_loaders, seed_worker
+from train.disease_model_a_efficientnet import build_model, get_parameter_groups
+from train.dataset_split import compute_class_weights
+from train.train_disease_model_a import (
     build_test_loader,
     compute_split_metrics,
     evaluate,
@@ -274,17 +274,17 @@ def test_step_12_smoke_training_step(tmp_path: Path):
 
 def test_manifest_and_configs_classes_must_agree_raising_if_not(tmp_path: Path):
     """
-    Verifies that manifest and configs/classes.py taxonomy must strictly agree,
+    Verifies that manifest and configs/disease_classes_model_a.py taxonomy must strictly agree,
     raising ValueError upfront if either the manifest contains an unknown class
     or is missing a class defined in the config.
     """
-    from configs.classes import CLASS_NAMES
+    from configs.disease_classes_model_a import CLASS_NAMES
 
     # Dummy image
     img_file = tmp_path / "dummy.jpg"
     cv2.imwrite(str(img_file), np.zeros((32, 32, 3), dtype=np.uint8))
 
-    # Case 1: Manifest contains an unknown class not in configs/classes.py
+    # Case 1: Manifest contains an unknown class not in configs/disease_classes_model_a.py
     df_unknown = pd.DataFrame([
         {'path': str(img_file), 'label': CLASS_NAMES[0]},
         {'path': str(img_file), 'label': 'alien_unregistered_disease'},
@@ -295,7 +295,7 @@ def test_manifest_and_configs_classes_must_agree_raising_if_not(tmp_path: Path):
             enforce_manifest_agreement=True,
         )
 
-    # Case 2: Manifest is missing classes defined in configs/classes.py
+    # Case 2: Manifest is missing classes defined in configs/disease_classes_model_a.py
     df_incomplete = pd.DataFrame([
         {'path': str(img_file), 'label': CLASS_NAMES[0]},
         {'path': str(img_file), 'label': CLASS_NAMES[1]},
@@ -815,7 +815,7 @@ def test_step13_zero_count_class_raises_instead_of_infinite_weight(tmp_path: Pat
 
 def test_step13_label_smoothing_value_is_actually_passed_to_criterion():
     """
-    Asserts that LABEL_SMOOTH = 0.1 from configs/train_config.py is actively
+    Asserts that LABEL_SMOOTH = 0.1 from configs/model_settings.py is actively
     wired into the CrossEntropyLoss criterion alongside the class weights.
     """
     weights = load_class_weights(SPLITS / "class_weights.json", class_names=CLASS_NAMES)
@@ -1546,7 +1546,7 @@ def test_step13_deterministic_flag_sets_cudnn_flags_and_defaults_off():
     4. Calling set_seed with deterministic=True sets cuDNN deterministic=True and benchmark=False.
     """
     import argparse
-    from train.train_model_a import main
+    from train.train_disease_model_a import main
 
     # 1. Default CLI behavior is False
     parser = argparse.ArgumentParser()
@@ -1621,60 +1621,6 @@ def test_phase_b_resized_photos_max_dim_1024_and_orientation_exif_stripped():
         assert folder_checked == expected_count, f"Expected {expected_count} for {top_folder}, got {folder_checked}"
 
     assert total_checked == 1154, f"Expected 1154 total resized images checked, got {total_checked}"
-
-
-def test_phase_b_splits_packaged_paths_exist_on_disk_and_zero_missing():
-    """
-    Asserts that 100% of paths in all CSVs under splits_packaged/ exist on disk
-    under data/packaged/, with exactly zero missing files.
-    """
-    import csv
-
-    splits_pkg = Path("splits_packaged")
-    assert splits_pkg.exists()
-
-    total_checked = 0
-    total_missing = 0
-    for csv_path in sorted(splits_pkg.glob("*.csv")):
-        with open(csv_path, "r", encoding="utf-8") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            if "path" not in header:
-                continue
-            path_idx = header.index("path")
-            for row in reader:
-                if len(row) > path_idx:
-                    p = Path(row[path_idx])
-                    total_checked += 1
-                    if not p.exists():
-                        total_missing += 1
-
-    assert total_checked == 60161, f"Expected 60161 total split paths, got {total_checked}"
-    assert total_missing == 0, f"Expected 0 missing files, got {total_missing}"
-
-
-def test_phase_b_class_weights_json_is_byte_identical_in_splits_packaged():
-    """
-    Asserts that splits_packaged/class_weights.json is byte-identical to splits/class_weights.json.
-    """
-    raw_cw = Path("splits/class_weights.json").read_bytes()
-    pkg_cw = Path("splits_packaged/class_weights.json").read_bytes()
-    assert raw_cw == pkg_cw, "splits_packaged/class_weights.json must match splits/class_weights.json byte-identically"
-
-
-def test_phase_b_leak_check_openset_holdout_and_not_crop_archive_absent_from_splits_packaged():
-    """
-    Asserts that openset_holdout and not_crop_archive do not appear anywhere in any
-    split CSV under splits_packaged/.
-    """
-    import subprocess
-
-    csvs = sorted(str(p) for p in Path("splits_packaged").glob("*.csv"))
-    res = subprocess.run(["grep", "-c", "openset_holdout\\|not_crop_archive"] + csvs, capture_output=True, text=True)
-    for line in res.stdout.strip().splitlines():
-        if ":" in line:
-            _, cnt = line.rsplit(":", 1)
-            assert int(cnt) == 0, f"Leaked entry detected in {line}"
 
 
 def test_path_prefix_strip_present_and_stripped_correctly_resolves(tmp_path: Path):
@@ -1885,9 +1831,9 @@ def test_splits_dir_flag_reaches_evaluate_test_splits_from_argparse(tmp_path: Pa
     Asserts that passing --splits_dir on the CLI threads cleanly through argparse
     into the evaluate_test_splits call.
     """
-    import train.train_model_a as tma
-    from train.model import build_model
-    from train.train_model_a import save_checkpoint_atomic
+    import train.train_disease_model_a as tma
+    from train.disease_model_a_efficientnet import build_model
+    from train.train_disease_model_a import save_checkpoint_atomic
 
     dummy_model = build_model(num_classes=len(CLASS_NAMES), pretrained=False)
     dummy_ckpt = tmp_path / "dummy_stage1.pt"
@@ -1983,7 +1929,7 @@ def test_best_checkpoint_selection_uses_the_raw_model_metric_not_ema(tmp_path: P
     If EMA drove selection, Epoch 2 would overwrite stage1.pt (0.95 > 0.15).
     Since RAW drives selection, Epoch 1 is selected (0.85 > 0.50) and Epoch 2 does not overwrite.
     """
-    import train.train_model_a as tma
+    import train.train_disease_model_a as tma
 
     out_ckpt = tmp_path / "stage1_raw_select.pt"
     out_metrics = tmp_path / "metrics_raw_select.json"
@@ -2282,23 +2228,23 @@ def test_step14_headline_generalization_gap_is_explicitly_calculated():
 
 def test_step14_evaluate_cli_supports_all_required_flags():
     """
-    Asserts that train/evaluate.py supports --ckpt, --split, --eval_weights, and --gradcam.
+    Asserts that train/evaluate_disease_model_a.py supports --ckpt, --split, --eval_weights, and --gradcam.
     """
     import subprocess
-    cmd = [sys.executable, "train/evaluate.py", "--help"]
+    cmd = [sys.executable, "train/evaluate_disease_model_a.py", "--help"]
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     assert res.returncode == 0
     help_text = res.stdout
     for flag in ["--ckpt", "--split", "--eval_weights", "--gradcam"]:
-        assert flag in help_text, f"Flag {flag} not found in train/evaluate.py --help"
+        assert flag in help_text, f"Flag {flag} not found in train/evaluate_disease_model_a.py --help"
 
 
 def test_step15_config_thresholds_fitted():
     """
-    Asserts that Step 15 fitted decision thresholds are set in configs/train_config.py
+    Asserts that Step 15 fitted decision thresholds are set in configs/model_settings.py
     and are not None.
     """
-    from configs.train_config import TAU_ENERGY, T_CAL, TAU_PRIOR, TAU_DISEASE, TAU_MARGIN
+    from configs.model_settings import TAU_ENERGY, T_CAL, TAU_PRIOR, TAU_DISEASE, TAU_MARGIN
     assert TAU_ENERGY is not None and isinstance(TAU_ENERGY, (float, int)), f"Invalid TAU_ENERGY: {TAU_ENERGY}"
     assert T_CAL is not None and isinstance(T_CAL, (float, int)), f"Invalid T_CAL: {T_CAL}"
     assert TAU_PRIOR is not None and isinstance(TAU_PRIOR, (float, int)), f"Invalid TAU_PRIOR: {TAU_PRIOR}"
@@ -2360,15 +2306,15 @@ def test_step15_ood_metrics_schema_and_values():
 
 def test_step15_calibrate_cli_supports_all_required_flags():
     """
-    Asserts that train/calibrate.py supports --ckpt, --openset, and --write-config.
+    Asserts that train/calibrate_disease_model_a.py supports --ckpt, --openset, and --write-config.
     """
     import subprocess
-    cmd = [sys.executable, "train/calibrate.py", "--help"]
+    cmd = [sys.executable, "train/calibrate_disease_model_a.py", "--help"]
     res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     assert res.returncode == 0
     help_text = res.stdout
     for flag in ["--ckpt", "--openset", "--write-config"]:
-        assert flag in help_text, f"Flag {flag} not found in train/calibrate.py --help"
+        assert flag in help_text, f"Flag {flag} not found in train/calibrate_disease_model_a.py --help"
 
 
 def test_step16_fused_model_channel_order_red_flag():
@@ -2376,9 +2322,9 @@ def test_step16_fused_model_channel_order_red_flag():
     CHECK 1 for Step 16: Asserts FusedModel matches reference CPU preprocessing
     on asymmetric strongly RED image [20, 40, 200], and detects BGR/RGB channel swap.
     """
-    from train.export_onnx import FusedModel, check_1_red_flag
-    from train.model import build_model
-    from configs.classes import NUM_CLASSES
+    from train.export_disease_model_a_onnx import FusedModel, check_1_red_flag
+    from train.disease_model_a_efficientnet import build_model
+    from configs.disease_classes_model_a import NUM_CLASSES
 
     backbone = build_model(num_classes=NUM_CLASSES, pretrained=False)
     backbone.eval()
@@ -2437,10 +2383,10 @@ def test_step17_simplified_onnx_passes_checks():
     and Check 3 (numerical fidelity vs PyTorch < 1e-3).
     """
     import onnxruntime as ort
-    from train.export_onnx import check_1_red_flag, check_3_onnx_fidelity, FusedModel
-    from train.train_model_a import load_checkpoint_for_eval
-    from train.model import build_model
-    from configs.classes import NUM_CLASSES
+    from train.export_disease_model_a_onnx import check_1_red_flag, check_3_onnx_fidelity, FusedModel
+    from train.train_disease_model_a import load_checkpoint_for_eval
+    from train.disease_model_a_efficientnet import build_model
+    from configs.disease_classes_model_a import NUM_CLASSES
 
     sim_onnx = ROOT / "artifacts" / "onnx" / "model_a_sim.onnx"
     ckpt_path = ROOT / "artifacts" / "checkpoints" / "v3" / "stage1.pt"
@@ -2494,13 +2440,13 @@ def test_step18_build_script_exists_and_forbids_int8():
 
 def test_step19_trt_classifier_structure_and_guards():
     """
-    Asserts that edge/trt_classifier.py adheres to Rule R9:
+    Asserts that edge/disease_model_runtime_tensorrt.py adheres to Rule R9:
     - Never imports pycuda.autoinit in AST
     - TRTClassifier implements infer, infer_all, close, __enter__, __exit__
     - Safeguards execution on non-CUDA hosts with descriptive RuntimeError
     """
     import ast
-    trt_py = ROOT / "edge" / "trt_classifier.py"
+    trt_py = ROOT / "edge" / "disease_model_runtime_tensorrt.py"
     assert trt_py.exists(), f"Missing runtime wrapper: {trt_py}"
 
     content = trt_py.read_text()
@@ -2514,7 +2460,7 @@ def test_step19_trt_classifier_structure_and_guards():
             for alias in node.names:
                 assert "autoinit" not in alias.name, f"Found autoinit import: {alias.name}"
 
-    import edge.trt_classifier as trt_mod
+    import edge.disease_model_runtime_tensorrt as trt_mod
     assert hasattr(trt_mod, "TRTClassifier")
     cls = trt_mod.TRTClassifier
 

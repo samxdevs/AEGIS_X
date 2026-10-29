@@ -115,6 +115,11 @@ export const SCAN: Record<string, string> = {
   '{w} of {n} fully working': '{n} में से {w} पूरी तरह चालू',
   'on the pod you carry': 'आपके हाथ वाले पॉड पर',
   'on the field station': 'खेत के स्टेशन पर',
+  "on the farmer's phone": 'किसान के फ़ोन पर',
+  'Phone GPS': 'फ़ोन GPS',
+  'NOT USED: PHONE GPS': 'इस्तेमाल नहीं: फ़ोन GPS',
+  "Positions in this report came from the phone's GPS.": 'इस रिपोर्ट की जगहें फ़ोन के GPS से आईं।',
+  '{name} not used (phone GPS)': '{name} इस्तेमाल नहीं हुआ (फ़ोन GPS)',
 
   // Scan details
   'Scan details': 'स्कैन की जानकारी',

@@ -25,10 +25,8 @@ export const SCREENS: Record<string, string> = {
 
   // Sync state
   'NEVER SYNCED': 'कभी सिंक नहीं हुआ',
-  'Nothing has been pulled from a pod on this phone yet.': 'इस फ़ोन पर अभी तक पॉड से कुछ नहीं लिया गया है।',
   SYNCED: 'सिंक हुआ',
   SYNCING: 'सिंक हो रहा है',
-  'Pulling from the pod.': 'पॉड से डेटा लिया जा रहा है।',
   'SYNC FAILED': 'सिंक नहीं हुआ',
   'Last pull did not finish. Open the Pod tab for the reason.': 'पिछली बार डेटा पूरा नहीं आया। कारण जानने के लिए पॉड टैब खोलें।',
 
@@ -39,17 +37,21 @@ export const SCREENS: Record<string, string> = {
   'Where to look': 'कहाँ देखें',
   '1 spot': '1 जगह',
   '{n} spots': '{n} जगहें',
-  'Every flagged finding with a GPS position from your recent scans. Tap a circle to open its scan.':
-    'हाल के स्कैन में मिली हर समस्या, जिसकी जीपीएस जगह पता है। उसका स्कैन खोलने के लिए गोले पर टैप करें।',
-  'Circles are about {m} m across the GPS error: a patch of field, not one plant.':
-    'हर गोला जीपीएस की लगभग {m} मीटर की चूक दिखाता है: यह खेत का एक हिस्सा है, एक पौधा नहीं।',
+  'Tap a circle to open its scan.': 'उसका स्कैन खोलने के लिए गोले पर टैप करें।',
   'Nothing to map yet': 'नक्शे पर दिखाने को अभी कुछ नहीं',
   'No flagged finding in your recent scans had a GPS fix. Leaving the pod in open sky for a minute before scanning usually gets one.':
     'हाल के स्कैन की किसी समस्या की जीपीएस जगह नहीं मिली। स्कैन से पहले पॉड को एक मिनट खुले आसमान के नीचे रखने से आमतौर पर जगह मिल जाती है।',
   '1 flagged scan has no GPS positions and is not on the map.': 'समस्या वाले 1 स्कैन की जीपीएस जगह नहीं है, इसलिए वह नक्शे पर नहीं है।',
   '{n} flagged scans have no GPS positions and are not on the map.': 'समस्या वाले {n} स्कैन की जीपीएस जगह नहीं है, इसलिए वे नक्शे पर नहीं हैं।',
-  'ALL {n} SCANS ON THIS PHONE': 'इस फ़ोन पर सभी {n} स्कैन',
   RECENT: 'हाल के',
+
+  // Folded sections (scan details, pod testing tools)
+  Details: 'पूरी जानकारी',
+  'Findings, map, field readings and how this scan was made': 'मिली समस्याएँ, नक्शा, खेत की रीडिंग और स्कैन कैसे हुआ',
+  "Enter the pod's address, then pull.": 'पॉड का पता डालें, फिर डेटा लें।',
+  'How the WiFi works': 'वाई-फ़ाई कैसे काम करता है',
+  'Testing tools': 'जाँच के टूल',
+  'Import a file, sample data and the demo replay': 'फ़ाइल लाना, नमूना डेटा और डेमो रीप्ले',
   'See all {n} scans ›': 'सभी {n} स्कैन देखें ›',
   'Opens the latest scan': 'सबसे नया स्कैन खोलता है',
   LATEST: 'सबसे नया',
@@ -64,7 +66,6 @@ export const SCREENS: Record<string, string> = {
   'Open scan ›': 'स्कैन खोलें ›',
 
   // Navigation
-  'Back to {where}': '{where} पर वापस',
   Back: 'वापस',
   'All scans': 'सभी स्कैन',
   Home: 'होम',
@@ -87,6 +88,11 @@ export const SCREENS: Record<string, string> = {
   // Profile
   'Your profile': 'आपकी प्रोफ़ाइल',
   'Settings for this phone.': 'इस फ़ोन की सेटिंग।',
+  'Changes every screen in the app.': 'ऐप की हर स्क्रीन बदल जाती है।',
+  Light: 'हल्का',
+  Dark: 'गहरा',
+  'Best in bright sun.': 'तेज़ धूप में सबसे अच्छा।',
+  'Easier on the eyes at night and indoors.': 'रात में और घर के अंदर आँखों को आराम देता है।',
   'Changes every screen in the app, including the advice. Works without internet.':
     'ऐप की हर स्क्रीन बदल जाती है, सलाह भी। बिना इंटरनेट के काम करता है।',
   'Technical messages from the pod, and the scan code on each scan, stay in English.':

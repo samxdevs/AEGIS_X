@@ -18,9 +18,9 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 from gateway.server import EdgeGateway
-from core.trap_segmentation import classify_trap_blobs, evaluate_trap_counts_against_etl
+from core.trap_insect_segmentation import classify_trap_blobs, evaluate_trap_counts_against_etl
 
 print("=================================================================")
 print("PART D3: TRACING UNCERTAIN_NON_TARGET THROUGH STORAGE & GATEWAY")

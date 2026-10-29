@@ -1,6 +1,6 @@
 # Primary Agronomic Sources Manifest
 
-This directory (`docs/sources/`) contains official regulatory and technical publications downloaded directly from Government of India and ICAR portals. These files serve as the ground-truth offline registry for all `WEB_VERIFIED` templates in `edge/rules_engine.py`.
+This directory (`docs/sources/`) contains official regulatory and technical publications downloaded directly from Government of India and ICAR portals. These files serve as the ground-truth offline registry for all `WEB_VERIFIED` templates in `edge/advice_rules_engine.py`.
 
 ---
 

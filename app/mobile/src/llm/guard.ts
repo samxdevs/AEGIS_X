@@ -35,6 +35,37 @@ export type GuardResult =
 const NUMBER = /\d[\d,]*(?:\.\d+)?/g;
 
 /**
+ * The zero of every digit set an Indian-language answer may be written in:
+ * Devanagari, Bengali, Gurmukhi, Gujarati, Odia, Tamil, Telugu, Kannada,
+ * Malayalam, Ol Chiki, Meetei Mayek, and the two Arabic sets Urdu, Kashmiri
+ * and Sindhi use. Each set runs zero to nine from here.
+ */
+const DIGIT_ZEROS = [
+  0x0966, 0x09e6, 0x0a66, 0x0ae6, 0x0b66, 0x0be6, 0x0c66, 0x0ce6, 0x0d66, 0x1c50, 0xabf0,
+  0x0660, 0x06f0,
+];
+
+const NATIVE_DIGIT = new RegExp(
+  `[${DIGIT_ZEROS.map((z) => `\\u${z.toString(16).padStart(4, '0')}-\\u${(z + 9).toString(16).padStart(4, '0')}`).join('')}]`,
+  'g',
+);
+
+/**
+ * Rewrites every native-script digit as its ASCII one.
+ *
+ * `\d` only matches 0-9, so without this a dose written "५ मिली" in a Hindi
+ * answer would walk straight past the guard. The voice assistant answers in
+ * whatever language the farmer spoke, which makes that the ordinary case.
+ */
+export function asciiDigits(text: string): string {
+  return text.replace(NATIVE_DIGIT, (d) => {
+    const code = d.charCodeAt(0);
+    const zero = DIGIT_ZEROS.find((z) => code >= z && code <= z + 9) ?? code;
+    return String(code - zero);
+  });
+}
+
+/**
  * Reduces a numeric string to one canonical form, so "0.880", "0.88" and
  * "  .88" all compare equal, and "1,200" equals "1200".
  *
@@ -81,7 +112,7 @@ export function allowedFigures(advisory: unknown): Set<string> {
       return;
     }
     if (typeof node === 'string') {
-      for (const m of node.match(NUMBER) ?? []) {
+      for (const m of asciiDigits(node).match(NUMBER) ?? []) {
         const c = canon(m);
         if (c !== null) allowed.add(c);
       }
@@ -134,7 +165,7 @@ export function checkFigures(text: string, advisory: unknown): GuardResult {
   const offending: Figure[] = [];
   const seen = new Set<string>();
 
-  for (const raw of stripListMarkers(text).match(NUMBER) ?? []) {
+  for (const raw of stripListMarkers(asciiDigits(text)).match(NUMBER) ?? []) {
     const c = canon(raw);
     if (c === null || allowed.has(c) || seen.has(c)) continue;
     seen.add(c);

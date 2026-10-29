@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from configs.classes_model_b import CLASS_NAMES
-from configs.train_config import MODEL_B_T_CAL
+from configs.insect_classes_model_b import CLASS_NAMES
+from configs.model_settings import MODEL_B_T_CAL
 
 MANIFEST_CSV = ROOT / "splits" / "model_b_manifest_v4.csv"
 ONNX_PATH = ROOT / "artifacts" / "onnx" / "model_b.onnx"

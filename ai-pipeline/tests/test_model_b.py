@@ -2,12 +2,12 @@
 Unit and integration tests for Model B (Trap Pest Patch Classifier).
 
 Tests:
-  1. Taxonomy constants and unfixable gap metadata (configs/classes_model_b.py).
-  2. Model B forward pass and parameter count (~153k) (train/model_b.py).
-  3. Augmentation transforms output dimensions and value ranges (train/transforms_model_b.py).
+  1. Taxonomy constants and unfixable gap metadata (configs/insect_classes_model_b.py).
+  2. Model B forward pass and parameter count (~153k) (train/insect_model_b_cnn.py).
+  3. Augmentation transforms output dimensions and value ranges (train/augmentations_model_b.py).
   4. ONNX model inference and output consistency (artifacts/onnx/model_b.onnx).
-  5. classify_trap_blobs integration in core/trap_segmentation.py.
-  6. Advisory wire contract integration in edge/storage.py.
+  5. classify_trap_blobs integration in core/trap_insect_segmentation.py.
+  6. Advisory wire contract integration in edge/scan_database.py.
 """
 
 import sys
@@ -19,13 +19,13 @@ import torch
 # Ensure repository root is on sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from configs.classes_model_b import (
+from configs.insect_classes_model_b import (
     CLASS_NAMES, NUM_CLASSES, IDX, NAME_FROM_IDX,
     TARGET_CLASS_NAME, KNOWN_UNFIXABLE_GAPS
 )
-from train.model_b import TrapPestCNN, build_model_b
-from train.transforms_model_b import train_transform_model_b, eval_transform_model_b
-from core.trap_segmentation import classify_trap_blobs
+from train.insect_model_b_cnn import TrapPestCNN, build_model_b
+from train.augmentations_model_b import train_transform_model_b, eval_transform_model_b
+from core.trap_insect_segmentation import classify_trap_blobs
 from configs.paths import ONNX_DIR
 
 
@@ -151,7 +151,7 @@ def test_classify_trap_blobs_calibrated_and_abstention():
 
 def test_storage_advisory_pest_integration(tmp_path):
     """Verify create_advisory integrates the populated pest block."""
-    from edge.storage import EdgeStorage
+    from edge.scan_database import EdgeStorage
     db_path = tmp_path / "test_advisory.db"
     storage = EdgeStorage(str(db_path))
 
@@ -185,7 +185,7 @@ def test_storage_advisory_pest_integration(tmp_path):
 
 def test_watershed_primary_etl_evaluation():
     """F1.4: Verify ETL evaluation uses deterministic watershed count as primary gate."""
-    from core.trap_segmentation import evaluate_trap_counts_against_etl
+    from core.trap_insect_segmentation import evaluate_trap_counts_against_etl
 
     morph_dist = {
         "small_pale_winged": {"count": 1, "fraction": 0.25},
@@ -262,7 +262,7 @@ def test_watershed_primary_etl_evaluation():
 
 def test_h3_3_verification_status_frozen_enum_compliance():
     """H3.3: Verify every verification_status emitted across trap, storage, and registry is in frozen enum."""
-    from core.trap_segmentation import TRAP_ETL_REGISTRY, classify_trap_blobs, evaluate_trap_counts_against_etl
+    from core.trap_insect_segmentation import TRAP_ETL_REGISTRY, classify_trap_blobs, evaluate_trap_counts_against_etl
     import numpy as np
 
     FROZEN_ENUM = {"VERIFIED", "WEB_VERIFIED", "RECALLED_UNVERIFIED", "UNSOURCED"}

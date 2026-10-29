@@ -1,5 +1,5 @@
 """
-tests/test_sensors.py — Unit and integration tests for edge/sensors.py (K1.5, K2.1, K2.3).
+tests/test_sensors.py — Unit and integration tests for edge/gps_and_mast_sensors.py (K1.5, K2.1, K2.3).
 """
 import datetime
 import json
@@ -8,13 +8,13 @@ import tempfile
 import time
 import pytest
 
-from edge.sensors import (
+from edge.gps_and_mast_sensors import (
     GPS,
     MastTelemetryReader,
     parse_nmea_coordinate,
     parse_nmea_sentence,
 )
-from edge.storage import EdgeStorage, get_utc_iso_now
+from edge.scan_database import EdgeStorage, get_utc_iso_now
 
 
 def test_k2_1_nmea_coordinate_parsing():

@@ -10,9 +10,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from configs.classes import CLASS_NAMES
-from configs.classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
-from edge.rules_engine import TEMPLATES
+from configs.disease_classes_model_a import CLASS_NAMES
+from configs.insect_classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
+from edge.advice_rules_engine import TEMPLATES
 
 
 def generate_payload_contract() -> str:

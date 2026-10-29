@@ -5,10 +5,10 @@ Edge sensing, agronomic modeling, WiFi telemetry, and advisory generation for Je
 """
 
 # Active edge package initialisation.
-# Note: Descoped hardware modules (edge.lora, edge.actuation, edge.flow, edge.adc)
+# Note: Descoped hardware modules (edge.lora, edge.actuation, edge.flow, edge.soil_moisture_adc)
 # are not imported here to maintain clean import boundaries for the pod runtime.
 
-from edge.thermal_point import (
+from edge.ir_thermometer_mlx90614 import (
     MLX90614Driver,
     raw_to_celsius_mlx90614,
     calculate_smbus_pec,

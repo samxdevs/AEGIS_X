@@ -359,7 +359,11 @@ export function validateAdvisory(raw: unknown): ValidationResult {
     ) {
       populated.push('vegetation');
     }
-    if (detections.some((d) => typeof d.lat === 'number')) populated.push('detections.located');
+    // Positions the phone supplied do not come from the pod's receiver, so the
+    // pod's GPS input is not what they are built from (SCAN_CONTROL_API.md §2).
+    if (detections.some((d) => typeof d.lat === 'number') && a.gps?.source !== 'phone_gps') {
+      populated.push('detections.located');
+    }
 
     for (const section of populated) {
       for (const need of SECTION_INPUTS[section] ?? []) {
@@ -436,7 +440,7 @@ export function validateAdvisory(raw: unknown): ValidationResult {
         add(
           5,
           `actions[${i}].template_id`,
-          `template ${JSON.stringify(act.template_id)} is not one of the 21 in the registry; it cannot be shown in Hindi`,
+          `template ${JSON.stringify(act.template_id)} is not one of the ${TEMPLATE_IDS.length} in the registry; it cannot be shown in Hindi`,
         );
       }
       if (act.generated_by !== 'template') {

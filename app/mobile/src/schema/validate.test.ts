@@ -314,7 +314,7 @@ test('rule 5 fires when a WEB_VERIFIED action cannot be traced anywhere', () => 
   assert.ok(rulesFired(a).includes(5));
 });
 
-test('rule 5 fires on a template id outside the registry of 21', () => {
+test('rule 5 fires on a template id outside the registry of 22', () => {
   const a = clone(loadFixture('advisory-healthy.json')) as any;
   a.actions[0].template_id = 'ACT_INVENT_SOMETHING';
   assert.ok(rulesFired(a).includes(5));

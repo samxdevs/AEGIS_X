@@ -43,7 +43,7 @@ pip3 install -r requirements-edge.txt
 
 # Build TensorRT engine and run edge pipeline
 bash edge/build_engine.sh
-python3 edge/pipeline.py --config configs/field_demo.yaml
+python3 edge/scan_pipeline.py --config configs/field_demo.yaml
 ```
 
 ## Implementation Plan & Documentation

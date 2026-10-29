@@ -23,7 +23,7 @@ if pgrep -f "gateway/server.py" > /dev/null 2>&1 || pgrep -f "gateway.server" > 
     RUNNING_PROCS=1
 fi
 
-if pgrep -f "edge/pipeline.py" > /dev/null 2>&1 || pgrep -f "edge.pipeline" > /dev/null 2>&1; then
+if pgrep -f "edge/scan_pipeline.py" > /dev/null 2>&1 || pgrep -f "edge.scan_pipeline" > /dev/null 2>&1; then
     echo "[ERROR] Pipeline process is currently running!" >&2
     RUNNING_PROCS=1
 fi
@@ -34,7 +34,7 @@ if [ "$RUNNING_PROCS" -ne 0 ]; then
 fi
 
 # 2. Resolve active storage directory via shared Python resolver
-RESOLVED_DIR=$(python3 -c "import sys; sys.path.insert(0, '.'); from edge.storage import resolve_data_directory; print(resolve_data_directory()[0])" 2>/dev/null || echo "data")
+RESOLVED_DIR=$(python3 -c "import sys; sys.path.insert(0, '.'); from edge.scan_database import resolve_data_directory; print(resolve_data_directory()[0])" 2>/dev/null || echo "data")
 echo "[INFO] Resolved active data directory: $RESOLVED_DIR"
 
 DB_FILE="$RESOLVED_DIR/edge.db"

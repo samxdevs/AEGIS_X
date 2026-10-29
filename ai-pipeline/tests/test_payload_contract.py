@@ -1,19 +1,19 @@
 """
 Test payload contract synchronization and real schema conformance (J1.4).
 Validates that docs/PAYLOAD_CONTRACT.md and docs/APP_TEAM_CHANGES.md stay strictly
-synchronized with code constants and real synthesized advisory payloads emitted by edge/storage.py.
+synchronized with code constants and real synthesized advisory payloads emitted by edge/scan_database.py.
 """
 import json
 from pathlib import Path
 import tempfile
 import pytest
 
-from configs.classes import CLASS_NAMES
-from configs.classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
+from configs.disease_classes_model_a import CLASS_NAMES
+from configs.insect_classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
 from configs.reliability import MODEL_A_CROSS_SOURCE_RELIABILITY
-from edge.rules_engine import TEMPLATES
-from core.trap_segmentation import TRAP_ETL_REGISTRY
-from edge.storage import EdgeStorage
+from edge.advice_rules_engine import TEMPLATES
+from core.trap_insect_segmentation import TRAP_ETL_REGISTRY
+from edge.scan_database import EdgeStorage
 from gateway.server import EdgeGateway
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -105,6 +105,7 @@ def assert_advisory_payload_schema_recursive(payload: dict):
         "summary",
         "stretches",
         "alerts",
+        "captures",  # SCAN_CONTROL_API.md §1.8: always present, [] when none
         "field_conditions",
     }
     assert set(payload.keys()) == expected_top_keys, f"Top-level keys mismatch: {set(payload.keys()) ^ expected_top_keys}"
@@ -132,6 +133,7 @@ def assert_advisory_payload_schema_recursive(payload: dict):
         "distance_reason",
         "crop_declared",
         "duration_s",
+        "duration_reason",
         "stop_reason",
     }
     assert set(payload["scan"].keys()) == expected_scan_keys, f"Scan keys mismatch: {set(payload['scan'].keys()) ^ expected_scan_keys}"
@@ -377,11 +379,12 @@ def assert_advisory_payload_schema_recursive(payload: dict):
         assert isinstance(payload["irrigation"]["reason"], str)
 
     # 10. GPS Scan Summary Block
-    expected_gps_keys = {"status", "point_count", "accuracy_note"}
+    expected_gps_keys = {"status", "point_count", "accuracy_note", "source"}
     assert set(payload["gps"].keys()) == expected_gps_keys, f"GPS keys mismatch: {set(payload['gps'].keys()) ^ expected_gps_keys}"
     assert payload["gps"]["status"] in ("OK", "ABSENT")
     assert isinstance(payload["gps"]["point_count"], int)
     assert isinstance(payload["gps"]["accuracy_note"], str)
+    assert payload["gps"]["source"] in ("pod_gps", "phone_gps", None)
 
     # 11. Detections List Elements
     expected_det_keys = {

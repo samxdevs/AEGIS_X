@@ -1,5 +1,5 @@
 /**
- * The 21 action templates, and the offline Hindi table keyed on `template_id`.
+ * The 22 action templates, and the offline Hindi table keyed on `template_id`.
  *
  * ── Why this file exists at all ─────────────────────────────────────────────
  * The pod emits a rendered English sentence *and* a `template_id` plus a
@@ -39,13 +39,18 @@ import type { Action, VerificationStatus } from './advisory.ts';
 
 export type Language = 'en' | 'hi';
 
-/** Contract §4.3. Frozen at 21; a 22nd id is a contract change, not a patch. */
+/**
+ * Contract §4.3. Frozen at 22; a 23rd id is a contract change, not a patch.
+ * The 22nd, ACT_RESCAN_NO_USABLE_FRAMES, came from the pod's contract update
+ * (docs/PAYLOAD_CONTRACT.md, edge/rules_engine.py) for walks with zero usable frames.
+ */
 export const TEMPLATE_IDS = [
   'ACT_EXT_OFFICER_CONSULT',
   'ACT_IRRIGATE_WATER_DEFICIT',
   'ACT_MAINTAIN_ROUTINE',
   'ACT_MULTICROP_INVESTIGATE',
   'ACT_RESCAN_AMBIGUOUS',
+  'ACT_RESCAN_NO_USABLE_FRAMES',
   'ACT_TREAT_RICE_BLAST',
   'ACT_TREAT_RICE_BLIGHT',
   'ACT_TREAT_RICE_BROWN_SPOT',
@@ -105,6 +110,22 @@ const ENTRIES: TemplateEntry[] = [
         'जिस हिस्से पर संदेह है उसे दोबारा स्कैन करें। पॉड को फसल की ऊपरी सतह से लगभग 1.0 मीटर ऊपर स्थिर पकड़कर, धीमी और एक-सी चाल (लगभग 0.5 मीटर प्रति सेकंड) से चलें। सीधी तेज़ धूप के बजाय हल्की छाँव वाली रोशनी बेहतर है।',
       rationale:
         'लगातार कम से कम दो फ़्रेम एक ही नतीजे पर नहीं पहुँचे, या तस्वीर की गुणवत्ता कमज़ोर रही। इसलिए कोई नतीजा घोषित नहीं किया गया।',
+    },
+  },
+  {
+    id: 'ACT_RESCAN_NO_USABLE_FRAMES',
+    verification: 'VERIFIED',
+    en: {
+      action:
+        'No usable pictures were taken during this walk — too dark, blurry, or not pointed at the crop. Scan again in daylight, about 1 m from the leaves.',
+      rationale:
+        'No usable pictures were taken during this walk — too dark, blurry, or not pointed at the crop. Scan again in daylight, about 1 m from the leaves.',
+    },
+    hi: {
+      action:
+        'इस बार चलते समय कोई काम की तस्वीर नहीं मिली — रोशनी बहुत कम थी, तस्वीर धुंधली थी, या कैमरा फ़सल की ओर नहीं था। दिन के उजाले में, पत्तियों से लगभग 1 मीटर दूर रखकर दोबारा स्कैन करें।',
+      rationale:
+        'इस स्कैन में एक भी तस्वीर जाँच के लायक नहीं थी, इसलिए फ़सल के बारे में कोई नतीजा नहीं दिया गया।',
     },
   },
   {

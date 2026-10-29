@@ -14,9 +14,9 @@ import type { ColorValue } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient, Line, Path, Rect, Stop } from 'react-native-svg';
 
 import type { Tone } from './components.tsx';
-import { chart, color } from './theme.ts';
+import { chart, color, getScheme, live } from './theme.ts';
 
-const FILL: Record<Tone, string> = {
+const FILL: Record<Tone, string> = live(() => ({
   good: chart.fill.good,
   warn: chart.fill.warn,
   bad: chart.fill.bad,
@@ -24,14 +24,14 @@ const FILL: Record<Tone, string> = {
   // Between good and warn on a status ramp: lime, not the brown text colour,
   // so a 'mild' band reads as a step on the scale rather than as a fault.
   neutral: '#A4B83A',
-};
-const TRACK: Record<Tone, string> = {
+}));
+const TRACK: Record<Tone, string> = live(() => ({
   good: chart.track.good,
   warn: chart.track.warn,
   bad: chart.track.bad,
   unknown: chart.track.unknown,
-  neutral: '#E9EDCF',
-};
+  neutral: getScheme() === 'dark' ? '#2E3326' : '#E9EDCF',
+}));
 
 // ---- Icons ----------------------------------------------------------------
 

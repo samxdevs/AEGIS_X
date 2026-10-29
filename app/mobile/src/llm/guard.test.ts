@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-import { allowedFigures, canon, checkFigures } from './guard.ts';
+import { allowedFigures, asciiDigits, canon, checkFigures } from './guard.ts';
 
 // .href keeps this a string: the app's tsconfig pulls in the DOM lib, whose URL
 // type is not assignable to node:url's. Same trick as validate.test.ts.
@@ -203,4 +203,27 @@ test('an invented figure is caught in every fixture', () => {
     const result = checkFigures('Apply 999999 units immediately.', a);
     assert.equal(result.ok, false, `${name}: guard did not fire`);
   }
+});
+
+// ---- figures written in Indian scripts --------------------------------------
+
+test('native-script digits read as the numbers they are', () => {
+  assert.equal(asciiDigits('५ मिली'), '5 मिली');
+  assert.equal(asciiDigits('௨.௫'), '2.5');
+  assert.equal(asciiDigits('১২০০'), '1200');
+  assert.equal(asciiDigits('no digits here'), 'no digits here');
+});
+
+test('an invented dose in Devanagari digits is caught, not waved through', () => {
+  // `\d` alone never matches ९, so before asciiDigits this passed silently.
+  const result = checkFigures('हर लीटर पानी में ९९९९९९ मिली दवा मिलाएँ।', healthy);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.offending[0].canon, '999999');
+});
+
+test('a measured figure quoted in Tamil digits still passes', () => {
+  const allowed = [...allowedFigures(healthy)].find((f) => /^\d{2,3}$/.test(f));
+  assert.ok(allowed, 'healthy fixture has no two- or three-digit figure to quote');
+  const tamil = allowed.replace(/\d/g, (d) => String.fromCharCode(0x0be6 + Number(d)));
+  assert.equal(checkFigures(`அளவு ${tamil}`, healthy).ok, true);
 });

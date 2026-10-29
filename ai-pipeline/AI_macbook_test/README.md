@@ -6,8 +6,8 @@ This directory contains a self-contained local testing harness designed specific
 > [!IMPORTANT]
 > **LOCAL DEVELOPMENT TOOL ONLY — NEVER DEPLOYED TO JETSON NANO**
 > - This testing harness runs PyTorch directly on macOS using Apple Silicon MPS or CPU. It **never runs on and is never deployed to the NVIDIA Jetson Nano**.
-> - The Jetson Nano edge deployment path uses TensorRT engine compilation (`artifacts/engines/`) and `edge/trt_classifier.py`.
-> - This visual sanity tool **does not replace** the official benchmark evaluation metrics produced by `train/evaluate.py` across the test splits (`splits/` or `splits_v3/`).
+> - The Jetson Nano edge deployment path uses TensorRT engine compilation (`artifacts/engines/`) and `edge/disease_model_runtime_tensorrt.py`.
+> - This visual sanity tool **does not replace** the official benchmark evaluation metrics produced by `train/evaluate_disease_model_a.py` across the test splits (`splits/` or `splits_v3/`).
 
 ---
 
@@ -31,7 +31,7 @@ Whole-frame inference often dilutes early-stage or localized lesions because res
 To match the real deployment pipeline:
 1. **3×3 Overlapping Grid**: The frame is tiled into 9 overlapping `320×320` patches with `20%` overlap (step `256` px, footprint `832×832` px).
 2. **Batched Inference**: All 9 tiles are processed through the model to obtain per-tile logits and calibrated softmax probabilities (`T_CAL = 0.597`).
-3. **MIL Aggregation**: [`core.aggregate.aggregate_frame()`](../core/aggregate.py) performs Multiple Instance Learning (MIL) max-pooling over tiles:
+3. **MIL Aggregation**: [`core.verdict_aggregation.aggregate_frame()`](../core/verdict_aggregation.py) performs Multiple Instance Learning (MIL) max-pooling over tiles:
    - Any tile exceeding `TAU_DISEASE = 0.40` by `TAU_MARGIN = 0.15` over healthy probabilities carries the frame into `DISEASE`.
    - Frames dominated by healthy leaves resolve to `HEALTHY`.
    - Frames dominated by background resolve to `NOT_CROP`.

@@ -1,5 +1,5 @@
 """
-Unit tests for Step 20: Edge Frame Gate (edge/frame_gate.py) and Edge Tiler (edge/tiler.py).
+Unit tests for Step 20: Edge Frame Gate (edge/frame_quality_check.py) and Edge Tiler (edge/leaf_tile_finder.py).
 Follows repo testing conventions: verbose assertion, failure mode isolation, no synthetic shortcuts.
 """
 
@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import pytest
 
-from configs.train_config import (
+from configs.model_settings import (
     GATE_ALTITUDE_MAX_M,
     GATE_ALTITUDE_MIN_M,
     GATE_MIN_NOVELTY_DISPLACEMENT,
@@ -23,9 +23,9 @@ from configs.train_config import (
     TILE_OVERLAP,
     TILE_SIZE,
 )
-from core.indices import PROVISIONAL_EXG_VEG_THRESHOLD, vegetation_mask
-from edge.frame_gate import FrameGate, run_selftest as run_gate_selftest
-from edge.tiler import TileBatch, Tiler, extract_tiles, run_selftest as run_tiler_selftest
+from core.vegetation_indices import PROVISIONAL_EXG_VEG_THRESHOLD, vegetation_mask
+from edge.frame_quality_check import FrameGate, run_selftest as run_gate_selftest
+from edge.leaf_tile_finder import TileBatch, Tiler, extract_tiles, run_selftest as run_tiler_selftest
 
 
 def _make_sharp_vegetation_frame(size=832, seed=42):
@@ -128,6 +128,28 @@ def test_frame_gate_sharpness_textured_passes():
     assert passed is True
     assert reason == "ok"
     assert metrics["blur_score"] >= gate.tau_blur
+
+
+def test_frame_gate_blur_score_does_not_depend_on_camera_resolution():
+    # Regression: on raw 1920x1080 IMX219 frames, Laplacian variance of a sharp
+    # leaf (~24) sat far under the old floor, so every Capture came back BLURRY.
+    gate = FrameGate()
+    frame = _make_sharp_vegetation_frame()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    hd = cv2.resize(gray, (1920, 1080), interpolation=cv2.INTER_CUBIC)
+    # Same scene at HD must clear the floor the canvas-sized frame clears
+    assert gate.compute_blur_score(gray) >= gate.tau_blur
+    assert gate.compute_blur_score(hd) >= gate.tau_blur
+
+
+def test_frame_gate_hd_out_of_focus_still_rejected():
+    gate = FrameGate()
+    frame = cv2.resize(_make_sharp_vegetation_frame(), (1920, 1080), interpolation=cv2.INTER_CUBIC)
+    defocused = cv2.GaussianBlur(frame, (21, 21), 0)
+    passed, reason, metrics = gate.evaluate(defocused)
+    assert passed is False
+    assert reason == "frame_blurry"
+    assert metrics["blur_score"] < gate.tau_blur
 
 
 def test_frame_gate_exposure_underexposed_clipped_rejected():

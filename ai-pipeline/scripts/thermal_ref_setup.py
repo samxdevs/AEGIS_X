@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from edge.thermal_capture import MLX90640
+from edge.thermal_camera_mlx90640 import MLX90640
 
 
 def parse_box_arg(box_str: str) -> Dict[str, int]:

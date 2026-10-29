@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 import pytest
 
-from edge.storage import EdgeStorage, get_utc_iso_now
+from edge.scan_database import EdgeStorage, get_utc_iso_now
 
 
 def test_k4_2_hardware_guards_when_absent():

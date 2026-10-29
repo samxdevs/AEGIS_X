@@ -37,7 +37,7 @@ from PIL import Image
 from tqdm import tqdm
 from sklearn.model_selection import StratifiedGroupKFold
 
-from configs.classes_model_b import CLASS_NAMES, IDX
+from configs.insect_classes_model_b import CLASS_NAMES, IDX
 from configs.paths import DATA, PROCESSED, SPLITS, ROOT
 
 PATCH_DIR_V4 = PROCESSED / "model_b_patches_v4"

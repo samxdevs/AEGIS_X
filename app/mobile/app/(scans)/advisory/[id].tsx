@@ -6,20 +6,21 @@
  *   1. what you cannot trust about this record   origin, backend, violations
  *   2. the verdict, in one sentence              crop_health
  *   3. what to do                                actions, then the explanation
- *   4. the findings and how much they are worth  disease
- *   5. where they are                            detections, on a map
- *   6. the field readings                        water, vegetation, pest, season
- *   7. how it was collected                      inputs, scan
+ *   3b. the walk report, for a walk from the app  summary, timeline, look-list
+ *   4. Details, closed until tapped:
+ *        the findings and how much they are worth  disease
+ *        where they are                            detections, on a map
+ *        the field readings                        water, vegetation, pest, season
+ *        how it was collected                      inputs, scan, advisory id
  *
  * Provenance before verdict, verdict before advice, advice before evidence.
  *
- * ── Why most of it is folded ────────────────────────────────────────────────
- * Every card used to be open, and the screen ran to about eleven phone-heights
- * with the same caveats repeated on every finding. Sections 1 to 5 are what a
- * farmer acts on and stay open. Section 6 is a grid of weather-style tiles
- * and section 7 a card of one-line rows; both open on tap, so nothing was
- * removed. The relative-greenness band, which needs its caveat beside it, is
- * only shown once its tile is opened, where that caveat comes first.
+ * ── Why Details is closed ───────────────────────────────────────────────────
+ * With every card open the screen ran to five phone-heights. Sections 1 to 3
+ * are what a farmer acts on and stay open; section 4 is for checking and opens
+ * on one tap, so nothing was removed. The reliability warning for a finding is
+ * not lost by this: the verdict card and the action's mandatory caution carry
+ * it above the fold.
  */
 
 import { useEffect, useState } from 'react';
@@ -44,11 +45,15 @@ import { DetectionsCard, DiseaseCard } from '../../../src/ui/detections.tsx';
 import { PestCard } from '../../../src/ui/pest.tsx';
 import { VegetationCard } from '../../../src/ui/vegetation.tsx';
 import { IrrigationCard, NdviCard, ThermalCard } from '../../../src/ui/water.tsx';
-import { Card, Group, Muted, TileGrid } from '../../../src/ui/components.tsx';
+import { Card, DetailsSection, Group, Muted, TileGrid } from '../../../src/ui/components.tsx';
+import { Reveal } from '../../../src/ui/motion.tsx';
 import { ExplanationCard } from '../../../src/ui/explanation.tsx';
+import { WalkReport } from '../../../src/ui/walk-report.tsx';
+import { isWalkReport } from '../../../src/scan/report.ts';
 import { missingBlocks } from '../../../src/schema/validate.ts';
 import type { Language } from '../../../src/schema/templates.ts';
 import { fieldIdFromAdvisoryId } from '../../../src/schema/advisory.ts';
+import { useBarClearance } from '../../../src/ui/floating-bar.ts';
 import { useStatusBarStyle } from '../../../src/ui/status-bar.ts';
 import { color, space, type } from '../../../src/ui/theme.ts';
 import { useLanguage } from '../../../src/i18n/language.tsx';
@@ -71,7 +76,8 @@ export default function AdvisoryScreen() {
   // still flip it for one scan, for reading the same advice in the other.
   useEffect(() => setLanguage(appLanguage), [appLanguage]);
   const insets = useSafeAreaInsets();
-  useStatusBarStyle('dark');
+  useStatusBarStyle('light');
+  const clearance = useBarClearance();
 
   useEffect(() => {
     if (!id) return;
@@ -106,7 +112,7 @@ export default function AdvisoryScreen() {
     return (
       <ScrollView
         style={{ backgroundColor: color.background }}
-        contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }}
+        contentContainerStyle={{ padding: space.lg, paddingBottom: clearance }}
       >
         <OriginBanner origin={stored.origin} />
         <Text style={[type.title, { color: color.foreground }]}>{tr('This advisory cannot be shown')}</Text>
@@ -139,7 +145,7 @@ export default function AdvisoryScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: color.background }}
-      contentContainerStyle={{ padding: space.lg, paddingBottom: space.xl }}
+      contentContainerStyle={{ padding: space.lg, paddingBottom: clearance }}
     >
       {/* The header names the field, so the screen title does not have to. */}
       <Stack.Screen options={{ title: heading }} />
@@ -155,44 +161,47 @@ export default function AdvisoryScreen() {
       <BackendBanner advisory={a} />
       <ViolationsCard violations={stored.violations} />
 
-      {/* The one sentence a farmer came for. */}
-      <CropHealthCard health={a.crop_health} topClass={topFinding(a)} />
+      {/* The verdict a farmer came for, then the first thing to do. */}
+      <Reveal index={0}>
+        <CropHealthCard health={a.crop_health} topClass={topFinding(a)} />
+      </Reveal>
 
       {/* The language switch lives in this card's header, because it changes
-          this card and nothing else — and a farmer who cannot read the English
+          this card and nothing else, and a farmer who cannot read the English
           needs to find it before giving up on the screen. */}
-      <ActionsCard actions={a.actions} language={language} onLanguageChange={setLanguage} />
+      <Reveal index={1}>
+        <ActionsCard actions={a.actions} language={language} onLanguageChange={setLanguage} />
+      </Reveal>
+
+      {/* A walk run from the app: the places to look come straight after the
+          advice, because they are the next thing to act on. */}
+      {isWalkReport(a) ? <WalkReport advisory={a} /> : null}
 
       {/* After the pod's own actions, never instead of them. Renders nothing
           on a build with no model endpoint. */}
       <ExplanationCard advisory={a} />
 
-      {/* Findings, with their reliability tier ahead of their confidence. */}
-      <DiseaseCard advisory={a} />
-
-      {/* Where the findings are, open rather than folded: a map is the fastest
-          way to know where to walk. */}
-      <DetectionsCard advisory={a} />
-
-      {/* Weather-app style: one tile per reading, a big figure and a small
-          graphic. A tap widens the tile and opens its full card. */}
-      <TileGrid eyebrow={tr('Field readings')} title={tr('What else the pod measured')}>
-        <ThermalCard thermal={a.thermal} />
-        <IrrigationCard irrigation={a.irrigation} />
-        <VegetationCard vegetation={a.vegetation} />
-        <NdviCard probe={a.ndvi} satellite={a.ndvi_satellite} />
-        <GrowthStageCard stage={a.growth_stage} />
-        <PestCard pest={a.pest} />
-      </TileGrid>
-
-      <Group eyebrow={tr('About this scan')}>
-        <InputsCard inputs={a.inputs} thermalReason={a.thermal?.reason} />
-        <ScanCard advisory={a} />
-      </Group>
-
-      <Text style={[type.valueSmall, { color: color.fgSubtle, textAlign: 'center', marginTop: space.sm }]}>
-        {a.advisory_id}
-      </Text>
+      {/* Findings, map, readings and scan facts are for checking, not for
+          deciding, so they sit behind one tap. Nothing here was removed. */}
+      <DetailsSection note={tr('Findings, map, field readings and how this scan was made')}>
+        <DiseaseCard advisory={a} />
+        <DetectionsCard advisory={a} />
+        <TileGrid eyebrow={tr('Field readings')} title={tr('What else the pod measured')}>
+          <ThermalCard thermal={a.thermal} />
+          <IrrigationCard irrigation={a.irrigation} />
+          <VegetationCard vegetation={a.vegetation} />
+          <NdviCard probe={a.ndvi} satellite={a.ndvi_satellite} />
+          <GrowthStageCard stage={a.growth_stage} />
+          <PestCard pest={a.pest} />
+        </TileGrid>
+        <Group eyebrow={tr('About this scan')}>
+          <InputsCard inputs={a.inputs} thermalReason={a.thermal?.reason} gpsSource={a.gps?.source} />
+          <ScanCard advisory={a} />
+        </Group>
+        <Text style={[type.valueSmall, { color: color.fgSubtle, textAlign: 'center', marginTop: space.sm }]}>
+          {a.advisory_id}
+        </Text>
+      </DetailsSection>
     </ScrollView>
   );
 }

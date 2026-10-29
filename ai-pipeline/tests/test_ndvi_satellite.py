@@ -11,7 +11,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 import urllib.error
 
-from edge.ndvi_satellite import (
+from edge.satellite_ndvi import (
     load_cdse_credentials,
     load_field_polygon,
     fetch_cdse_token,
@@ -21,7 +21,7 @@ from edge.ndvi_satellite import (
     CDSE_STATS_URL,
     PROVISIONAL_MIN_VALID_PIXEL_FRACTION,
 )
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

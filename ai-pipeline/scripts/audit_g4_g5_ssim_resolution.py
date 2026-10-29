@@ -27,12 +27,12 @@ import torch.nn as nn
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from configs.classes import CLASS_NAMES, NUM_CLASSES, CROP_COLS
-from train.model import build_model
-from train.train_model_a import load_checkpoint_for_eval
-from train.transforms import eval_transform
-from train.calibrate import fit_temperature_scaling
-from core.rejection import fit_energy_threshold, open_set_energy
+from configs.disease_classes_model_a import CLASS_NAMES, NUM_CLASSES, CROP_COLS
+from train.disease_model_a_efficientnet import build_model
+from train.train_disease_model_a import load_checkpoint_for_eval
+from train.augmentations_model_a import eval_transform
+from train.calibrate_disease_model_a import fit_temperature_scaling
+from core.unknown_object_rejection import fit_energy_threshold, open_set_energy
 
 LEAKAGE_CSV = ROOT / "artifacts/audit/2026-09-16/model_a_cross_split_leakage.csv"
 OUTPUT_DIR = ROOT / "artifacts/audit/2026-09-17"

@@ -1,5 +1,5 @@
 """
-Unit and integration tests for core/indices.py integration into edge/pipeline.py and edge/storage.py.
+Unit and integration tests for core/vegetation_indices.py integration into edge/scan_pipeline.py and edge/scan_database.py.
 Covers:
   - 0% canopy (pure soil) and 100% canopy (pure green) frame evaluation
   - Cell-level canopy cover persistence and aggregation
@@ -15,12 +15,12 @@ import tempfile
 import numpy as np
 import pytest
 
-from configs.train_config import (
+from configs.model_settings import (
     PROVISIONAL_DGCI_MAX_OOD_FRACTION,
     PROVISIONAL_EXG_VEG_THRESHOLD,
     PROVISIONAL_MIN_CANOPY_FRACTION,
 )
-from core.indices import (
+from core.vegetation_indices import (
     aggregate_index,
     bgr_to_bandmap,
     compute_canopy_index,
@@ -30,7 +30,7 @@ from core.indices import (
     vari,
     vegetation_mask,
 )
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 def test_zero_percent_canopy_frame():

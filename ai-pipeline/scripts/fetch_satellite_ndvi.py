@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from edge.ndvi_satellite import (
+from edge.satellite_ndvi import (
     load_cdse_credentials,
     load_field_polygon,
     check_internet_connectivity,
@@ -32,7 +32,7 @@ from edge.ndvi_satellite import (
     DEFAULT_FIELD_CONFIG_PATH,
     DEFAULT_DAYS_HISTORY,
 )
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 def main():

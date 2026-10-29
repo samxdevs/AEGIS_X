@@ -5,11 +5,18 @@
  *
  * The oklch values there were converted to sRGB hex; the names are kept
  * identical so a token can be traced back to the stylesheet it came from.
- * Light only — the site deliberately removed its dark block, and a screen that
- * has to stay readable in direct sun is not where to reinstate one.
+ * Light is the default, because a screen read in direct sun is the hard case.
+ * Dark is opt-in from the Profile screen, for evenings and the shed.
+ *
+ * `color`, `chart` and `shadow` are live: they read the active palette on every
+ * access, so a switch restyles the whole app without a restart. Anything built
+ * once at module load (a StyleSheet, a tone table) has to go through
+ * `themed()` or `live()` below, or it freezes on the palette it was born with.
  */
 
-export const color = {
+export type Scheme = 'light' | 'dark';
+
+const lightColor = {
   background: '#F8F5F0',
   card: '#FFFFFF',
   foreground: '#3E2723',
@@ -63,7 +70,47 @@ export const color = {
   unknown: '#5B6570',
   unknownSurface: '#EEF1F4',
   unknownBorder: '#D6DDE4',
-} as const;
+};
+
+export type Palette = { [K in keyof typeof lightColor]: string };
+
+/** Dark counterpart. Same hues, re-stepped so every pairing keeps its contrast. */
+const darkColor: Palette = {
+  background: '#111611',
+  card: '#1A211A',
+  foreground: '#EFE9DF',
+  muted: '#242C24',
+  mutedForeground: '#BDB6A9',
+  fgSubtle: '#9AA595',
+  border: '#2E3A2E',
+
+  primary: '#66BB6A',
+  primaryForeground: '#0A1F0C',
+  secondary: '#1D3320',
+  secondaryForeground: '#A5D6A7',
+  accent: '#2F5A32',
+  accentForeground: '#C8E6C9',
+
+  warning: '#F0A830',
+  warningForeground: '#F5BC63',
+  warningMuted: '#3A2B10',
+  warningBorder: '#5E461A',
+
+  destructive: '#F0716A',
+  destructiveForeground: '#1F0A08',
+  destructiveMuted: '#3E1C19',
+  destructiveBorder: '#6B2F2A',
+
+  deep: '#0A1F0C',
+  deepElevated: '#1F3420',
+  deepBorder: '#304330',
+  deepForeground: '#F8F5F0',
+  deepMuted: '#99AA9A',
+
+  unknown: '#A3AEBA',
+  unknownSurface: '#222932',
+  unknownBorder: '#36404B',
+};
 
 /**
  * Chart tokens.
@@ -77,29 +124,43 @@ export const color = {
  * Each status gets a light step of its own hue for meter tracks, so an unfilled
  * track reads as the same ramp as its fill rather than as dead grey.
  */
-export const chart = {
-  /** Meter fills, in severity order. */
+const lightChart = {
   fill: {
-    good: color.primary,
-    warn: color.warning,
-    bad: color.destructive,
-    unknown: color.unknown,
+    good: lightColor.primary,
+    warn: lightColor.warning,
+    bad: lightColor.destructive,
+    unknown: lightColor.unknown,
   },
-  /** The unfilled remainder of a meter: a lighter step of the fill's own hue. */
   track: {
     good: '#D7EBD8',
     warn: '#F7E3C2',
     bad: '#F7D8D4',
     unknown: '#E4E9EE',
   },
-  /** Hairline grid and axis rules. One shade off the surface, never dashed. */
   grid: '#EDE5DA',
   axis: '#DCD1C4',
-  /** De-emphasis: context marks that must recede behind the one that matters. */
   muted: '#CFC3B4',
-  /** The gap punched between adjacent fills, in px. Never a stroke. */
   gap: 2,
-} as const;
+};
+
+const darkChart: typeof lightChart = {
+  fill: {
+    good: darkColor.primary,
+    warn: darkColor.warning,
+    bad: darkColor.destructive,
+    unknown: darkColor.unknown,
+  },
+  track: {
+    good: '#233A26',
+    warn: '#40321A',
+    bad: '#44211E',
+    unknown: '#2A313A',
+  },
+  grid: '#262E26',
+  axis: '#364036',
+  muted: '#5C6357',
+  gap: 2,
+};
 
 export const font = {
   sans: 'Montserrat_400Regular',
@@ -142,13 +203,13 @@ export const type = {
   title: { fontFamily: font.sansBold, fontSize: 19, lineHeight: 24, letterSpacing: -0.4 },
   cardTitle: { fontFamily: font.sansBold, fontSize: 15.5, letterSpacing: -0.25 },
 
-  /** The mono eyebrow that opens a section: 10.5px at 0.1em. */
-  eyebrow: { fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.05 },
-  /** The smallest label on the site: 9.5px at 0.1em. WHY / CHECK NEXT. */
-  micro: { fontFamily: font.mono, fontSize: 9.5, letterSpacing: 0.95 },
+  /** The mono eyebrow that opens a section. */
+  eyebrow: { fontFamily: font.mono, fontSize: 11.5, letterSpacing: 0.9 },
+  /** The smallest label. WHY / CHECK NEXT. 11px: below that it was tiring to read, in Hindi most of all. */
+  micro: { fontFamily: font.mono, fontSize: 11, letterSpacing: 0.8 },
   /** Chip keys: 10px at 0.09em. */
-  chipLabel: { fontFamily: font.mono, fontSize: 10, letterSpacing: 0.9 },
-  chipValue: { fontFamily: font.mono, fontSize: 12.5 },
+  chipLabel: { fontFamily: font.mono, fontSize: 11, letterSpacing: 0.7 },
+  chipValue: { fontFamily: font.mono, fontSize: 13 },
 
   body: { fontFamily: font.sans, fontSize: 14.5, lineHeight: 24 },
   small: { fontFamily: font.sans, fontSize: 13, lineHeight: 18 },
@@ -168,8 +229,7 @@ export const type = {
   valueSmall: { fontFamily: font.mono, fontSize: 12.5 },
 } as const;
 
-/** The site's card shadow, translated to RN's elevation model. */
-export const shadow = {
+const lightShadow = {
   card: {
     shadowColor: '#3E2723',
     shadowOpacity: 0.06,
@@ -184,4 +244,59 @@ export const shadow = {
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
   },
-} as const;
+};
+
+const darkShadow: typeof lightShadow = {
+  card: { ...lightShadow.card, shadowColor: '#000000', shadowOpacity: 0.35 },
+  lifted: { ...lightShadow.lifted, shadowColor: '#000000', shadowOpacity: 0.5 },
+};
+
+// ---- The active scheme ----------------------------------------------------
+
+/** Both palettes, for the preview swatches on the Profile screen. */
+export const palettes: Record<Scheme, Palette> = { light: lightColor, dark: darkColor };
+
+let active: Scheme = 'light';
+
+export function getScheme(): Scheme {
+  return active;
+}
+
+/** Set before the tree re-renders, so what renders next already reads it. */
+export function setActiveScheme(next: Scheme) {
+  active = next;
+}
+
+/**
+ * An object whose every property read goes to `read()` afresh. Used so tables
+ * built at module load (tone maps, chart fills) follow the active palette.
+ */
+export function live<T extends object>(read: () => T): T {
+  return new Proxy({} as T, {
+    get: (_t, key) => Reflect.get(read(), key),
+    has: (_t, key) => Reflect.has(read(), key),
+    ownKeys: () => Reflect.ownKeys(read()),
+    getOwnPropertyDescriptor: (_t, key) => {
+      const d = Reflect.getOwnPropertyDescriptor(read(), key);
+      return d ? { ...d, configurable: true } : undefined;
+    },
+  });
+}
+
+/**
+ * `StyleSheet.create` that is rebuilt when the scheme changes:
+ *
+ *   const s = themed(() => StyleSheet.create({ card: { backgroundColor: color.card } }));
+ */
+export function themed<T extends object>(make: () => T): T {
+  let cached: { scheme: Scheme; value: T } | null = null;
+  return live(() => {
+    if (!cached || cached.scheme !== active) cached = { scheme: active, value: make() };
+    return cached.value;
+  });
+}
+
+export const color: Palette = live(() => (active === 'dark' ? darkColor : lightColor));
+export const chart = live(() => (active === 'dark' ? darkChart : lightChart));
+/** The site's card shadow, translated to RN's elevation model. */
+export const shadow = live(() => (active === 'dark' ? darkShadow : lightShadow));

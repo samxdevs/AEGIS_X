@@ -20,12 +20,12 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from configs.classes import CLASS_NAMES, NUM_CLASSES
+from configs.disease_classes_model_a import CLASS_NAMES, NUM_CLASSES
 from configs.paths import CKPT, ROOT as DATA_ROOT
-from configs.train_config import IMAGE_SIZE
-from train.model import build_model
-from train.train_model_a import load_checkpoint_for_eval, compute_split_metrics
-from train.transforms import eval_transform
+from configs.model_settings import IMAGE_SIZE
+from train.disease_model_a_efficientnet import build_model
+from train.train_disease_model_a import load_checkpoint_for_eval, compute_split_metrics
+from train.augmentations_model_a import eval_transform
 
 AUDIT_DIR = ROOT / "artifacts" / "audit" / "2026-09-16"
 LEAKAGE_CSV = AUDIT_DIR / "model_a_cross_split_leakage.csv"

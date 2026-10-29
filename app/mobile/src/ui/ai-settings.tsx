@@ -19,7 +19,7 @@ import type { ProviderId, ProviderSettings } from '../llm/providers.ts';
 import { removeProvider, saveProvider, useLlmSettings } from '../llm/settings.ts';
 import { tr } from '../i18n/tr.ts';
 import { Panel, StatusChip } from './components.tsx';
-import { color, font, radius, shadow, space, type } from './theme.ts';
+import { color, font, radius, shadow, space, type, themed } from './theme.ts';
 
 type Note = { tone: 'good' | 'bad'; label: string; text: string };
 
@@ -275,7 +275,7 @@ function ActionButton({
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   card: {
     backgroundColor: color.card,
     borderRadius: radius.xl,
@@ -324,4 +324,4 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

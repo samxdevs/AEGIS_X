@@ -16,15 +16,21 @@ Endpoints (9 total):
   POST /api/v1/trap/upload            -> Sticky trap card photo for Model B segmentation & classification
   POST /api/v1/sync/trigger           -> Triggers asynchronous ground mast collector pull
 
+Scan control (docs/SCAN_CONTROL_API.md), including the live view and Capture:
+  GET  /api/v1/camera/frame.jpg       -> Newest preview frame of the running walk (§1.7)
+  POST /api/v1/scan/capture           -> Check the frame the camera sees now (§1.8)
+  GET  /api/v1/media/<id>             -> A captured photo's JPEG (cap_*); anything else is still 410
+
 Key Architectural Properties:
 1. Python 3.6 stdlib only (http.server + socketserver.ThreadingMixIn) — zero external dependencies.
-2. Concurrent-safe with edge/pipeline.py writes via SQLite WAL mode and thread-isolated connections.
+2. Concurrent-safe with edge/scan_pipeline.py writes via SQLite WAL mode and thread-isolated connections.
 3. Binds to 0.0.0.0:8080 (plain HTTP, no TLS) by default.
 4. Clean seam for Subsystem 7 AR9271 AP/STA mode-switching ("syncing" status flag).
 5. 503 boot window support with Retry-After: 5 header during startup/initialization.
 """
 
 import argparse
+import concurrent.futures
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import datetime
 import json
@@ -32,6 +38,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import socket
 import socketserver
 import subprocess
 import sys
@@ -39,17 +46,185 @@ import threading
 import time
 from typing import Any, Dict, Optional, Tuple, Union
 import urllib.parse
+import urllib.request
 
 # Ensure repo root is on sys.path
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from edge.storage import DEFAULT_DB_PATH, EdgeStorage, _parse_iso_timestamp, get_utc_iso_now
+from edge.live_view_and_capture import is_safe_media_id, live_dir_for, read_preview, request_capture
+from edge.scan_database import DEFAULT_DB_PATH, EdgeStorage, _parse_iso_timestamp, get_utc_iso_now, place_capture
 
 DEFAULT_GATEWAY_HOST = "0.0.0.0"
 DEFAULT_GATEWAY_PORT = 8080
 
+
+def _get_wlan_subnet_prefix():
+    """Finds the local /24 subnet prefix for wlan0 or active network."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        parts = ip.split(".")
+        if len(parts) == 4:
+            return ".".join(parts[:3])
+    except Exception:
+        pass
+    return "192.168.43"
+
+
+def check_field_station_health(base_url, timeout=0.5):
+    """Checks GET /api/v1/health on base_url and returns True if node_id is SIH-NODE-01."""
+    if not base_url:
+        return False
+    try:
+        url = "%s/health" % base_url.rstrip("/")
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                if isinstance(data, dict) and data.get("node_id") == "SIH-NODE-01":
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def probe_for_field_station(subnet_prefix=None, timeout_per_host=0.5, max_workers=32, total_timeout=8.0, candidate_hosts=None, probe_port=80):
+    """Probes /24 subnet (or candidate hosts) in parallel for ESP32 Field Station node_id == 'SIH-NODE-01'."""
+    if candidate_hosts is not None:
+        hosts = list(candidate_hosts)
+    else:
+        prefix = subnet_prefix or _get_wlan_subnet_prefix()
+        hosts = ["%s.%d" % (prefix, i) for i in range(1, 255)]
+
+    def _probe_host(host_entry):
+        if str(host_entry).startswith("http://") or str(host_entry).startswith("https://"):
+            url = "%s/health" % str(host_entry).rstrip("/")
+            if "/api/v1" not in url:
+                url = "%s/api/v1/health" % str(host_entry).rstrip("/")
+            ret_base = str(host_entry).rstrip("/")
+            if not ret_base.endswith("/api/v1"):
+                ret_base = "%s/api/v1" % ret_base
+        elif ":" in str(host_entry):
+            url = "http://%s/api/v1/health" % host_entry
+            ret_base = "http://%s/api/v1" % host_entry
+        else:
+            if probe_port != 80:
+                url = "http://%s:%d/api/v1/health" % (host_entry, probe_port)
+                ret_base = "http://%s:%d/api/v1" % (host_entry, probe_port)
+            else:
+                url = "http://%s/api/v1/health" % host_entry
+                ret_base = "http://%s/api/v1" % host_entry
+
+        req = urllib.request.Request(url)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout_per_host) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    if isinstance(data, dict) and data.get("node_id") == "SIH-NODE-01":
+                        return ret_base
+        except Exception:
+            pass
+        return None
+
+    found_url = None
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_host = {executor.submit(_probe_host, h): h for h in hosts}
+        try:
+            for fut in concurrent.futures.as_completed(future_to_host, timeout=total_timeout):
+                res = fut.result()
+                if res:
+                    found_url = res
+                    break
+        except Exception:
+            pass
+    return found_url
+
+
+def discover_field_station_url(data_dir, mast_base_url_override=None, candidate_hosts=None, probe_port=80):
+    """
+    Discovery fallback order (Spec §1.2 / Fix 1 & Fix 3):
+      a) mast_base_url_override (if set)
+      b) /etc/sih/field_station.json (if exists, never overwritten)
+      c) <data_dir>/field_station.json (cache)
+         - If healthy, return it.
+         - If health check fails, run /24 probe once; if found, update cache and return it.
+      d) parallel wlan0 /24 subnet probe (if no cache)
+         - If found, save to <data_dir>/field_station.json and return it.
+    """
+    if mast_base_url_override:
+        return mast_base_url_override
+
+    # a) /etc/sih/field_station.json (configuration, never overwritten)
+    etc_path = Path("/etc/sih/field_station.json")
+    if etc_path.exists():
+        try:
+            with open(str(etc_path), "r", encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict) and d.get("base_url"):
+                    return d["base_url"].rstrip("/")
+        except Exception:
+            pass
+
+    # b) <data_dir>/field_station.json (cache)
+    data_path = Path(data_dir) / "field_station.json"
+    cached_url = None
+    if data_path.exists():
+        try:
+            with open(str(data_path), "r", encoding="utf-8") as f:
+                d = json.load(f)
+                if isinstance(d, dict) and d.get("base_url"):
+                    cached_url = d["base_url"].rstrip("/")
+        except Exception:
+            pass
+
+    prefix = _get_wlan_subnet_prefix()
+
+    if cached_url:
+        if check_field_station_health(cached_url, timeout=0.5):
+            return cached_url
+        # Cached URL failed health check: run /24 probe once
+        found = probe_for_field_station(
+            subnet_prefix=prefix,
+            timeout_per_host=0.5,
+            max_workers=32,
+            total_timeout=8.0,
+            candidate_hosts=candidate_hosts,
+            probe_port=probe_port,
+        )
+        if found:
+            # Update cache (<data_dir>/field_station.json); /etc/sih/field_station.json is NEVER overwritten
+            try:
+                data_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(str(data_path), "w", encoding="utf-8") as f:
+                    json.dump({"base_url": found}, f)
+            except Exception:
+                pass
+            return found
+        return None
+
+    # c) probe subnet in parallel
+    found = probe_for_field_station(
+        subnet_prefix=prefix,
+        timeout_per_host=0.5,
+        max_workers=32,
+        total_timeout=8.0,
+        candidate_hosts=candidate_hosts,
+        probe_port=probe_port,
+    )
+    if found:
+        try:
+            data_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(str(data_path), "w", encoding="utf-8") as f:
+                json.dump({"base_url": found}, f)
+        except Exception:
+            pass
+        return found
+
+    return None
 
 
 class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
@@ -89,7 +264,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
         self.engine_path = ROOT / "artifacts" / "engines" / "model_a_fp16.engine"
         self.camera_device = Path("/dev/video0")
         self.replay_source = ROOT / "test_video_from_dataset_images.mp4"
-        self.pipeline_script = str(ROOT / "edge" / "pipeline.py")
+        self.pipeline_script = str(ROOT / "edge" / "scan_pipeline.py")
         self.startup_timeout_s = 60.0
         self.watchdog_timeout_s = 30.0
         self.clock_source = "filesystem"
@@ -104,6 +279,14 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
         self.last_scan_status = None
         self.current_stop_reason = None
         self.scan_lock = threading.Lock()
+        self.field_station_status = {"reachable": None, "readings_collected": None, "last_reading_utc": None}
+        self.field_station_warning = False
+
+        # Live view + Capture (spec §1.7, §1.8). The camera stays in the scan
+        # subprocess; these meet it through files in current_live_dir.
+        self.current_live_dir = None  # type: Optional[Path]
+        self.capture_lock = threading.Lock()
+        self.capture_counter = 0
 
         # Interrupted recovery on startup (Point 5)
         try:
@@ -190,14 +373,33 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                 "readings_collected": None,
                 "last_reading_utc": None,
             }
-        for k in ("reachable", "readings_collected", "last_reading_utc"):
-            if k not in status["field_station"]:
-                status["field_station"][k] = None
+        # If status file has null field_station or missing, check server's live status
+        if status["field_station"].get("reachable") is None:
+            fs_live = getattr(self, "field_station_status", None)
+            if fs_live and fs_live.get("reachable") is not None:
+                status["field_station"] = dict(fs_live)
+            else:
+                for k in ("reachable", "readings_collected", "last_reading_utc"):
+                    if k not in status["field_station"]:
+                        status["field_station"][k] = None
+        else:
+            for k in ("reachable", "readings_collected", "last_reading_utc"):
+                if k not in status["field_station"]:
+                    status["field_station"][k] = None
 
         if "warnings" not in status or not isinstance(status["warnings"], list):
             status["warnings"] = []
         if "alerts" not in status or not isinstance(status["alerts"], list):
             status["alerts"] = []
+
+        # Add FIELD_STATION_NOT_FOUND warning if active
+        if getattr(self, "field_station_warning", False):
+            has_fs_warn = any(w.get("code") == "FIELD_STATION_NOT_FOUND" for w in status["warnings"] if isinstance(w, dict))
+            if not has_fs_warn:
+                status["warnings"].append({
+                    "code": "FIELD_STATION_NOT_FOUND",
+                    "since_utc": self.current_scan_info.get("started_utc", self.init_utc) if getattr(self, "current_scan_info", None) else self.init_utc,
+                })
 
         # Add STORAGE_CARD_MISSING warning if storage is internal
         if getattr(self.storage, "storage_location", "internal") == "internal":
@@ -269,10 +471,13 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
             self.current_scan_id = scan_id
             self.current_scan_state = "starting"
             self.current_stop_reason = None
+            self.last_scan_status = None
             self.current_scan_started_mono = time.monotonic()
             status_file_path = self.storage.data_dir / "status" / ("scan_status_%s.json" % scan_id)
             status_file_path.parent.mkdir(parents=True, exist_ok=True)
             self.current_scan_status_file = status_file_path
+            self.current_live_dir = live_dir_for(scan_id, self.storage.data_dir)
+            self.capture_counter = 0
 
             self.current_scan_info = {
                 "scan_id": scan_id,
@@ -285,7 +490,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
             }
 
             # 5. Build pipeline subprocess command
-            pipeline_script = getattr(self, "pipeline_script", str(ROOT / "edge" / "pipeline.py"))
+            pipeline_script = getattr(self, "pipeline_script", str(ROOT / "edge" / "scan_pipeline.py"))
             cmd = [
                 sys.executable,
                 pipeline_script,
@@ -295,6 +500,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                 "--field-id", field_id,
                 "--crop", crop,
                 "--status-file", str(status_file_path),
+                "--live-dir", str(self.current_live_dir),
                 "--db-path", str(self.storage.db_path),
                 "--time-source", self.clock_source,
             ]
@@ -340,6 +546,96 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                 replay=1 if replay_flag else 0,
             )
 
+            # Background field station discovery & telemetry poll (Spec §1.2 / Item G / Fix 1)
+            self.field_station_warning = False
+
+            def _poll_fs_on_start():
+                try:
+                    from edge.mast_data_collector import MastCollector
+                    override = getattr(self, "mast_base_url", None)
+                    base_url = discover_field_station_url(self.storage.data_dir, mast_base_url_override=override)
+                    if not base_url:
+                        self.field_station_status = {
+                            "reachable": False,
+                            "readings_collected": 0,
+                            "last_reading_utc": None,
+                        }
+                        self.field_station_warning = True
+                        return
+
+                    collector = MastCollector(base_url=base_url, storage=self.storage, timeout=1.5, max_retries=0)
+                    try:
+                        res = collector.collect()
+                    except Exception:
+                        res = None
+
+                    # If collect failed and base_url came from cache, run /24 probe once
+                    if not isinstance(res, dict) or res.get("status") != "ok":
+                        data_path = Path(self.storage.data_dir) / "field_station.json"
+                        is_cached = False
+                        if data_path.exists():
+                            try:
+                                with open(str(data_path), "r", encoding="utf-8") as f:
+                                    d = json.load(f)
+                                    if isinstance(d, dict) and d.get("base_url") == base_url:
+                                        is_cached = True
+                            except Exception:
+                                pass
+                        if is_cached:
+                            prefix = _get_wlan_subnet_prefix()
+                            found = probe_for_field_station(
+                                subnet_prefix=prefix,
+                                timeout_per_host=0.5,
+                                max_workers=32,
+                                total_timeout=8.0,
+                            )
+                            if found and found != base_url:
+                                try:
+                                    with open(str(data_path), "w", encoding="utf-8") as f:
+                                        json.dump({"base_url": found}, f)
+                                except Exception:
+                                    pass
+                                base_url = found
+                                collector = MastCollector(base_url=base_url, storage=self.storage, timeout=1.5, max_retries=0)
+                                try:
+                                    res = collector.collect()
+                                except Exception:
+                                    res = None
+
+                    if isinstance(res, dict) and res.get("status") == "ok":
+                        latest = self.storage.get_latest_mast_telemetry()
+                        last_utc = latest.get("utc") if latest else None
+                        self.field_station_status = {
+                            "reachable": True,
+                            "readings_collected": int(res.get("records_pulled", 0)),
+                            "last_reading_utc": last_utc,
+                        }
+                        self.field_station_warning = False
+
+                        # Set ESP32 clock if phone or gps (Fix 1)
+                        if self.clock_source in ("phone", "gps"):
+                            try:
+                                collector.set_time(int(time.time()))
+                            except Exception:
+                                pass
+                    else:
+                        self.field_station_status = {
+                            "reachable": False,
+                            "readings_collected": 0,
+                            "last_reading_utc": None,
+                        }
+                        self.field_station_warning = True
+                except Exception:
+                    self.field_station_status = {
+                        "reachable": False,
+                        "readings_collected": 0,
+                        "last_reading_utc": None,
+                    }
+                    self.field_station_warning = True
+
+            t_fs = threading.Thread(target=_poll_fs_on_start, daemon=True, name="FieldStationStartPoll")
+            t_fs.start()
+
             # Spawn background monitor thread
             t = threading.Thread(
                 target=self._monitor_scan_process,
@@ -350,6 +646,42 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
             t.start()
 
             return 202, {"scan_id": scan_id, "state": "starting", "replay": replay_flag}
+
+    def _has_advisory_for_scan(self, scan_id):
+        """Check if an advisory already exists for a scan_id. Must be called under scan_lock."""
+        try:
+            conn = self.storage._get_connection()
+            row = conn.execute("SELECT advisory_id FROM advisories WHERE scan_id = ?;", (scan_id,)).fetchone()
+            return row is not None
+        except Exception:
+            return False
+
+    def _poll_fs_on_finalize(self):
+        """Collect once more at stop/finalize (max 5s, non-blocking) so advisory gets latest readings."""
+        def _bg_stop_poll():
+            try:
+                from edge.mast_data_collector import MastCollector
+                override = getattr(self, "mast_base_url", None)
+                base_url = discover_field_station_url(self.storage.data_dir, mast_base_url_override=override)
+                if base_url:
+                    collector = MastCollector(base_url=base_url, storage=self.storage, timeout=1.5, max_retries=0)
+                    collector.collect()
+            except Exception:
+                pass
+        t = threading.Thread(target=_bg_stop_poll, daemon=True, name="FieldStationStopPoll")
+        t.start()
+
+    def _build_final_status(self, final_st, scan_id, state, stop_reason, adv_id):
+        """Build the final status dict, preferring pipeline's own status file."""
+        if final_st and final_st.get("scan_id") == scan_id:
+            st = dict(final_st)
+        else:
+            st = self.get_scan_status()
+        st["state"] = state
+        st["stop_reason"] = stop_reason
+        st["advisory_id"] = adv_id
+        st["scan_id"] = scan_id
+        return st
 
     def _monitor_scan_process(
         self,
@@ -366,28 +698,40 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                 time.sleep(0.5)
 
                 with self.scan_lock:
-                    if self.current_scan_proc is not proc and self.current_scan_id != scan_id:
+                    if self.current_scan_proc is not proc:
                         break
 
                     # Check if process exited
                     ret = proc.poll()
                     if ret is not None:
+                        # Read the pipeline's final status file for this scan
+                        final_st = None
+                        if status_file.exists():
+                            try:
+                                with open(str(status_file), "r", encoding="utf-8") as f:
+                                    final_st = json.load(f)
+                                if final_st.get("scan_id") != scan_id:
+                                    final_st = None
+                            except Exception:
+                                final_st = None
+
                         if self.current_scan_state == "finalizing":
                             eff_reason = self.current_stop_reason if self.current_stop_reason == "interrupted" else "user"
                             self.current_scan_state = "done"
                             self.current_stop_reason = eff_reason
-                            adv_id = None
-                            if status_file.exists():
+                            adv_id = final_st.get("advisory_id") if final_st else None
+                            if not adv_id and not self._has_advisory_for_scan(scan_id):
                                 try:
-                                    with open(str(status_file), "r", encoding="utf-8") as f:
-                                        sdata = json.load(f)
-                                        adv_id = sdata.get("advisory_id")
+                                    adv = self.storage.create_advisory(scan_id=scan_id, stop_reason=eff_reason)
+                                    adv_id = adv.get("advisory_id")
                                 except Exception:
                                     pass
                             if not adv_id:
                                 try:
-                                    adv = self.storage.create_advisory(scan_id=scan_id, stop_reason=eff_reason)
-                                    adv_id = adv.get("advisory_id")
+                                    conn = self.storage._get_connection()
+                                    row = conn.execute("SELECT advisory_id FROM advisories WHERE scan_id = ?;", (scan_id,)).fetchone()
+                                    if row:
+                                        adv_id = row["advisory_id"]
                                 except Exception:
                                     pass
                             try:
@@ -395,55 +739,62 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                                 self.storage.record_scan_end(scan_id=scan_id, status=status_name, stop_reason=eff_reason)
                             except Exception:
                                 pass
-                            st = self.get_scan_status()
-                            st["state"] = "done"
-                            st["stop_reason"] = eff_reason
-                            st["advisory_id"] = adv_id
+                            st = self._build_final_status(final_st, scan_id, "done", eff_reason, adv_id)
                             self.last_scan_status = st
                         elif ret != 0:
                             self.current_scan_state = "error"
                             self.current_stop_reason = "error"
                             adv_id = None
-                            try:
-                                adv = self.storage.create_advisory(scan_id=scan_id, stop_reason="error")
-                                adv_id = adv.get("advisory_id")
-                            except Exception:
-                                pass
-                            try:
-                                self.storage.record_scan_end(scan_id=scan_id, status="error", stop_reason="error")
-                            except Exception:
-                                pass
-                            st = self.get_scan_status()
-                            st["state"] = "error"
-                            st["stop_reason"] = "error"
-                            st["advisory_id"] = adv_id
-                            self.last_scan_status = st
-                        else:
-                            self.current_scan_state = "done"
-                            if self.current_stop_reason is None:
-                                self.current_stop_reason = "user"
-                            adv_id = None
-                            if status_file.exists():
+                            if not self._has_advisory_for_scan(scan_id):
                                 try:
-                                    with open(str(status_file), "r", encoding="utf-8") as f:
-                                        sdata = json.load(f)
-                                        adv_id = sdata.get("advisory_id")
+                                    adv = self.storage.create_advisory(scan_id=scan_id, stop_reason="error")
+                                    adv_id = adv.get("advisory_id")
                                 except Exception:
                                     pass
                             if not adv_id:
                                 try:
-                                    adv = self.storage.create_advisory(scan_id=scan_id, stop_reason=self.current_stop_reason)
-                                    adv_id = adv.get("advisory_id")
+                                    conn = self.storage._get_connection()
+                                    row = conn.execute("SELECT advisory_id FROM advisories WHERE scan_id = ?;", (scan_id,)).fetchone()
+                                    if row:
+                                        adv_id = row["advisory_id"]
                                 except Exception:
                                     pass
                             try:
-                                self.storage.record_scan_end(scan_id=scan_id, status="complete", stop_reason=self.current_stop_reason)
+                                self.storage.record_scan_end(scan_id=scan_id, status="error", stop_reason="error")
                             except Exception:
                                 pass
-                            st = self.get_scan_status()
-                            st["state"] = "done"
-                            st["stop_reason"] = self.current_stop_reason
-                            st["advisory_id"] = adv_id
+                            st = self._build_final_status(final_st, scan_id, "error", "error", adv_id)
+                            self.last_scan_status = st
+                        else:
+                            # Exit 0: prefer pipeline's own final status file
+                            if final_st and final_st.get("stop_reason"):
+                                eff_reason = final_st["stop_reason"]
+                            elif self.current_stop_reason:
+                                eff_reason = self.current_stop_reason
+                            else:
+                                eff_reason = "user"
+                            self.current_scan_state = "done"
+                            self.current_stop_reason = eff_reason
+                            adv_id = final_st.get("advisory_id") if final_st else None
+                            if not adv_id and not self._has_advisory_for_scan(scan_id):
+                                try:
+                                    adv = self.storage.create_advisory(scan_id=scan_id, stop_reason=eff_reason)
+                                    adv_id = adv.get("advisory_id")
+                                except Exception:
+                                    pass
+                            if not adv_id:
+                                try:
+                                    conn = self.storage._get_connection()
+                                    row = conn.execute("SELECT advisory_id FROM advisories WHERE scan_id = ?;", (scan_id,)).fetchone()
+                                    if row:
+                                        adv_id = row["advisory_id"]
+                                except Exception:
+                                    pass
+                            try:
+                                self.storage.record_scan_end(scan_id=scan_id, status="complete", stop_reason=eff_reason)
+                            except Exception:
+                                pass
+                            st = self._build_final_status(final_st, scan_id, "done", eff_reason, adv_id)
                             self.last_scan_status = st
 
                         self.current_scan_proc = None
@@ -476,11 +827,12 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                         self.current_scan_state = "error"
                         self.current_stop_reason = "error"
                         adv_id = None
-                        try:
-                            adv = self.storage.create_advisory(scan_id=scan_id, stop_reason="error")
-                            adv_id = adv.get("advisory_id")
-                        except Exception:
-                            pass
+                        if not self._has_advisory_for_scan(scan_id):
+                            try:
+                                adv = self.storage.create_advisory(scan_id=scan_id, stop_reason="error")
+                                adv_id = adv.get("advisory_id")
+                            except Exception:
+                                pass
                         try:
                             self.storage.record_scan_end(scan_id=scan_id, status="error", stop_reason="error")
                         except Exception:
@@ -498,6 +850,72 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                     log_f.close()
                 except Exception:
                     pass
+
+    def _camera_running(self) -> Tuple[bool, Optional[Tuple[int, Dict[str, Any]]]]:
+        """(True, None) while a walk's camera is up; else (False, the §1.7/§1.8 error to send)."""
+        state = self.get_scan_status().get("state")
+        if state not in ("starting", "scanning") or self.current_live_dir is None:
+            return False, (409, {"error": "camera_idle"})
+        proc = getattr(self, "current_scan_proc", None)
+        if proc is not None and proc.poll() is not None:
+            # The scan subprocess is gone while the walk still says it is running.
+            return False, (503, {"error": "camera_unavailable"})
+        return True, None
+
+    def get_camera_frame(self) -> Tuple[int, Any, Dict[str, str]]:
+        """
+        Spec §1.7: (status, body, headers). Body is JPEG bytes on 200, None on
+        204, a JSON-able dict otherwise.
+        """
+        running, err = self._camera_running()
+        if not running:
+            return err[0], err[1], {}
+        preview = read_preview(self.current_live_dir)
+        if preview is None:
+            return 204, None, {"Cache-Control": "no-store"}
+        jpeg, meta = preview
+        return 200, jpeg, {
+            "Content-Type": "image/jpeg",
+            "Cache-Control": "no-store",
+            "X-Frame-Seq": str(int(meta.get("seq", 0))),
+            "X-Frame-UTC": str(meta.get("utc") or ""),
+            "X-Frame-Source": "replay" if meta.get("source") == "replay" else "camera",
+        }
+
+    def capture(self, scan_id: Optional[str]) -> Tuple[int, Dict[str, Any]]:
+        """Spec §1.8: asks the scan subprocess to check the frame it sees now."""
+        if not scan_id or scan_id != self.current_scan_id:
+            return 404, {"error": "no_such_scan"}
+        if self.get_scan_status().get("state") != "scanning":
+            return 409, {"error": "not_scanning"}
+        running, err = self._camera_running()
+        if not running:
+            return err
+        if not self.capture_lock.acquire(False):
+            return 429, {"error": "capture_busy"}
+        try:
+            self.capture_counter += 1
+            result = request_capture(self.current_live_dir, self.capture_counter)
+            if result is None:
+                return 503, {"error": "camera_unavailable", "detail": "the scan did not answer the capture in time"}
+            if "error" in result:
+                code = 409 if result.get("error") == "not_scanning" else 503
+                return code, result
+            # The pod's own fix when the frame had one, else the phone's (§1.4).
+            return 200, place_capture(result, self.storage.get_scan_track(scan_id))
+        finally:
+            self.capture_lock.release()
+
+    def captured_photo(self, media_id: str) -> Optional[bytes]:
+        """A Capture's JPEG from the data card, or None."""
+        if not is_safe_media_id(media_id):
+            return None
+        path = self.storage.data_dir / "media" / (media_id + ".jpg")
+        try:
+            with open(str(path), "rb") as f:
+                return f.read()
+        except OSError:
+            return None
 
     def stop_scan(self, reason: str = "user", wait_timeout: float = 30.0) -> Tuple[int, Dict[str, Any]]:
         with self.scan_lock:
@@ -519,12 +937,16 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                     self.current_scan_state = "error"
                     self.current_stop_reason = "error"
                     adv_id = None
+                    if not self._has_advisory_for_scan(active_scan_id):
+                        try:
+                            adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason="error")
+                            adv_id = adv.get("advisory_id")
+                        except Exception:
+                            pass
                     try:
-                        adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason="error")
-                        adv_id = adv.get("advisory_id")
+                        self.storage.record_scan_end(scan_id=active_scan_id, status="error", stop_reason="error")
                     except Exception:
                         pass
-                    self.storage.record_scan_end(scan_id=active_scan_id, status="error", stop_reason="error")
                     st = self.get_scan_status()
                     st["state"] = "error"
                     st["stop_reason"] = "error"
@@ -534,12 +956,16 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                     self.current_scan_state = "done"
                     self.current_stop_reason = effective_reason
                     adv_id = None
+                    if not self._has_advisory_for_scan(active_scan_id):
+                        try:
+                            adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason=effective_reason)
+                            adv_id = adv.get("advisory_id")
+                        except Exception:
+                            pass
                     try:
-                        adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason=effective_reason)
-                        adv_id = adv.get("advisory_id")
+                        self.storage.record_scan_end(scan_id=active_scan_id, status="complete", stop_reason=effective_reason)
                     except Exception:
                         pass
-                    self.storage.record_scan_end(scan_id=active_scan_id, status="complete", stop_reason=effective_reason)
                     st = self.get_scan_status()
                     st["state"] = "done"
                     st["stop_reason"] = effective_reason
@@ -574,11 +1000,20 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                             pass
                         self.current_scan_state = "done"
                         adv_id = None
-                        try:
-                            adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason="interrupted")
-                            adv_id = adv.get("advisory_id")
-                        except Exception:
-                            pass
+                        if not self._has_advisory_for_scan(active_scan_id):
+                            try:
+                                adv = self.storage.create_advisory(scan_id=active_scan_id, stop_reason="interrupted")
+                                adv_id = adv.get("advisory_id")
+                            except Exception:
+                                pass
+                        if not adv_id:
+                            try:
+                                conn = self.storage._get_connection()
+                                row = conn.execute("SELECT advisory_id FROM advisories WHERE scan_id = ?;", (active_scan_id,)).fetchone()
+                                if row:
+                                    adv_id = row["advisory_id"]
+                            except Exception:
+                                pass
                         try:
                             self.storage.record_scan_end(scan_id=active_scan_id, status="interrupted", stop_reason="interrupted")
                         except Exception:
@@ -587,6 +1022,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
                         st["state"] = "done"
                         st["stop_reason"] = "interrupted"
                         st["advisory_id"] = adv_id
+                        st["scan_id"] = active_scan_id
                         self.last_scan_status = st
                         self.current_scan_proc = None
 
@@ -623,7 +1059,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
 
         def _worker():
             try:
-                from edge.mast_collector import MastCollector
+                from edge.mast_data_collector import MastCollector
                 collector = MastCollector(storage=self.storage)
                 res = collector.collect()
                 if isinstance(res, dict) and res.get("status") == "ok":
@@ -673,6 +1109,16 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                 self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_bytes(self, status_code: int, body: bytes, headers: Dict[str, str]) -> None:
+        """A non-JSON response: the live preview and captured photos."""
+        self.send_response(status_code)
+        for k, v in headers.items():
+            self.send_header(k, v)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        if body:
+            self.wfile.write(body)
 
     def _send_error_json(self, status_code: int, error: str, detail: Optional[str] = None, extra_headers: Optional[Dict[str, str]] = None) -> None:
         payload = {"error": error}
@@ -786,9 +1232,24 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                     self._send_json_response(200, advisory)
                 return
 
-            # Route: GET /api/v1/media/<id> (§A5, §A10)
+            # Route: GET /api/v1/camera/frame.jpg (Spec §1.7)
+            if path == "/api/v1/camera/frame.jpg":
+                code, body, headers = self.server.get_camera_frame()
+                if code == 200:
+                    self._send_bytes(200, body, headers)
+                elif code == 204:
+                    self._send_bytes(204, b"", headers)
+                else:
+                    self._send_json_response(code, body)
+                return
+
+            # Route: GET /api/v1/media/<id> (§A5, §A10; captured photos per Spec §1.8)
             media_match = re.match(r"^/api/v1/media/([^/]+)$", path)
             if media_match:
+                photo = self.server.captured_photo(urllib.parse.unquote(media_match.group(1)))
+                if photo is not None:
+                    self._send_bytes(200, photo, {"Content-Type": "image/jpeg"})
+                    return
                 # Per §A5/§A10: Media endpoint is out of demo critical path; retention pruned
                 self._send_json_response(410, {"error": "gone", "reason": "retention_pruned"})
                 return
@@ -904,7 +1365,7 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                     f.write(image_bytes)
 
                 # Process trap card through Model B job
-                from edge.trap_job import process_trap_image
+                from edge.trap_insect_counting_job import process_trap_image
                 try:
                     job_res = process_trap_image(
                         image_path=saved_path,
@@ -1015,6 +1476,64 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                 self._send_json_response(code, resp)
                 return
 
+            # Route: POST /api/v1/scan/track (Spec §1.4 / Item E)
+            if path == "/api/v1/scan/track":
+                content_length = self.headers.get("Content-Length")
+                if not content_length:
+                    self._send_error_json(400, "bad_request", "Missing Content-Length header")
+                    return
+                try:
+                    length = int(content_length)
+                    raw_body = self.rfile.read(length)
+                    body_json = json.loads(raw_body.decode("utf-8")) if raw_body else {}
+                except Exception as ex:
+                    self._send_error_json(400, "bad_request", "Malformed JSON: %s" % ex)
+                    return
+
+                if not isinstance(body_json, dict):
+                    self._send_error_json(400, "bad_request", "JSON object payload expected")
+                    return
+
+                scan_id = body_json.get("scan_id")
+                fixes = body_json.get("fixes")
+                if not scan_id or not isinstance(scan_id, str):
+                    self._send_error_json(400, "bad_request", "scan_id is required")
+                    return
+                if fixes is None or not isinstance(fixes, list):
+                    self._send_error_json(400, "bad_request", "fixes list is required")
+                    return
+                if len(fixes) > 500:
+                    self._send_error_json(400, "bad_request", "Batch size exceeds maximum limit of 500 fixes")
+                    return
+
+                # Check if scan exists in DB (Fix 8: 404 unknown_scan)
+                conn = self.server.storage._get_connection()
+                srow = conn.execute("SELECT scan_id FROM scans WHERE scan_id = ?;", (scan_id.strip(),)).fetchone()
+                if not srow:
+                    self._send_error_json(404, "unknown_scan", "Scan ID '%s' not found" % scan_id)
+                    return
+
+                res = self.server.storage.record_scan_track(scan_id=scan_id.strip(), fixes=fixes)
+                self._send_json_response(200, {"accepted": res["accepted"]})
+                return
+
+            # Route: POST /api/v1/scan/capture (Spec §1.8)
+            if path == "/api/v1/scan/capture":
+                scan_id = None
+                content_length = self.headers.get("Content-Length")
+                if content_length:
+                    try:
+                        raw_body = self.rfile.read(int(content_length))
+                        body_json = json.loads(raw_body.decode("utf-8")) if raw_body else {}
+                        if isinstance(body_json, dict) and body_json.get("scan_id"):
+                            scan_id = str(body_json["scan_id"])
+                    except Exception:
+                        self._send_error_json(400, "bad_request", "Malformed JSON body")
+                        return
+                code, resp = self.server.capture(scan_id)
+                self._send_json_response(code, resp)
+                return
+
             # Route: POST /api/v1/scan/stop (Spec §1.5)
             if path == "/api/v1/scan/stop":
                 reason = "user"
@@ -1062,20 +1581,35 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                             if self.server.current_scan_proc is None or self.server.current_scan_proc.poll() is not None:
                                 break
                             time.sleep(0.5)
-                        if self.server.current_scan_proc is not None and self.server.current_scan_proc.poll() is None:
-                            try:
-                                self.server.current_scan_proc.kill()
-                            except Exception:
-                                pass
-                            active_id = self.server.current_scan_id
-                            self.server.current_stop_reason = "interrupted"
-                            self.server.current_scan_state = "done"
-                            try:
-                                self.server.storage.create_advisory(scan_id=active_id, stop_reason="interrupted")
-                                self.server.storage.record_scan_end(scan_id=active_id, status="interrupted", stop_reason="interrupted")
-                            except Exception:
-                                pass
-                            self.server.current_scan_proc = None
+                        with self.server.scan_lock:
+                            if self.server.current_scan_proc is not None and self.server.current_scan_proc.poll() is None:
+                                try:
+                                    self.server.current_scan_proc.kill()
+                                    self.server.current_scan_proc.wait(timeout=1.0)
+                                except Exception:
+                                    pass
+                                active_id = self.server.current_scan_id
+                                self.server.current_stop_reason = "interrupted"
+                                self.server.current_scan_state = "done"
+                                adv_id = None
+                                if not self.server._has_advisory_for_scan(active_id):
+                                    try:
+                                        adv = self.server.storage.create_advisory(scan_id=active_id, stop_reason="interrupted")
+                                        adv_id = adv.get("advisory_id")
+                                    except Exception:
+                                        pass
+                                try:
+                                    self.server.storage.record_scan_end(scan_id=active_id, status="interrupted", stop_reason="interrupted")
+                                except Exception:
+                                    pass
+                                st = self.server.get_scan_status()
+                                st["state"] = "done"
+                                st["stop_reason"] = "interrupted"
+                                if adv_id:
+                                    st["advisory_id"] = adv_id
+                                st["scan_id"] = active_id
+                                self.server.last_scan_status = st
+                                self.server.current_scan_proc = None
                     time.sleep(1.0)
                     try:
                         res = subprocess.run(

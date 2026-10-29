@@ -27,7 +27,7 @@ if str(ROOT) not in sys.path:
 
 import pytest
 
-from edge.storage import EdgeStorage, get_utc_iso_now
+from edge.scan_database import EdgeStorage, get_utc_iso_now
 
 
 def generate_realistic_frame_events(scan_id: str, start_idx: int, count: int) -> List[Dict[str, Any]]:

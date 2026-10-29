@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Regression test suite for calibrated and provisional threshold plumbing in edge/pipeline.py.
+Regression test suite for calibrated and provisional threshold plumbing in edge/scan_pipeline.py.
 
 Guards against Failure Pattern 4 (Green tests hiding defects / silent signature default fallback).
 Asserts that every threshold affecting classification, rejection, and spatial/temporal
-aggregation is explicitly passed as a keyword argument sourced from configs/train_config.py.
+aggregation is explicitly passed as a keyword argument sourced from configs/model_settings.py.
 """
 
 import ast
@@ -14,17 +14,17 @@ import tempfile
 import numpy as np
 import pytest
 
-import configs.train_config as train_config
-from configs.classes import NUM_CLASSES
-from edge.pipeline import (
+import configs.model_settings as train_config
+from configs.disease_classes_model_a import NUM_CLASSES
+from edge.scan_pipeline import (
     DecisionAggregateStoreThread,
     DropOldestQueue,
     load_log_priors,
 )
-from edge.tiler import TileBatch
+from edge.leaf_tile_finder import TileBatch
 
 
-# The mandatory mapping from function parameter name -> config constant name in configs/train_config.py
+# The mandatory mapping from function parameter name -> config constant name in configs/model_settings.py
 EXPECTED_PLUMBING = {
     "decide": {
         "tau_energy": "TAU_ENERGY",
@@ -50,12 +50,12 @@ EXPECTED_PLUMBING = {
 
 def test_static_ast_call_sites_explicitly_pass_config_constants():
     """
-    Statically parses edge/pipeline.py AST to verify that calls to decide(),
+    Statically parses edge/scan_pipeline.py AST to verify that calls to decide(),
     aggregate_frame(), and aggregate_cell() pass every required threshold as an
     explicit keyword argument bound to the exact expected config constant name.
     """
-    pipeline_path = Path(__file__).resolve().parent.parent / "edge" / "pipeline.py"
-    assert pipeline_path.exists(), "edge/pipeline.py does not exist: %s" % pipeline_path
+    pipeline_path = Path(__file__).resolve().parent.parent / "edge" / "scan_pipeline.py"
+    assert pipeline_path.exists(), "edge/scan_pipeline.py does not exist: %s" % pipeline_path
 
     with open(pipeline_path, "r") as f:
         tree = ast.parse(f.read(), filename=str(pipeline_path))
@@ -83,7 +83,7 @@ def test_static_ast_call_sites_explicitly_pass_config_constants():
     for fn_name, expected_params in EXPECTED_PLUMBING.items():
         calls = calls_found[fn_name]
         assert len(calls) > 0, (
-            "Found no call to %s() in edge/pipeline.py!" % fn_name
+            "Found no call to %s() in edge/scan_pipeline.py!" % fn_name
         )
 
         for line_no, kwargs in calls:
@@ -94,18 +94,18 @@ def test_static_ast_call_sites_explicitly_pass_config_constants():
                     % (fn_name, line_no, param_name, param_name, expected_const)
                 )
                 assert kwargs[param_name] == expected_const, (
-                    "Call to %s() at line %d passes '%s=%s', but expected '%s=%s' from configs/train_config.py."
+                    "Call to %s() at line %d passes '%s=%s', but expected '%s=%s' from configs/model_settings.py."
                     % (fn_name, line_no, param_name, kwargs[param_name], param_name, expected_const)
                 )
 
 
 def test_runtime_spy_receives_exact_config_values(monkeypatch):
     """
-    Dynamically spies on edge.pipeline's calls to decide, aggregate_frame, and aggregate_cell
+    Dynamically spies on edge.scan_pipeline's calls to decide, aggregate_frame, and aggregate_cell
     during worker thread execution to verify that runtime kwargs contain and equal the
-    exact values defined in configs/train_config.py.
+    exact values defined in configs/model_settings.py.
     """
-    import edge.pipeline as pipeline_mod
+    import edge.scan_pipeline as pipeline_mod
 
     intercepted = {}
 

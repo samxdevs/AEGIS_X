@@ -363,7 +363,7 @@ Rules: raw values only (the Nano computes VPD, soil %, everything else); any fai
 
 **Nano collector rule:** store `log_epoch` from `/health`. If it ever changes, the mast's flash was wiped and `seq` restarted, so reset the cursor to 0. Only call `/time` when the Nano's own GPS fix and time are valid; a wrong time here corrupts every later timestamp.
 
-**Data flow note:** The mast never pushes sensor data. The Nano Pod pulls `/readings` and `/trap/image`. The Nano-side collector (`edge/mast_collector.py`) and trap processing (`edge/trap_job.py`) are software-side work and are not built yet. The field names in the record format above are the contract; there is no rain field.
+**Data flow note:** The mast never pushes sensor data. The Nano Pod pulls `/readings` and `/trap/image`. The Nano-side collector (`edge/mast_data_collector.py`) and trap processing (`edge/trap_insect_counting_job.py`) are software-side work and are not built yet. The field names in the record format above are the contract; there is no rain field.
 
 Bench shortcut: the serial monitor (115200) on the main ESP32 accepts `H` (print health), `S` (sample now), `C` (capture now) and `T<unix seconds>` (set clock).
 

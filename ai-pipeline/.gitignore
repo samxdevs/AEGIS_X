@@ -24,3 +24,7 @@ kaggle/output/
 kaggle/model_b_package/
 .DS_Store
 **/.DS_Store
+
+# local run output
+AI_macbook_test/snapshots/
+pytest_verbose_output.txt

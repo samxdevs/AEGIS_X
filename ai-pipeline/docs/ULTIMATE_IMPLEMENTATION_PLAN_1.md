@@ -182,7 +182,7 @@ printf 'data/\nartifacts/\n__pycache__/\n*.pyc\n.pytest_cache/\n*.engine\n*.onnx
 
 Then copy the pre-tested modules in:
 ```bash
-cp <path>/sih_pipeline_v4/configs/classes.py       configs/
+cp <path>/sih_pipeline_v4/configs/disease_classes_model_a.py       configs/
 cp <path>/sih_pipeline_v4/aggregate.py             core/
 cp <path>/sih_pipeline_v4/rejection.py             core/
 cp <path>/sih_pipeline_v4/thermal.py               core/
@@ -229,7 +229,7 @@ for p in (RAW, INTERIM, PROCESSED, SPLITS, CKPT, ONNX_DIR, ENGINE_DIR, REPORTS):
     p.mkdir(parents=True, exist_ok=True)
 ```
 
-**Build `configs/train_config.py`:**
+**Build `configs/model_settings.py`:**
 ```python
 # ---- SHARED between training and edge. Changing these breaks the engine. ----
 IMAGE_SIZE   = 224      # model input
@@ -265,7 +265,7 @@ TAU_PRIOR   = 1.0       # post-hoc logit adjustment strength
 CELL_K, CELL_N, CELL_MIN_SCORE = 2, 3, 0.55
 ```
 
-**Acceptance:** `python -c "from configs.paths import ROOT; from configs.train_config import N_TILES, ENGINE_BATCH; assert N_TILES == ENGINE_BATCH == 9; print('ok')"`
+**Acceptance:** `python -c "from configs.paths import ROOT; from configs.model_settings import N_TILES, ENGINE_BATCH; assert N_TILES == ENGINE_BATCH == 9; print('ok')"`
 
 **DO NOT:** write `224`, `9`, `0.55` or any path literal anywhere else in the codebase. Import them.
 
@@ -448,9 +448,9 @@ print('not_crop cats:', sorted(a)); print('openset cats:', sorted(b))
 **Depends on:** 6, 7
 **Goal:** One CSV describing every image, with the class mapping decisions recorded.
 
-**Build `train/build_manifest.py`:**
+**Build `train/dataset_build_manifest.py`:**
 - Walk every raw dataset directory
-- Map each source folder name → a canonical class from `configs/classes.py`
+- Map each source folder name → a canonical class from `configs/disease_classes_model_a.py`
 - Emit `splits/all_images.csv` with columns: `path, label, source_dataset, orig_folder`
 - Emit `splits/class_mapping.csv` recording every merge decision — a judge may ask why "brown rust" and "rust" became one class
 
@@ -458,10 +458,10 @@ print('not_crop cats:', sorted(a)); print('openset cats:', sorted(b))
 
 **Acceptance:**
 ```bash
-python train/build_manifest.py
+python train/dataset_build_manifest.py
 python -c "
 import pandas as pd
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 df = pd.read_csv('splits/all_images.csv')
 unknown = set(df.label) - set(CLASS_NAMES)
 assert not unknown, f'labels not in taxonomy: {unknown}'
@@ -471,7 +471,7 @@ print('TOTAL:', len(df))
 ```
 Expect roughly 27,000–30,000 rows. Save the class distribution to `artifacts/reports/class_distribution.txt`.
 
-**DO NOT:** invent class names. Every label must already exist in `configs/classes.py`. If a source folder does not map cleanly, log it and skip — do not guess.
+**DO NOT:** invent class names. Every label must already exist in `configs/disease_classes_model_a.py`. If a source folder does not map cleanly, log it and skip — do not guess.
 
 ---
 
@@ -480,9 +480,9 @@ Expect roughly 27,000–30,000 rows. Save the class distribution to `artifacts/r
 **Depends on:** 8
 **Goal:** Splits where near-duplicate images never straddle train and test.
 
-**Build `train/dedup.py`:** perceptual hash (`imagehash.phash`, hash_size=8), group images with Hamming distance ≤ 5 into a shared `group_id`, and also catch exact MD5 duplicates across the two sugarcane datasets (both are from Maharashtra and may share images). Adds a `group_id` column.
+**Build `train/dataset_dedup.py`:** perceptual hash (`imagehash.phash`, hash_size=8), group images with Hamming distance ≤ 5 into a shared `group_id`, and also catch exact MD5 duplicates across the two sugarcane datasets (both are from Maharashtra and may share images). Adds a `group_id` column.
 
-**Build `train/split.py`:** `StratifiedGroupKFold` grouped on `group_id`, stratified on `label`. Roughly 80/10/10.
+**Build `train/dataset_split.py`:** `StratifiedGroupKFold` grouped on `group_id`, stratified on `label`. Roughly 80/10/10.
 
 Outputs:
 - `splits/train.csv`, `splits/val.csv`, `splits/test_indist.csv`
@@ -490,8 +490,8 @@ Outputs:
 
 **Commands:**
 ```bash
-python train/dedup.py        # ~20-30 min on 30k images
-python train/split.py
+python train/dataset_dedup.py        # ~20-30 min on 30k images
+python train/dataset_split.py
 ```
 
 **Acceptance:**
@@ -519,11 +519,11 @@ print('classes present in all three:', len(set(tr.label)&set(va.label)&set(te.la
 **Depends on:** 9
 **Goal:** Measure whether your labels leak through capture conditions. This produces one of your best slides.
 
-**Build `train/bias_audit.py`:** extract 8 background pixels per image (four corners + four edge midpoints → 24-dim vector), train a `RandomForestClassifier` on **only** those, evaluate on the test split. Chance is 1/31 = 3.2%.
+**Build `train/dataset_background_bias_audit.py`:** extract 8 background pixels per image (four corners + four edge midpoints → 24-dim vector), train a `RandomForestClassifier` on **only** those, evaluate on the test split. Chance is 1/31 = 3.2%.
 
 **Commands:**
 ```bash
-python train/bias_audit.py --out artifacts/reports/bias_audit.json
+python train/dataset_background_bias_audit.py --out artifacts/reports/bias_audit.json
 ```
 
 **Acceptance:** the JSON contains `background_only_accuracy` and `chance_accuracy`. Interpret:
@@ -547,7 +547,7 @@ python train/bias_audit.py --out artifacts/reports/bias_audit.json
 **Depends on:** 9
 **Goal:** Dataset and augmentation code matching the deployment domain.
 
-**Build `train/transforms.py`** — exactly the recipe in `AI_Handbook_4.md` §6.6. The critical elements, and why each is there:
+**Build `train/augmentations_model_a.py`** — exactly the recipe in `AI_Handbook_4.md` §6.6. The critical elements, and why each is there:
 
 | Transform | Why |
 |---|---|
@@ -558,7 +558,7 @@ python train/bias_audit.py --out artifacts/reports/bias_audit.json
 | `CoarseDropout` | Forces use of multiple leaf regions, not one memorised patch |
 | `VerticalFlip(p=0.3)` | A nadir drone view has no natural "up" |
 
-**Build `train/dataset.py`:**
+**Build `train/dataset_loader_model_a.py`:**
 - Reads a split CSV, loads with `cv2.imread` then **`cv2.cvtColor(..., COLOR_BGR2RGB)`**
 - **Slicing-aided fine-tuning:** for each training image, additionally emit 2–4 random 320×320 crops with the same label, so the training distribution matches tile-based inference
 - Pre-resize all images on disk to max side 512 first (one-off) — Paddy Doctor is 1080×1440 and full-size JPEG decode will bottleneck the dataloader
@@ -566,7 +566,7 @@ python train/bias_audit.py --out artifacts/reports/bias_audit.json
 **Acceptance:**
 ```bash
 python -c "
-from train.dataset import build_loaders
+from train.dataset_loader_model_a import build_loaders
 tl, vl = build_loaders()
 x, y = next(iter(tl))
 print(x.shape, x.dtype, float(x.min()), float(x.max()), y.shape)
@@ -584,9 +584,9 @@ Then **visually inspect**: save a 4×4 grid of augmented samples to `artifacts/r
 **Depends on:** 11
 **Goal:** A deliberately plain baseline so the augmentation delta can be measured. **This exists to be beaten.**
 
-**Build `train/model.py`:** flat classification head via `timm.create_model(BACKBONE, pretrained=True, num_classes=num_classes, drop_rate, drop_path_rate)`. Head width is resolved dynamically from `configs/classes.py` at runtime (`len(CLASS_NAMES)`), not a hardcoded literal. Nothing else. No attention modules, no ensembles.
+**Build `train/disease_model_a_efficientnet.py`:** flat classification head via `timm.create_model(BACKBONE, pretrained=True, num_classes=num_classes, drop_rate, drop_path_rate)`. Head width is resolved dynamically from `configs/disease_classes_model_a.py` at runtime (`len(CLASS_NAMES)`), not a hardcoded literal. Nothing else. No attention modules, no ensembles.
 
-**Build `train/train_model_a.py`:** with a `--stage` flag.
+**Build `train/train_disease_model_a.py`:** with a `--stage` flag.
 - Stage 1: standard augmentation only (resize, flip, normalize), no class balancing, no distillation
 - AdamW, discriminative LR (backbone 1e-4, head 1e-3), OneCycle, EMA, AMP
 - **Select checkpoints on macro-F1, never accuracy**
@@ -594,10 +594,10 @@ Then **visually inspect**: save a 4×4 grid of augmented samples to `artifacts/r
 
 **Commands:**
 ```bash
-python train/train_model_a.py --stage 1 --epochs 30 --out artifacts/checkpoints/stage1.pt
+python train/train_disease_model_a.py --stage 1 --epochs 30 --out artifacts/checkpoints/stage1.pt
 ```
 
-**Acceptance:** `stage1_metrics.json` contains `val_macro_f1`, `val_top1`, and `per_class_recall` for all taxonomy classes resolved dynamically from `configs/classes.py`. Record the macro-F1 — it is the "before" number in your headline slide.
+**Acceptance:** `stage1_metrics.json` contains `val_macro_f1`, `val_top1`, and `per_class_recall` for all taxonomy classes resolved dynamically from `configs/disease_classes_model_a.py`. Record the macro-F1 — it is the "before" number in your headline slide.
 
 **DO NOT:** tune anything at this stage. A tuned baseline understates your improvement.
 
@@ -616,7 +616,7 @@ Stage 2 adds, one at a time so you can attribute the gain:
 
 **Commands:**
 ```bash
-python train/train_model_a.py --stage 2 --epochs 30 --out artifacts/checkpoints/stage2.pt
+python train/train_disease_model_a.py --stage 2 --epochs 30 --out artifacts/checkpoints/stage2.pt
 ```
 
 **Acceptance:**
@@ -635,7 +635,7 @@ python train/train_model_a.py --stage 2 --epochs 30 --out artifacts/checkpoints/
 **Depends on:** 13
 **Goal:** The four numbers that go in your PPT, including the uncomfortable one.
 
-**Build `train/evaluate.py`** producing:
+**Build `train/evaluate_disease_model_a.py`** producing:
 
 | Output | File |
 |---|---|
@@ -647,9 +647,9 @@ python train/train_model_a.py --stage 2 --epochs 30 --out artifacts/checkpoints/
 
 **Commands:**
 ```bash
-python train/evaluate.py --ckpt artifacts/checkpoints/stage2.pt --split test_indist
-python train/evaluate.py --ckpt artifacts/checkpoints/stage2.pt --split test_crossdomain
-python train/evaluate.py --ckpt artifacts/checkpoints/stage2.pt --gradcam
+python train/evaluate_disease_model_a.py --ckpt artifacts/checkpoints/stage2.pt --split test_indist
+python train/evaluate_disease_model_a.py --ckpt artifacts/checkpoints/stage2.pt --split test_crossdomain
+python train/evaluate_disease_model_a.py --ckpt artifacts/checkpoints/stage2.pt --gradcam
 ```
 
 **Acceptance:** all five files exist and contain real measured values.
@@ -663,25 +663,25 @@ python train/evaluate.py --ckpt artifacts/checkpoints/stage2.pt --gradcam
 ## STEP 15 — Calibrate all thresholds                       [AGENT] ~45 min
 
 **Depends on:** 14
-**Goal:** Fill in every `None` in `configs/train_config.py` with a fitted value.
+**Goal:** Fill in every `None` in `configs/model_settings.py` with a fitted value.
 
-**Build `train/calibrate.py`** doing four things in this order:
+**Build `train/calibrate_disease_model_a.py`** doing four things in this order:
 
 1. **Temperature scaling** → `T_CAL`. LBFGS on validation NLL.
-2. **Energy threshold** → `TAU_ENERGY`. Use `core.rejection.fit_energy_threshold(id_logits, openset_logits, CROP_COLS, tpr=0.95)`. **`openset_logits` comes from `raw/openset/` — the disjoint categories from STEP 7 — never from `not_crop`.** Report FPR@95TPR and AUROC.
+2. **Energy threshold** → `TAU_ENERGY`. Use `core.unknown_object_rejection.fit_energy_threshold(id_logits, openset_logits, CROP_COLS, tpr=0.95)`. **`openset_logits` comes from `raw/openset/` — the disjoint categories from STEP 7 — never from `not_crop`.** Report FPR@95TPR and AUROC.
 3. **Post-hoc prior strength** → `TAU_PRIOR`. Sweep `[0, 0.25, 0.5, 0.75, 1.0]`, pick the best validation macro-F1.
 4. **Aggregation thresholds** → `TAU_DISEASE`, `TAU_MARGIN`. Grid-sweep both, plot precision/recall for the DISEASE verdict, choose your operating point. Save the plot — it shows you tuned a decision rule rather than guessing a constant.
 
 **Commands:**
 ```bash
-python train/calibrate.py --ckpt artifacts/checkpoints/stage2.pt \
+python train/calibrate_disease_model_a.py --ckpt artifacts/checkpoints/stage2.pt \
     --openset data/raw/openset --write-config
 ```
 
 **Acceptance:**
 ```bash
 python -c "
-from configs.train_config import TAU_ENERGY, T_CAL
+from configs.model_settings import TAU_ENERGY, T_CAL
 assert TAU_ENERGY is not None and T_CAL is not None, 'thresholds not fitted'
 print('TAU_ENERGY', TAU_ENERGY, 'T_CAL', T_CAL)
 "
@@ -705,7 +705,7 @@ Also save `artifacts/reports/ood_metrics.json` with FPR@95TPR and AUROC, and `ar
 **Depends on:** 13
 **Goal:** A model that takes raw uint8 BGR straight from OpenCV and does all preprocessing on the GPU.
 
-**Build `train/export_onnx.py` containing:**
+**Build `train/export_disease_model_a_onnx.py` containing:**
 
 ```python
 class FusedModel(nn.Module):
@@ -755,18 +755,18 @@ assert abs(f1_fused - f1_reference) < 0.005
 
 **Commands:**
 ```bash
-python train/export_onnx.py --ckpt artifacts/checkpoints/stage2.pt \
+python train/export_disease_model_a_onnx.py --ckpt artifacts/checkpoints/stage2.pt \
     --out artifacts/onnx/model_a_fused.onnx --batch 9 --opset 13
 python -m onnxsim artifacts/onnx/model_a_fused.onnx artifacts/onnx/model_a_sim.onnx \
     --overwrite-input-shape input_bgr_uint8:9,224,224,3
-python train/export_onnx.py --verify artifacts/onnx/model_a_sim.onnx
+python train/export_disease_model_a_onnx.py --verify artifacts/onnx/model_a_sim.onnx
 ```
 
 **Acceptance:** all three checks from STEP 16 pass against the **simplified ONNX file**, not just the PyTorch model.
 
 **DO NOT:**
 - Use `dynamic_axes`. Static shapes give TensorRT more to optimise and are more stable on TRT 8.
-- Use batch 8. `ENGINE_BATCH` is 9 and comes from `configs/train_config.py` — the tile grid is 3×3.
+- Use batch 8. `ENGINE_BATCH` is 9 and comes from `configs/model_settings.py` — the tile grid is 3×3.
 - Use opset > 13. TensorRT 8.2 will reject it.
 
 **If it fails:** if the fused graph will not export (permute or uint8 cast unsupported), fall back to the plain model with float RGB input plus explicit `cv2.cvtColor` on the host. The fusion is an optimisation, not a requirement — and the plain path makes the channel conversion visible in code.
@@ -816,7 +816,7 @@ sudo nvpmodel -m 0 && sudo jetson_clocks
 **Depends on:** 18
 **Goal:** Python 3.6-compatible inference that never truncates tiles and never crashes on teardown.
 
-**Build `edge/trt_classifier.py`:**
+**Build `edge/disease_model_runtime_tensorrt.py`:**
 
 ```python
 # NO `import pycuda.autoinit` ANYWHERE IN THIS FILE. See rule R9.
@@ -824,7 +824,7 @@ import numpy as np, cv2, tensorrt as trt, pycuda.driver as cuda
 
 class TRTClassifier:
     def __init__(self, engine_path, batch=9, size=224, num_classes=None):
-        from configs.classes import NUM_CLASSES
+        from configs.disease_classes_model_a import NUM_CLASSES
         num_classes = num_classes or NUM_CLASSES
         # fused graph takes uint8 NHWC BGR — no float conversion on the host
         self.h_in  = cuda.pagelocked_empty((batch, size, size, 3), np.uint8)
@@ -852,7 +852,7 @@ class TRTClassifier:
 
 **Acceptance (on the Nano):**
 ```bash
-python3 edge/trt_classifier.py --selftest --engine artifacts/engines/model_a_fp16.engine
+python3 edge/disease_model_runtime_tensorrt.py --selftest --engine artifacts/engines/model_a_fp16.engine
 ```
 Must print per-batch latency, confirm output shape `(9, 31)`, and exit cleanly with no `LogicError`.
 
@@ -865,7 +865,7 @@ Must print per-batch latency, confirm output shape `(9, 31)`, and exit cleanly w
 **Depends on:** 2
 **Goal:** Reject 92–97% of frames before the model runs. **This is your single biggest optimisation** — worth 10–30×, far more than anything on the GPU.
 
-**Build `edge/frame_gate.py`** — reject a frame unless **all** pass:
+**Build `edge/frame_quality_check.py`** — reject a frame unless **all** pass:
 
 | Check | Method | Reject if |
 |---|---|---|
@@ -875,12 +875,12 @@ Must print per-batch latency, confirm output shape `(9, 31)`, and exit cleanly w
 | Exposure | histogram | clipped at either end |
 | Novelty | scene displacement vs last kept frame | below 60% |
 
-**Build `edge/tiler.py`** — deterministic **3×3 grid, 320×320 tiles, 20% overlap**, keeping only tiles with >40% vegetation (use `core.thermal.vegetation_mask`, which uses an **absolute** ExG threshold, not Otsu). Pad to exactly `N_TILES` so the engine batch always matches.
+**Build `edge/leaf_tile_finder.py`** — deterministic **3×3 grid, 320×320 tiles, 20% overlap**, keeping only tiles with >40% vegetation (use `core.water_stress_thermal.vegetation_mask`, which uses an **absolute** ExG threshold, not Otsu). Pad to exactly `N_TILES` so the engine batch always matches.
 
 **Acceptance:**
 ```bash
-python3 edge/frame_gate.py --selftest    # pass rate on a sample video: expect 3-8%
-python3 edge/tiler.py --selftest         # must ALWAYS return exactly 9 tiles
+python3 edge/frame_quality_check.py --selftest    # pass rate on a sample video: expect 3-8%
+python3 edge/leaf_tile_finder.py --selftest         # must ALWAYS return exactly 9 tiles
 ```
 
 **DO NOT:** use Otsu for the vegetation mask. On a fully closed canopy the ExG histogram is unimodal and Otsu bisects it, reporting ~50% vegetation on a 100% green field.
@@ -892,7 +892,7 @@ python3 edge/tiler.py --selftest         # must ALWAYS return exactly 9 tiles
 **Depends on:** 19, 20
 **Goal:** The complete on-device loop, four threads, using the tested core modules.
 
-**Build `edge/pipeline.py`:**
+**Build `edge/scan_pipeline.py`:**
 
 ```
 Thread 1  capture + GPS/IMU/altitude tagging  -> ring buffer
@@ -922,13 +922,13 @@ def inference_thread(engine_path, tile_q, result_q, stop_evt):
 
 **Use the tested modules for all decisions:**
 ```python
-from core.rejection import decide
-from core.aggregate import aggregate_frame, aggregate_cell
+from core.unknown_object_rejection import decide
+from core.verdict_aggregation import aggregate_frame, aggregate_cell
 ```
 
 **Acceptance:**
 ```bash
-python3 edge/pipeline.py --source test_video.mp4 --dry-run --report
+python3 edge/scan_pipeline.py --source test_video.mp4 --dry-run --report
 ```
 Must print: frames seen, frames passing the gate, tiles classified, per-cell verdicts, and end-to-end scenes/second. Target **2–4 scenes/sec**. Must exit cleanly.
 
@@ -965,7 +965,7 @@ Must print: frames seen, frames passing the gate, tiles classified, per-cell ver
 **Depends on:** 2
 **Goal:** One interface for all sensors, with a simulation mode so nothing blocks on hardware.
 
-**Build `edge/sensors.py`:**
+**Build `edge/gps_and_mast_sensors.py`:**
 
 | Sensor | Reads | Notes |
 |---|---|---|
@@ -977,7 +977,7 @@ Must print: frames seen, frames passing the gate, tiles classified, per-cell ver
 
 Every sensor class needs a `--simulate` mode returning plausible synthetic values, so Parts 5–8 can be built and tested before hardware arrives.
 
-**Acceptance:** `python3 edge/sensors.py --selftest --simulate` prints one reading per sensor with units and a timestamp.
+**Acceptance:** `python3 edge/gps_and_mast_sensors.py --selftest --simulate` prints one reading per sensor with units and a timestamp.
 
 **DO NOT:** leave auto-white-balance on. A camera that re-balances every frame makes colourimetry meaningless, and STEP 25 depends on it.
 
@@ -988,10 +988,10 @@ Every sensor class needs a `--simulate` mode returning plausible synthetic value
 **Depends on:** 23
 **Goal:** Irrigation advice from a closed-form equation (advisory-only prescriptions for manual farmer execution; autonomous actuation is dropped). No model.
 
-**Use `core/thermal.py` — already written and tested.** Do not reimplement.
+**Use `core/water_stress_thermal.py` — already written and tested.** Do not reimplement.
 
 ```python
-from core.thermal import canopy_temperature, cwsi
+from core.water_stress_thermal import canopy_temperature, cwsi
 tc, info = canopy_temperature(thermal_frame, air_temp_c=ta, veg_fraction=veg_frac)
 if tc is None:
     log_rejection(info)     # 'no_vegetation_bare_soil' | 'implausibly_cold' | ...
@@ -1039,7 +1039,7 @@ else:
 **Depends on:** 23
 **Goal:** Survey-pass stress mapping using RGB vegetation indices and dormant dual-bandpass IMX219-77IR + DB660/850 NDVI.
 
-Use `core/indices.py` and `core/ndvi.py`:
+Use `core/vegetation_indices.py` and `core/ndvi_nir_camera.py`:
 - Compute ExG, VARI, TGI, NGRDI, GMR, DGCI per grid cell; segment canopy using absolute ExG (`PROVISIONAL_EXG_VEG_THRESHOLD = 20`) rather than Otsu, and enforce minimum canopy floor (`PROVISIONAL_MIN_CANOPY_FRACTION = 0.15`).
 - Dual-bandpass NDVI (660nm Red, 850nm NIR): counterintuitive Bayer mapping (Blue=NIR, Red=660nm). Cross-talk unmixing via `apply_channel_response_correction` raises `NotImplementedError` until bench calibration matrix $K^{-1}$ is measured (`scripts/calibrate_dual_bandpass.py`). Empirical line calibration (ELM) with reference panels requires confirmed reflectances.
 - Commercial 5-band multispectral and hyperspectral cameras are explicitly out of scope due to cost (₹40k–₹25L+), payload mass (500g–1.5kg), and offline workstation GPU processing requirements that contradict the edge-computing architecture.
@@ -1055,7 +1055,7 @@ Use `core/indices.py` and `core/ndvi.py`:
 **Depends on:** 23
 **Goal:** Drought, flood, heat and disease-favourable alerts from thresholds over time series.
 
-**Build `edge/rules_engine.py`:**
+**Build `edge/advice_rules_engine.py`:**
 
 | Risk | Rule |
 |---|---|
@@ -1133,7 +1133,7 @@ rules_engine → structured finding (JSON) → LLM API → readable text
 **Depends on:** 6
 **Goal:** A tiny CNN classifying 64×64 insect crops.
 
-**Build `train/train_model_b.py`:**
+**Build `train/train_insect_model_b.py`:**
 - Architecture: `TrapPestCNN` from `AI_Handbook_4.md` §7.5.2 — 4 conv blocks, ~150k params, **from scratch** (the task is genuinely simple: uniform background, fixed scale, controlled lighting)
 - Classes: your target pests + **`not_pest`** (dust, debris, and **beneficials** — distinguishing pests from natural enemies is agronomically meaningful and a good detail to mention)
 - Data: **RP11** (rice-specific IP102 refinement, re-annotated — prefer it over raw IP102), plus sticky-trap datasets, plus **synthetic composites**: paste segmented insects onto real yellow trap backgrounds at random positions and rotations. Cheap and very effective here.
@@ -1149,10 +1149,10 @@ rules_engine → structured finding (JSON) → LLM API → readable text
 **Depends on:** 29, 30
 **Goal:** JPEG in, per-species counts out.
 
-**Build `gateway/trap_count.py`. Use `core/trap_segmentation.py` — already written and tested.**
+**Build `gateway/trap_count.py`. Use `core/trap_insect_segmentation.py` — already written and tested.**
 
 ```python
-from core.trap_segmentation import segment_trap_blobs
+from core.trap_insect_segmentation import segment_trap_blobs
 blobs = segment_trap_blobs(bgr, min_area=8, max_area=1200, abs_floor_px=ABS_FLOOR)
 ```
 
@@ -1185,7 +1185,7 @@ Store daily counts in SQLite; alert when a count crosses the published ETL, or w
 
 **Depends on:** 21, 27
 
-**Build `edge/storage.py`:** SQLite on device, surviving connectivity loss. Tables: `frames`, `cell_verdicts`, `sensor_readings`, `trap_counts`, `alerts`. Opportunistic sync when a network appears.
+**Build `edge/scan_database.py`:** SQLite on device, surviving connectivity loss. Tables: `frames`, `cell_verdicts`, `sensor_readings`, `trap_counts`, `alerts`. Opportunistic sync when a network appears.
 
 **Build `dashboard/app.py`:** Streamlit or Flask.
 - Field map with per-cell colour by verdict — and **all four states must be visually distinct**: `DISEASE` / `HEALTHY` / `UNCERTAIN` / `NO_DATA`. Grey for NO_DATA means "re-fly", green for HEALTHY means "don't spray". Conflating them is a real bug that the tested `aggregate_cell` now prevents.
@@ -1204,7 +1204,7 @@ Store daily counts in SQLite; alert when a count crosses the published ETL, or w
 
 **Commands:**
 ```bash
-python3 edge/pipeline.py --config configs/field_demo.yaml --duration 600 --report
+python3 edge/scan_pipeline.py --config configs/field_demo.yaml --duration 600 --report
 ```
 
 **Acceptance — a 10-minute continuous run producing:**

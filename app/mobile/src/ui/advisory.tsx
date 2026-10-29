@@ -32,7 +32,7 @@ import {
 import type { Tone } from './components.tsx';
 import { EvidenceBar, Meter, Stat } from './charts.tsx';
 import { ProgressBar, SproutIcon } from './tiles.tsx';
-import { color, radius, shadow, space, type } from './theme.ts';
+import { color, radius, shadow, space, type, themed } from './theme.ts';
 import type {
   Advisory,
   AdvisoryInput,
@@ -41,8 +41,12 @@ import type {
   GrowthStage,
   InputStatus,
 } from '../schema/advisory.ts';
+import { isPhoneGpsPod } from '../schema/advisory.ts';
 import { DRIED_LEAF_CAVEAT, DRIED_LEAF_CLASS, describeClass } from '../schema/classes.ts';
+import { recallPercent } from '../schema/reliability.ts';
 import { presentVerification, renderAction } from '../schema/templates.ts';
+import { sourceLine } from '../scan/report.ts';
+import { VerdictIcon } from './verdict-icon.tsx';
 import type { Language } from '../schema/templates.ts';
 import type { AdvisoryOrigin } from '../db/advisories.ts';
 import type { Violation } from '../schema/validate.ts';
@@ -211,25 +215,38 @@ export function CropHealthCard({
 
   const total = health.frames_evaluated;
   const other = Math.max(0, total - health.frames_agreeing - health.frames_uncertain);
+  // The findings card, with the full reliability panel, sits behind Details, so
+  // the one line that says how far to trust a disease call stays up here.
+  const recall = health.state === 'DISEASE' && topClass ? recallPercent(topClass) : null;
 
   return (
     <View style={[s.verdictCard, { borderColor: t.border }]}>
       {/* The band carries the state colour; the words carry the state. Never
           one without the other — this has to read in sun and in grayscale. */}
       <View style={[s.verdictBand, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
-        <Text style={[type.title, { color: t.fg }]}>
-          {tr(HEALTH_HEADLINE[health.state] ?? String(health.state))}
-        </Text>
-        {described ? (
-          <Text style={[type.label, { color: t.fg, marginTop: 4 }]}>{described.label}</Text>
-        ) : health.crop ? (
-          <Text style={[type.label, { color: t.fg, marginTop: 4 }]}>
-            {health.crop.charAt(0).toUpperCase() + health.crop.slice(1)}
-          </Text>
-        ) : null}
-        <Text style={[type.small, { color: t.fg, marginTop: 6, opacity: 0.9 }]}>
+        <View style={s.verdictHead}>
+          <VerdictIcon tone={tone} size={52} plate={color.card} />
+          <View style={{ flex: 1 }}>
+            <Text style={[type.title, { color: t.fg, fontSize: 22, lineHeight: 27 }]}>
+              {tr(HEALTH_HEADLINE[health.state] ?? String(health.state))}
+            </Text>
+            {described ? (
+              <Text style={[type.label, { color: t.fg, marginTop: 3 }]}>{described.label}</Text>
+            ) : health.crop ? (
+              <Text style={[type.label, { color: t.fg, marginTop: 3 }]}>
+                {health.crop.charAt(0).toUpperCase() + health.crop.slice(1)}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        <Text style={[type.small, { color: t.fg, marginTop: space.md, opacity: 0.9 }]}>
           {tr(HEALTH_BODY[health.state] ?? '')}
         </Text>
+        {recall ? (
+          <Text style={[type.label, { color: color.destructive, marginTop: space.sm }]}>
+            {tr('Right {pct} of the time in tests on new cameras. Check by eye before acting.', { pct: recall })}
+          </Text>
+        ) : null}
       </View>
 
       <View style={{ paddingHorizontal: space.lg, paddingVertical: space.md }}>
@@ -433,6 +450,7 @@ export function GrowthStageCard({ stage }: { stage: GrowthStage }) {
 const INPUT_LABEL: Record<string, string> = {
   pod_thermal: msg('Pod thermal camera'),
   pod_gps: msg('Pod GPS'),
+  phone_gps: msg('Phone GPS'),
   pod_camera_rgb: msg('Pod colour camera'),
   pod_ndvi: msg('Pod infrared camera'),
   mast_ambient: msg('Air temp / humidity'),
@@ -444,6 +462,7 @@ const INPUT_LABEL: Record<string, string> = {
 const INPUT_SHORT: Record<string, string> = {
   pod_thermal: msg('Thermal'),
   pod_gps: msg('GPS'),
+  phone_gps: msg('Phone GPS'),
   pod_camera_rgb: msg('Camera'),
   pod_ndvi: msg('Infrared'),
   mast_ambient: msg('Air sensor'),
@@ -514,6 +533,16 @@ function isReplayThermal(input: AdvisoryInput, thermalReason?: string | null): b
 }
 
 /**
+ * `pod_gps` when the positions in this report came from the phone.
+ *
+ * The pod's receiver was not used, which is a statement about this report and
+ * not a fault, so it is neutral. Showing NOT CONNECTED would be wrong when the
+ * pod's GPS is fine, and a warning would send someone to fix nothing.
+ */
+const PHONE_GPS_LABEL = msg('NOT USED: PHONE GPS');
+const PHONE_GPS_BODY = msg("Positions in this report came from the phone's GPS.");
+
+/**
  * What the advisory was built from.
  *
  * Contract v1.0 trimmed this block to name, node and status — there are no
@@ -525,9 +554,11 @@ function isReplayThermal(input: AdvisoryInput, thermalReason?: string | null): b
 export function InputsCard({
   inputs,
   thermalReason,
+  gpsSource,
 }: {
   inputs: AdvisoryInput[];
   thermalReason?: string | null;
+  gpsSource?: string | null;
 }) {
   if (!inputs || inputs.length === 0) {
     return (
@@ -547,12 +578,15 @@ export function InputsCard({
   // Folded: how many sensors fed this scan, and what is up with the rest.
   // PENDING_CALIBRATION is not "not used" — its direct reading is real and on
   // this screen — so it is named for what it is rather than lumped in.
-  const working = inputs.filter((x) => x.status === 'OK' && !isReplayThermal(x, thermalReason));
+  const working = inputs.filter(
+    (x) => x.status === 'OK' && !isReplayThermal(x, thermalReason) && !isPhoneGpsPod(x, gpsSource),
+  );
   const notWorking = inputs
     .filter((x) => !working.includes(x))
     .map((x) => {
       const name = INPUT_SHORT[x.name] ? tr(INPUT_SHORT[x.name]) : x.name.replace(/_/g, ' ');
       if (isReplayThermal(x, thermalReason)) return tr('{name} not used (replay)', { name });
+      if (isPhoneGpsPod(x, gpsSource)) return tr('{name} not used (phone GPS)', { name });
       const state = INPUT_STATUS_SHORT[String(x.status)];
       return `${name} ${state ? tr(state) : String(x.status).toLowerCase()}`;
     });
@@ -572,13 +606,21 @@ export function InputsCard({
       {inputs.map((input, i) => {
         const status = input.status as InputStatus;
         const replayThermal = isReplayThermal(input, thermalReason);
+        const phoneGps = isPhoneGpsPod(input, gpsSource);
         const label = replayThermal
           ? tr(REPLAY_THERMAL_LABEL)
-          : INPUT_STATUS_LABEL[status]
-            ? tr(INPUT_STATUS_LABEL[status])
-            : String(status).replace(/_/g, ' ');
-        const tone: Tone = replayThermal ? 'neutral' : (INPUT_STATUS_TONE[status] ?? 'bad');
-        const bodyEn = replayThermal ? REPLAY_THERMAL_BODY : INPUT_STATUS_BODY[status];
+          : phoneGps
+            ? tr(PHONE_GPS_LABEL)
+            : INPUT_STATUS_LABEL[status]
+              ? tr(INPUT_STATUS_LABEL[status])
+              : String(status).replace(/_/g, ' ');
+        const tone: Tone =
+          replayThermal || phoneGps ? 'neutral' : (INPUT_STATUS_TONE[status] ?? 'bad');
+        const bodyEn = replayThermal
+          ? REPLAY_THERMAL_BODY
+          : phoneGps
+            ? PHONE_GPS_BODY
+            : INPUT_STATUS_BODY[status];
         const body = bodyEn ? tr(bodyEn) : undefined;
         return (
           <View key={`${input.name}-${i}`}>
@@ -589,7 +631,11 @@ export function InputsCard({
                   {INPUT_LABEL[input.name] ? tr(INPUT_LABEL[input.name]) : input.name.replace(/_/g, ' ')}
                 </Text>
                 <Text style={[type.valueSmall, { color: color.fgSubtle, marginTop: 3 }]}>
-                  {input.source_node === 'POD' ? tr('on the pod you carry') : tr('on the field station')}
+                  {input.source_node === 'POD'
+                    ? tr('on the pod you carry')
+                    : input.source_node === 'PHONE'
+                      ? tr("on the farmer's phone")
+                      : tr('on the field station')}
                 </Text>
               </View>
               <StatusChip label={label} tone={tone} />
@@ -621,9 +667,10 @@ const CONFIDENCE_HI: Record<string, string> = { high: 'उच्च', medium: '�
  *
  * Three things are non-negotiable here and all three come from the registry:
  *
- *   advisory_only appears on every action, per-action rather than once at the
- *   bottom, so it cannot scroll out of view. Actuation was dropped from scope
- *   and the UI must not imply otherwise.
+ *   advisory_only is stated once at the foot of the card, in a sentence that
+ *   stays visible ("AEGIS only advises..."), and as a chip under "Why?". An
+ *   action that is NOT advisory-only gets a red chip in plain sight instead.
+ *   Actuation was dropped from scope and the UI must not imply otherwise.
  *
  *   The verification badge renders from the structural enum, so switching to
  *   Hindi cannot drop it — which is the failure mode §1.2 exists to prevent.
@@ -641,6 +688,7 @@ export function ActionsCard({
   language?: Language;
   onLanguageChange?: (l: Language) => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
   const toggle = onLanguageChange ? (
     <LanguageToggle value={language} onChange={onLanguageChange} />
   ) : undefined;
@@ -653,9 +701,14 @@ export function ActionsCard({
     );
   }
 
+  // The first step is the one a farmer acts on now. Later steps stay one tap
+  // away, except any carrying a mandatory caution, which never hides.
+  const shown = showAll ? actions : actions.filter((a, i) => i === 0 || presentVerification(a.verification_status, language).mandatory);
+  const hidden = actions.length - shown.length;
+
   return (
     <Card title={language === 'hi' ? 'किसान सलाह' : 'Farmer Advisory'} right={toggle}>
-      {actions.map((a, i) => (
+      {shown.map((a, i) => (
         <ActionRow
           key={`${a.rank}-${a.template_id}`}
           action={a}
@@ -663,6 +716,19 @@ export function ActionsCard({
           first={i === 0}
         />
       ))}
+
+      {actions.length > 1 && (hidden > 0 || showAll) ? (
+        <Pressable
+          onPress={() => setShowAll((o) => !o)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showAll }}
+          style={{ marginTop: space.md, alignSelf: 'flex-start', paddingVertical: 4 }}
+        >
+          <Text style={[type.label, { color: color.primary }]}>
+            {showAll ? tr('Show fewer') : tr('Show {n} more', { n: hidden })}
+          </Text>
+        </Pressable>
+      ) : null}
 
       <Text style={[type.small, { color: color.fgSubtle, marginTop: space.md }]}>
         {language === 'hi'
@@ -708,27 +774,18 @@ function ActionRow({
         </Panel>
       ) : null}
 
-      <View style={[s.chipLine, { marginTop: space.sm }]}>
-        <StatusChip label={v.badge} tone={v.tone as Tone} />
-        <StatusChip
-          label={a.advisory_only ? (hi ? 'केवल सलाह' : 'ADVISORY ONLY') : 'UNLABELLED'}
-          tone={a.advisory_only ? 'good' : 'bad'}
-        />
-        <StatusChip
-          label={
-            hi
-              ? `भरोसा ${CONFIDENCE_HI[a.confidence] ?? String(a.confidence)}`
-              : `CONFIDENCE ${String(a.confidence).toUpperCase()}`
-          }
-          tone={CONFIDENCE_TONE[a.confidence] ?? 'neutral'}
-        />
-        {/* Provenance of the words themselves. The pod has no generative layer,
-            so anything not stamped "template" did not come from it — only that
-            case is worth a chip. */}
-        {a.generated_by !== 'template' ? (
-          <StatusChip label={`WORDING ${String(a.generated_by).toUpperCase()}`} tone="warn" />
-        ) : null}
-      </View>
+      {/* Only an exception earns a chip under the step itself: an action not
+          marked advisory-only, or wording the pod's templates did not write
+          (the pod has no generative layer). The routine source, advisory and
+          confidence chips live behind "Why?", so a normal step reads clean. */}
+      {!a.advisory_only || a.generated_by !== 'template' ? (
+        <View style={[s.chipLine, { marginTop: space.sm }]}>
+          {!a.advisory_only ? <StatusChip label="UNLABELLED" tone="bad" /> : null}
+          {a.generated_by !== 'template' ? (
+            <StatusChip label={`WORDING ${String(a.generated_by).toUpperCase()}`} tone="warn" />
+          ) : null}
+        </View>
+      ) : null}
 
       {!r.localised ? (
         <Panel label="Not translated" tone="warn">
@@ -760,6 +817,18 @@ function ActionRow({
 
       {open ? (
         <View>
+          <View style={[s.chipLine, { marginTop: space.xs, marginBottom: space.xs }]}>
+            <StatusChip label={v.badge} tone={v.tone as Tone} />
+            {a.advisory_only ? <StatusChip label={hi ? 'केवल सलाह' : 'ADVISORY ONLY'} tone="good" /> : null}
+            <StatusChip
+              label={
+                hi
+                  ? `भरोसा ${CONFIDENCE_HI[a.confidence] ?? String(a.confidence)}`
+                  : `CONFIDENCE ${String(a.confidence).toUpperCase()}`
+              }
+              tone={CONFIDENCE_TONE[a.confidence] ?? 'neutral'}
+            />
+          </View>
           {r.rationale ? (
             <Text style={[type.small, { color: color.mutedForeground, marginTop: space.xs }]}>
               {r.rationale}
@@ -838,9 +907,12 @@ export function ScanCard({ advisory }: { advisory: Advisory }) {
   const scan = advisory.scan;
   const health = advisory.crop_health;
   const seconds =
-    scan.ended_utc && !Number.isNaN(Date.parse(scan.ended_utc))
-      ? Math.round((Date.parse(scan.ended_utc) - Date.parse(scan.started_utc)) / 1000)
-      : null;
+    typeof scan.duration_s === 'number'
+      ? scan.duration_s
+      : scan.ended_utc && !Number.isNaN(Date.parse(scan.ended_utc))
+        ? Math.round((Date.parse(scan.ended_utc) - Date.parse(scan.started_utc)) / 1000)
+        : null;
+  const where = sourceLine(advisory);
   const mostDiscarded =
     scan.frames_captured > 0 && scan.frames_evaluated / scan.frames_captured < 0.6;
   const rejectedNotCrop = health?.frames_rejected_not_crop ?? 0;
@@ -909,6 +981,12 @@ export function ScanCard({ advisory }: { advisory: Advisory }) {
         </Text>
       </Row>
 
+      {/* Where the clock and the positions came from. One neutral line: the
+          phone supplying either is an ordinary thing, not a fault. */}
+      {where ? (
+        <Text style={[type.small, { color: color.mutedForeground, marginTop: space.sm }]}>{where}</Text>
+      ) : null}
+
       <ChipRow>
         <Chip label={tr('MODE')} value={modeLabel(scan.mode)} />
         <Chip label={tr('ENGINE')} value={String(advisory.inference_backend).toUpperCase()} />
@@ -929,6 +1007,7 @@ export function formatStamp(iso: string): string {
 }
 
 function modeLabel(mode: unknown): string {
+  if (mode === 'walk') return tr('walk');
   return mode === 'handheld_pod' ? tr('handheld pod') : String(mode).replace(/_/g, ' ');
 }
 
@@ -949,7 +1028,7 @@ function formatDuration(seconds: number): string {
   return tr('{m} min walk', { m: Math.round(seconds / 60) });
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   banner: {
     borderWidth: 1,
     borderRadius: radius.md,
@@ -986,6 +1065,7 @@ const s = StyleSheet.create({
     marginBottom: space.md,
     ...shadow.card,
   },
+  verdictHead: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   verdictBand: {
     paddingHorizontal: space.lg,
     paddingVertical: space.lg,
@@ -1006,4 +1086,4 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+}));

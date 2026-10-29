@@ -44,10 +44,10 @@ const fixtures = readdirSync(FIXTURE_DIR)
 
 // ---- Completeness ---------------------------------------------------------
 
-test('the registry holds exactly the 21 frozen template ids', () => {
-  assert.equal(TEMPLATE_IDS.length, 21);
-  assert.equal(new Set(TEMPLATE_IDS).size, 21, 'a template id is duplicated');
-  assert.equal(Object.keys(TEMPLATES).length, 21);
+test('the registry holds exactly the 22 frozen template ids', () => {
+  assert.equal(TEMPLATE_IDS.length, 22);
+  assert.equal(new Set(TEMPLATE_IDS).size, 22, 'a template id is duplicated');
+  assert.equal(Object.keys(TEMPLATES).length, 22);
 });
 
 test('every template carries both languages, non-empty', () => {

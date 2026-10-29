@@ -3,11 +3,11 @@ tests/test_edge.py
 ------------------
 Unit and regression tests for Section E edge modules:
   1. edge/irrigation_model.py (FAO-56 ET0 Penman-Monteith & Hargreaves, Table 12 Kc, net irrigation)
-  2. edge/adc.py (ADS1115 16-bit ADC, capacitive moisture calibration, mockable driver)
+  2. edge/soil_moisture_adc.py (ADS1115 16-bit ADC, capacitive moisture calibration, mockable driver)
   3. edge/flow.py (YF-S201 Hall-effect turbine flow sensor, accumulator, volume verification)
   4. edge/actuation.py (Fail-safe pump/valve control loop, exception de-assertion, dry-run & leak faults)
   5. edge/lora.py (SX1278 packet framing, CRC16-CCITT, compact telemetry encoding)
-  6. edge/thermal_point.py (MLX90614 single-point IR sensor, CRC-8 PEC, thermal mast cross-check)
+  6. edge/ir_thermometer_mlx90614.py (MLX90614 single-point IR sensor, CRC-8 PEC, thermal mast cross-check)
 
 Note: All tests use synthetic or mocked hardware interfaces. Zero physical hardware access is assumed.
 """
@@ -47,7 +47,7 @@ from edge.irrigation_model import (
     PROVISIONAL_PADDY_RECOVERY_DAYS,
     PROVISIONAL_PADDY_TERMINAL_DRAINAGE_DAYS
 )
-from edge.adc import (
+from edge.soil_moisture_adc import (
     raw_to_voltage,
     voltage_to_moisture_pct,
     get_lsb_voltage,
@@ -55,34 +55,7 @@ from edge.adc import (
     PROVISIONAL_V_DRY,
     PROVISIONAL_V_WET
 )
-from edge.flow import (
-    pulses_to_liters,
-    liters_to_pulses,
-    frequency_to_flow_rate_lpm,
-    FlowMonitor,
-    PROVISIONAL_YF_S201_PULSES_PER_LITER,
-    PROVISIONAL_YF_S201_HZ_PER_LPM
-)
-from edge.actuation import (
-    ActuationController,
-    MockGPIO,
-    PROVISIONAL_MAX_IRRIGATION_DURATION_S,
-    PROVISIONAL_FLOW_DISAGREEMENT_TIMEOUT_S,
-    PROVISIONAL_LEAK_PULSE_THRESHOLD
-)
-from edge.lora import (
-    crc16_ccitt,
-    build_lora_packet,
-    parse_lora_packet,
-    encode_telemetry_payload,
-    decode_telemetry_payload,
-    SX1278Driver,
-    MSG_TELEMETRY,
-    MSG_COMMAND,
-    MSG_ACK,
-    MSG_ALERT
-)
-from edge.thermal_point import (
+from edge.ir_thermometer_mlx90614 import (
     raw_to_celsius_mlx90614,
     celsius_to_raw_mlx90614,
     calculate_smbus_pec,
@@ -251,7 +224,7 @@ def test_section_e_irrigation_net_requirement_and_volume():
 
 
 # ==============================================================================
-# 2. Tests for edge/adc.py
+# 2. Tests for edge/soil_moisture_adc.py
 # ==============================================================================
 
 @pytest.mark.descoped
@@ -318,292 +291,7 @@ def test_section_e_adc_driver_mock_reading():
 
 
 # ==============================================================================
-# 3. Tests for edge/flow.py
-# ==============================================================================
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_flow_pulse_and_rate_conversions():
-    """Verify YF-S201 conversion factors: 450 pulses/L and 7.5 Hz/(L/min)."""
-    # 450 pulses = 1.0 Liter
-    assert pulses_to_liters(450, pulses_per_liter=450.0) == 1.0
-    assert pulses_to_liters(900, pulses_per_liter=450.0) == 2.0
-    assert pulses_to_liters(0, pulses_per_liter=450.0) == 0.0
-
-    # 1.5 Liters = 675 pulses
-    assert liters_to_pulses(1.5, pulses_per_liter=450.0) == 675
-
-    # Frequency conversion: 7.5 Hz = 1.0 L/min; 15.0 Hz = 2.0 L/min
-    assert frequency_to_flow_rate_lpm(7.5, hz_per_lpm=7.5) == 1.0
-    assert frequency_to_flow_rate_lpm(15.0, hz_per_lpm=7.5) == 2.0
-    assert frequency_to_flow_rate_lpm(0.0, hz_per_lpm=7.5) == 0.0
-
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_flow_monitor_accumulation_and_verification():
-    """Verify FlowMonitor accumulation and target volume verification."""
-    monitor = FlowMonitor(pulses_per_liter=450.0, hz_per_lpm=7.5)
-
-    # Interval 1: 450 pulses over 60 seconds (1.0 L delivered, rate = 1.0 L/min)
-    step1 = monitor.record_pulse_delta(delta_pulses=450, elapsed_seconds=60.0, timestamp=100.0)
-    assert step1["total_pulses"] == 450
-    assert step1["delivered_liters"] == 1.0
-    assert abs(step1["current_rate_lpm"] - 1.0) < 1e-2
-
-    # Target not yet reached (target = 2.0 L)
-    assert monitor.is_target_reached(2.0) is False
-
-    # Interval 2: another 450 pulses over 60 seconds (total 2.0 L)
-    step2 = monitor.record_pulse_delta(delta_pulses=450, elapsed_seconds=60.0, timestamp=160.0)
-    assert step2["total_pulses"] == 900
-    assert step2["delivered_liters"] == 2.0
-    assert monitor.is_target_reached(2.0) is True
-
-    # Verification against target 2.0 L within 5% tolerance
-    verif = monitor.verify_delivery(target_liters=2.0, tolerance_pct=0.05)
-    assert verif["within_bounds"] is True
-    assert verif["discrepancy_liters"] == 0.0
-    assert verif["error_pct"] == 0.0
-
-
-# ==============================================================================
-# 4. Tests for edge/actuation.py
-# ==============================================================================
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_actuation_failsafe_normal_and_exception_deassertion():
-    """Verify try...finally context manager guarantees pin deassertion."""
-    mock_gpio = MockGPIO()
-    controller = ActuationController(
-        pump_pin=18,
-        valve_pins={"zone_1": 23, "zone_2": 24},
-        gpio_backend=mock_gpio
-    )
-
-    # Initial state: everything LOW (Normally Closed)
-    assert mock_gpio.get_pin(18) == 0
-    assert mock_gpio.get_pin(23) == 0
-    assert mock_gpio.get_pin(24) == 0
-
-    # 1. Normal session exit deasserts pins
-    with controller.session("zone_1", start_time=1000.0):
-        # Asserted during session
-        assert mock_gpio.get_pin(18) == 1
-        assert mock_gpio.get_pin(23) == 1
-        assert mock_gpio.get_pin(24) == 0
-    # After context exit, verified deasserted
-    assert mock_gpio.get_pin(18) == 0
-    assert mock_gpio.get_pin(23) == 0
-
-    # 2. Unhandled exception in context manager MUST deassert pins
-    with pytest.raises(RuntimeError, match="Simulated crash"):
-        with controller.session("zone_2", start_time=1100.0):
-            assert mock_gpio.get_pin(18) == 1
-            assert mock_gpio.get_pin(24) == 1
-            raise RuntimeError("Simulated crash during irrigation!")
-
-    # Verified fail-safe de-assertion executed despite exception
-    assert mock_gpio.get_pin(18) == 0
-    assert mock_gpio.get_pin(24) == 0
-    assert controller.state == ActuationController.STATE_IDLE
-
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_actuation_flow_disagreement_no_flow_fault():
-    """Verify commanded OPEN with zero flow trips FAULT_NO_FLOW after timeout."""
-    mock_gpio = MockGPIO()
-    controller = ActuationController(
-        pump_pin=18,
-        valve_pins={"zone_1": 23},
-        gpio_backend=mock_gpio,
-        no_flow_timeout_s=15.0
-    )
-
-    t0 = 1000.0
-    controller.start_irrigation("zone_1", start_time=t0)
-    assert controller.state == ActuationController.STATE_IRRIGATING
-
-    # Update at t0 + 10s (within 15s timeout): no fault yet
-    res_10 = controller.update_safety_loop(current_time=t0 + 10.0, flow_pulses_delta=0)
-    assert res_10["state"] == ActuationController.STATE_IRRIGATING
-
-    # Update at t0 + 16s (exceeds 15s timeout): must trip FAULT_NO_FLOW and shut down
-    res_16 = controller.update_safety_loop(current_time=t0 + 16.0, flow_pulses_delta=0)
-    assert res_16["state"] == ActuationController.STATE_FAULT_NO_FLOW
-    assert "No water flow detected" in res_16["fault"]
-
-    # Verify physical pins were driven LOW upon fault trip
-    assert mock_gpio.get_pin(18) == 0
-    assert mock_gpio.get_pin(23) == 0
-
-    # Further irrigation starts are blocked until fault reset
-    with pytest.raises(RuntimeError, match="fault state"):
-        controller.start_irrigation("zone_1", start_time=t0 + 20.0)
-
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_actuation_leak_detection_when_closed():
-    """Verify commanded CLOSED with pulses trips FAULT_LEAK_DETECTED."""
-    mock_gpio = MockGPIO()
-    controller = ActuationController(
-        pump_pin=18,
-        valve_pins={"zone_1": 23},
-        gpio_backend=mock_gpio,
-        leak_pulse_thresh=5
-    )
-
-    # Controller in IDLE state (valves closed)
-    assert controller.state == ActuationController.STATE_IDLE
-
-    # 3 pulses arrive (below threshold of 5)
-    res_3 = controller.update_safety_loop(current_time=100.0, flow_pulses_delta=3)
-    assert res_3["state"] == ActuationController.STATE_IDLE
-
-    # Another 3 pulses arrive (total 6 >= 5 threshold) -> trip FAULT_LEAK_DETECTED
-    res_6 = controller.update_safety_loop(current_time=105.0, flow_pulses_delta=3)
-    assert res_6["state"] == ActuationController.STATE_FAULT_LEAK
-    assert "Hydraulic leak detected" in res_6["fault"]
-
-
-# SCOPE NOTE (7 Sep 2026): Actuation hardware is out of scope. The system produces irrigation prescriptions for manual farmer execution. This module is retained as a validated reference implementation for future closed-loop deployment and is NOT wired into any runtime path.
-@pytest.mark.descoped
-def test_section_e_actuation_watchdog_timeout_cutoff():
-    """Verify continuous runtime exceeding watchdog limit forces shutdown."""
-    mock_gpio = MockGPIO()
-    controller = ActuationController(
-        pump_pin=18,
-        valve_pins={"zone_1": 23},
-        gpio_backend=mock_gpio,
-        max_duration_s=600.0  # 10 minute test watchdog limit
-    )
-
-    t0 = 1000.0
-    controller.start_irrigation("zone_1", start_time=t0)
-
-    # At 500s: valid flow provided -> still IRRIGATING
-    res_500 = controller.update_safety_loop(current_time=t0 + 500.0, flow_pulses_delta=50, flow_rate_lpm=5.0)
-    assert res_500["state"] == ActuationController.STATE_IRRIGATING
-
-    # At 605s: exceeds 600s watchdog -> trips FAULT_WATCHDOG_TIMEOUT
-    res_605 = controller.update_safety_loop(current_time=t0 + 605.0, flow_pulses_delta=50, flow_rate_lpm=5.0)
-    assert res_605["state"] == ActuationController.STATE_FAULT_WATCHDOG
-    assert mock_gpio.get_pin(18) == 0
-
-
-# ==============================================================================
-# 5. Tests for edge/lora.py
-# ==============================================================================
-
-@pytest.mark.descoped
-def test_section_e_lora_crc16_ccitt_standard_vector():
-    """Verify CRC16-CCITT algorithm against standard test vector '123456789' -> 0x29B1."""
-    test_bytes = b"123456789"
-    computed = crc16_ccitt(test_bytes)
-    assert computed == 0x29B1, f"Expected 0x29B1, got 0x{computed:04X}"
-
-
-@pytest.mark.descoped
-def test_section_e_lora_packet_framing_and_parse_roundtrip():
-    """Verify complete LoRa frame serialization, CRC integrity, and deserialization."""
-    node_id = 42
-    msg_type = MSG_TELEMETRY
-    seq_num = 1001
-    payload = b"field_sens_data_sample"
-
-    packet = build_lora_packet(node_id, msg_type, seq_num, payload)
-    assert len(packet) == (8 + len(payload) + 2)
-
-    parsed = parse_lora_packet(packet)
-    assert parsed["valid"] is True
-    assert parsed["status"] == "ok"
-    assert parsed["node_id"] == node_id
-    assert parsed["msg_type"] == msg_type
-    assert parsed["msg_type_name"] == "TELEMETRY"
-    assert parsed["seq_num"] == seq_num
-    assert parsed["payload"] == payload
-
-
-@pytest.mark.descoped
-def test_section_e_lora_corrupted_packet_detection():
-    """Verify corrupted packet rejection (CRC error, invalid sync, truncated buffer)."""
-    packet = build_lora_packet(node_id=1, msg_type=MSG_COMMAND, seq_num=5, payload=b"start_valve_1")
-
-    # 1. Tamper single byte in payload -> CRC_MISMATCH
-    corrupted_payload = bytearray(packet)
-    corrupted_payload[10] ^= 0xFF
-    res_crc = parse_lora_packet(bytes(corrupted_payload))
-    assert res_crc["valid"] is False
-    assert res_crc["status"] == "CRC_MISMATCH"
-
-    # 2. Corrupt sync byte -> INVALID_SYNC
-    corrupted_sync = bytearray(packet)
-    corrupted_sync[0] = 0x00
-    res_sync = parse_lora_packet(bytes(corrupted_sync))
-    assert res_sync["valid"] is False
-    assert res_sync["status"] == "INVALID_SYNC"
-
-    # 3. Truncate packet -> PACKET_TOO_SHORT
-    res_short = parse_lora_packet(packet[:5])
-    assert res_short["valid"] is False
-    assert res_short["status"] == "PACKET_TOO_SHORT"
-
-
-@pytest.mark.descoped
-def test_section_e_lora_telemetry_payload_packing_roundtrip():
-    """Verify 16-byte fixed binary telemetry encoding and decoding."""
-    moisture = 45.50
-    soil_temp = 22.35
-    canopy_temp = 26.80
-    battery = 3950
-    flow_rate = 4.25
-    volume = 1250.75
-    faults = 0x0002
-
-    packed = encode_telemetry_payload(
-        moisture_pct=moisture,
-        soil_temp_c=soil_temp,
-        canopy_temp_c=canopy_temp,
-        battery_mv=battery,
-        flow_rate_lpm=flow_rate,
-        cumulative_liters=volume,
-        fault_flags=faults
-    )
-    assert len(packed) == 16
-
-    unpacked = decode_telemetry_payload(packed)
-    assert abs(unpacked["moisture_pct"] - moisture) < 0.01
-    assert abs(unpacked["soil_temp_c"] - soil_temp) < 0.01
-    assert abs(unpacked["canopy_temp_c"] - canopy_temp) < 0.01
-    assert unpacked["battery_mv"] == battery
-    assert abs(unpacked["flow_rate_lpm"] - flow_rate) < 0.01
-    assert abs(unpacked["cumulative_liters"] - volume) < 0.01
-    assert unpacked["fault_flags"] == faults
-
-
-@pytest.mark.descoped
-def test_section_e_lora_driver_mock_send_receive():
-    """Verify SX1278Driver queue and transmission logic."""
-    driver = SX1278Driver(node_id=10)
-    pkt1 = driver.send(MSG_TELEMETRY, b"payload_1")
-    pkt2 = driver.send(MSG_ALERT, b"leak_alert")
-
-    assert len(driver.tx_buffer) == 2
-    assert driver.seq_num == 2
-
-    # Queue pkt1 into RX and receive it
-    driver.queue_mock_rx(pkt1)
-    recv_res = driver.receive()
-    assert recv_res is not None
-    assert recv_res["valid"] is True
-    assert recv_res["payload"] == b"payload_1"
-
-
-# ==============================================================================
-# 6. Tests for edge/thermal_point.py
+# 6. Tests for edge/ir_thermometer_mlx90614.py
 # ==============================================================================
 
 def test_section_e_thermal_point_raw_to_celsius_conversion():
@@ -1261,7 +949,7 @@ def test_section_e_camera_reference_card_colour_calibration():
 def test_load_log_priors_csv_pandas_equivalence():
     """F2.3: Verify load_log_priors stdlib csv parser matches pandas-based count logic."""
     from pathlib import Path
-    from edge.pipeline import load_log_priors
+    from edge.scan_pipeline import load_log_priors
     repo_root = Path(__file__).resolve().parent.parent
     priors = load_log_priors(repo_root)
 

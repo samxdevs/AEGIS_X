@@ -28,9 +28,9 @@ import cv2
 import numpy as np
 import pytest
 
-from edge.mast_collector import MastCollector
-from edge.sensors import GPS, MastTelemetryReader
-from edge.storage import EdgeStorage, get_utc_iso_now
+from edge.mast_data_collector import MastCollector
+from edge.gps_and_mast_sensors import GPS, MastTelemetryReader
+from edge.scan_database import EdgeStorage, get_utc_iso_now
 from edge.wifi_switch import WiFiSwitch
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -6,13 +6,14 @@
  * rows, so a tile can never disagree with the list it opens.
  */
 
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { AdvisorySummary } from '../db/advisories.ts';
 import { TONE } from './components.tsx';
+import { PressScale } from './motion.tsx';
 import type { Tone } from './components.tsx';
 import { isUnclear, looksHealthy, needsLook } from './scan-row.tsx';
-import { color, radius, shadow, space, type } from './theme.ts';
+import { color, radius, shadow, space, type, themed } from './theme.ts';
 import { tr } from '../i18n/tr.ts';
 
 export type Filter = 'all' | 'look' | 'healthy' | 'unclear';
@@ -45,28 +46,25 @@ export function CountTiles({
         const on = active === t.key;
         const c = TONE[t.tone];
         return (
-          <Pressable
+          <PressScale
             key={t.key}
             onPress={() => onChange(on ? 'all' : t.key)}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
             accessibilityHint={tr('Shows scans that are {what}', { what: t.label })}
-            style={({ pressed }) => [
-              s.tile,
-              on && { borderColor: c.fg, backgroundColor: c.bg },
-              pressed && { opacity: 0.7 },
-            ]}
+            outerStyle={{ flex: 1 }}
+            style={[s.tile, on && { borderColor: c.fg, backgroundColor: c.bg }]}
           >
             <Text style={[type.stat, { color: t.value === 0 ? color.fgSubtle : c.fg }]}>{t.value}</Text>
             <Text style={[type.small, { color: color.mutedForeground }]}>{t.label}</Text>
-          </Pressable>
+          </PressScale>
         );
       })}
     </View>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   tiles: { flexDirection: 'row', gap: space.sm, marginBottom: space.lg },
   tile: {
     flex: 1,
@@ -78,4 +76,4 @@ const s = StyleSheet.create({
     paddingHorizontal: space.md,
     ...shadow.card,
   },
-});
+}));

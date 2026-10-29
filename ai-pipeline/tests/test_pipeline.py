@@ -11,16 +11,16 @@ import numpy as np
 import cv2
 import pytest
 
-from configs.classes import (CLASS_NAMES, NUM_CLASSES, IDX,
+from configs.disease_classes_model_a import (CLASS_NAMES, NUM_CLASSES, IDX,
                              HEALTHY_COLS, NOTCROP_COL, CROP_COLS, DISEASE_COLS)
-from core.aggregate import aggregate_frame, aggregate_cell
-from core.thermal import (canopy_temperature, cwsi,
+from core.verdict_aggregation import aggregate_frame, aggregate_cell
+from core.water_stress_thermal import (canopy_temperature, cwsi,
                           compute_vpd, fit_non_water_stressed_baseline,
                           cross_check_mlx90614, ThermalMastStation,
                           MIN_BASELINE_OBSERVATIONS,
                           PROVISIONAL_BIMODAL_GAP_C,
                           PROVISIONAL_OTSU_MIN_INTERCLASS_VARIANCE_RATIO)
-from core.indices import (vegetation_mask, excess_green,
+from core.vegetation_indices import (vegetation_mask, excess_green,
                           PROVISIONAL_EXG_VEG_THRESHOLD,
                           exg, vari, tgi, ngrdi, gmr, dgci,
                           bgr_to_bandmap, rgb_to_bandmap,
@@ -29,7 +29,7 @@ from core.indices import (vegetation_mask, excess_green,
                           aggregate_index, compute_canopy_index,
                           masked_index_mean, check_frame_usable_for_indices,
                           PROVISIONAL_MIN_CANOPY_FRACTION)
-from core.ndvi import (
+from core.ndvi_nir_camera import (
     ndvi_from_dual_bandpass,
     apply_channel_response_correction,
     apply_empirical_line_calibration,
@@ -38,8 +38,8 @@ from core.ndvi import (
     PROVISIONAL_PANEL_REFLECTANCES,
     PANEL_REFLECTANCES_CONFIRMED
 )
-from core.rejection import open_set_energy, posthoc_logit_adjust, decide
-from core.trap_segmentation import (segment_trap_blobs, verify_fiducial_marker,
+from core.unknown_object_rejection import open_set_energy, posthoc_logit_adjust, decide
+from core.trap_insect_segmentation import (segment_trap_blobs, verify_fiducial_marker,
                                   verify_fiducial_frame, process_trap_frame,
                                   evaluate_trap_counts_against_etl,
                                   MARKER_SPACING_CONFIRMED,
@@ -251,8 +251,8 @@ def test_r3_micro_pests_survive_next_to_a_large_insect():
 
 # -------------------------------------------------------- Section A (Thermal Mast) ---
 def test_section_a_thermal_mast_downwash_rationale_in_docstring():
-    """Section A: verify downwash biophysical rationale is preserved in core/thermal.py docstring."""
-    import core.thermal as th
+    """Section A: verify downwash biophysical rationale is preserved in core/water_stress_thermal.py docstring."""
+    import core.water_stress_thermal as th
     doc = th.__doc__
     assert "rotor downwash" in doc.lower()
     assert "convection" in doc.lower()
@@ -1141,7 +1141,7 @@ def test_prompt3_section_a_dgci_canopy_and_domain_mask_composition():
 
 
 # ==============================================================================
-# Tests for Prompt 3 Section D (core/ndvi.py)
+# Tests for Prompt 3 Section D (core/ndvi_nir_camera.py)
 # ==============================================================================
 
 def test_prompt3_section_d_channel_mapping_and_counterintuitive_derivation():

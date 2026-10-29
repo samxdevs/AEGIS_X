@@ -6,8 +6,8 @@ E1: Cat JSON keys and sed lines for all Task 3 claims.
 Extracts exact lines and JSON values from:
 1. eval_indist.json (Headline in-distribution accuracy & macro-F1)
 2. eval_crossdomain.json (Source-held-out macro-F1 and generalization gap)
-3. configs/train_config.py (T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR)
-4. splits_v3/class_weights.json & configs/train_config.py (Class weighting formula)
+3. configs/model_settings.py (T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR)
+4. splits_v3/class_weights.json & configs/model_settings.py (Class weighting formula)
 5. splits_v3/openset_categories.csv & artifacts/reports/ood_metrics.json (Open-set held-out data)
 """
 import json
@@ -49,8 +49,8 @@ if cross_path.exists():
     print(f"  shortcut_learning_resid : {gap.get('shortcut_learning_residual')}")
 
 # 3. Calibration parameters in train_config.py
-print("\n--- 3. CALIBRATION CONSTANTS (configs/train_config.py) ---")
-train_cfg_path = ROOT / "configs" / "train_config.py"
+print("\n--- 3. CALIBRATION CONSTANTS (configs/model_settings.py) ---")
+train_cfg_path = ROOT / "configs" / "model_settings.py"
 print(f"File: {train_cfg_path.relative_to(ROOT)} lines 25-33:")
 res = subprocess.run(["sed", "-n", "25,33p", str(train_cfg_path)], capture_output=True, text=True)
 print(res.stdout)

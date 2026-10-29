@@ -145,18 +145,18 @@ The implementation plan tells you **when** to build things. This tells you **wha
 
 > Two files disagreeing about a constant is exactly how the batch-8-versus-9-tiles bug happened. Nothing outside `configs/` may hardcode a path or a threshold.
 
-### ☐ `configs/classes.py` — **COPY**, Step 1
-**Source:** `sih_pipeline_v4/configs/classes.py`
+### ☐ `configs/disease_classes_model_a.py` — **COPY**, Step 1
+**Source:** `sih_pipeline_v4/configs/disease_classes_model_a.py`
 **Provides:** `CLASS_NAMES` (31), `NUM_CLASSES`, `IDX`, `HEALTHY_COLS`, `NOTCROP_COL`, `CROP_COLS`, `DISEASE_COLS`
 **MUST NOT:** be edited. If you drop wheat, do it by not populating those classes — do not renumber the taxonomy mid-project.
-**Verify:** `python -c "from configs.classes import NUM_CLASSES, CROP_COLS; assert NUM_CLASSES==31 and len(CROP_COLS)==30; print('ok')"`
+**Verify:** `python -c "from configs.disease_classes_model_a import NUM_CLASSES, CROP_COLS; assert NUM_CLASSES==31 and len(CROP_COLS)==30; print('ok')"`
 
 ### ☐ `configs/paths.py` — BUILD, Step 2
 **Must contain:** `ROOT`, `DATA`, `RAW`, `INTERIM`, `PROCESSED`, `SPLITS`, `ARTIFACTS`, `CKPT`, `ONNX_DIR`, `ENGINE_DIR`, `REPORTS`, plus per-dataset dirs (`PADDY`, `SUGAR_THITE`, `SUGAR_DAPHAL`, `PLANTDOC`, `PLANTWILD`, `NOTCROP`, `OPENSET`). Must `mkdir(parents=True, exist_ok=True)` on import.
 **Must use:** `pathlib.Path`, all paths relative to `ROOT` — never absolute.
 **Verify:** `python -c "from configs.paths import ROOT, OPENSET; print(ROOT, OPENSET.exists())"`
 
-### ☐ `configs/train_config.py` — BUILD, Step 2
+### ☐ `configs/model_settings.py` — BUILD, Step 2
 **Must contain, in two clearly separated blocks:**
 
 *Shared (changing these invalidates the engine):* `IMAGE_SIZE=224`, `TILE_SIZE=320`, `TILE_GRID=3`, `N_TILES=9`, `TILE_OVERLAP=0.20`, `ENGINE_BATCH=N_TILES`, `ONNX_OPSET=13`
@@ -166,7 +166,7 @@ The implementation plan tells you **when** to build things. This tells you **wha
 *Thresholds (start as `None`, written back by Step 15):* `TAU_ENERGY`, `T_CAL` — plus `TAU_DISEASE=0.55`, `TAU_MARGIN=0.10`, `TAU_CONF=0.60`, `TAU_PRIOR=1.0`, `CELL_K=2`, `CELL_N=3`, `CELL_MIN_SCORE=0.55`
 
 **MUST:** define `ENGINE_BATCH = N_TILES`, not a literal. **Never write `8` anywhere.**
-**Verify:** `python -c "from configs.train_config import N_TILES, ENGINE_BATCH, ONNX_OPSET; assert N_TILES==ENGINE_BATCH==9 and ONNX_OPSET<=13; print('ok')"`
+**Verify:** `python -c "from configs.model_settings import N_TILES, ENGINE_BATCH, ONNX_OPSET; assert N_TILES==ENGINE_BATCH==9 and ONNX_OPSET<=13; print('ok')"`
 
 ### ☐ `configs/crop_baselines.py` — **HUMAN**, Step 24
 **Must contain:** published CWSI baselines per crop — `LL_SLOPE`, `LL_INTERCEPT` (the non-water-stressed baseline as a function of VPD) and `UL_OFFSET` (non-transpiring baseline), for rice and sugarcane. **Cite the source next to each number in a comment.**
@@ -184,7 +184,7 @@ The implementation plan tells you **when** to build things. This tells you **wha
 
 ### ☐ `configs/field_demo.yaml` — BUILD, Step 34
 **Must contain:** which sensors are live vs simulated, the video/camera source, run duration, output DB path, log level.
-**Verify:** `python3 edge/pipeline.py --config configs/field_demo.yaml --dry-run` parses it without error.
+**Verify:** `python3 edge/scan_pipeline.py --config configs/field_demo.yaml --dry-run` parses it without error.
 
 ---
 
@@ -192,35 +192,35 @@ The implementation plan tells you **when** to build things. This tells you **wha
 
 > Note: `aggregate.py` and `rejection.py` remain tested and frozen. `thermal.py` and `trap_segmentation.py` have received required defect fixes and calibration gates. `indices.py`, `ndvi.py`, `edge/camera.py`, and `scripts/calibrate_dual_bandpass.py` implement the vegetation sensing pipeline.
 
-### ☐ `core/aggregate.py` — **COPY**, Step 1
+### ☐ `core/verdict_aggregation.py` — **COPY**, Step 1
 **Provides:** `aggregate_frame(tile_probs, healthy_cols, notcrop_col, ...)` → `(state, class_id, score)` with state in `DISEASE|HEALTHY|NOT_CROP|UNCERTAIN`; `aggregate_cell(frame_results, k, n, min_score)` → dict with state in `DISEASE|HEALTHY|UNCERTAIN|NO_DATA`.
 **Guards:** frames with no healthy path (alarms on pristine fields); top-k averaging diluting a single-tile lesion; `None` conflating healthy with never-visited.
 **Verify:** `pytest tests/test_pipeline.py -k aggregate -v`
 
-### ☐ `core/rejection.py` — **COPY**, Step 1
+### ☐ `core/unknown_object_rejection.py` — **COPY**, Step 1
 **Provides:** `open_set_energy(logits, crop_cols, T)` (1D and 2D safe); `posthoc_logit_adjust`; `softmax`; `decide(...)`; `fit_energy_threshold(...)`
 **Guards:** energy summed over all logits including `not_crop`; confidence gated on prior-adjusted probabilities; `AxisError` on 1D input.
 **Verify:** `pytest tests/test_pipeline.py -k rejection -v`
 
-### ☐ `core/thermal.py` — **MODIFIED**, Step 1, 24
+### ☐ `core/water_stress_thermal.py` — **MODIFIED**, Step 1, 24
 **Status:** MODIFIED — pure-canopy bisection fixed via unimodality ratio guard (`PROVISIONAL_OTSU_MIN_INTERCLASS_VARIANCE_RATIO = 0.85`), fixed-mast rescope applied (veg_fraction=None in mast path), 14-observation baseline gate added.
 **Provides:** `canopy_temperature(thermal, air_temp_c, veg_fraction=None, ...)`; `cwsi(...)`; `fit_non_water_stressed_baseline(...)`.
 **Guards:** Pure-canopy bisection where sun/shade leaf variance falsely split pure canopy; `Ta+15` biophysical gate; NWSB baseline fit requiring $\ge 14$ solar-noon observations.
 **Verify:** `pytest tests/test_pipeline.py -k thermal -v`
 
-### ☐ `core/trap_segmentation.py` — **MODIFIED**, Step 1, 31
+### ☐ `core/trap_insect_segmentation.py` — **MODIFIED**, Step 1, 31
 **Status:** MODIFIED — dual-threshold marker extraction applied, adaptive thresholding replacing Otsu, label off-by-one fixed.
 **Provides:** `segment_trap_blobs(bgr, min_area, max_area, abs_floor_px, crop)`; `extract_markers`; `_fill_holes`.
 **Guards:** A global `0.3 × dist.max()` threshold erasing micro-pests; `adaptiveThreshold` hollowing large insects; the label-loop off-by-one.
 **Verify:** `pytest tests/test_pipeline.py -k trap -v`
 
-### ☐ `core/indices.py` — **IMPLEMENTED**, Step 26
+### ☐ `core/vegetation_indices.py` — **IMPLEMENTED**, Step 26
 **Status:** IMPLEMENTED — six RGB vegetation indices (VARI, TGI, NGRDI, GMR, DGCI, ExG) with band-addressed mapping (`BandMap`) and byte-identical BGR/RGB delegation adapters.
 **Provides:** `vari`, `tgi`, `ngrdi`, `gmr`, `dgci`, `exg`, `vegetation_mask` (absolute ExG threshold), `compute_canopy_indices`.
 **Guards:** Pure-green canopy bisection guarded by absolute ExG threshold (`PROVISIONAL_EXG_VEG_THRESHOLD = 20`); canopy fraction floor (`PROVISIONAL_MIN_CANOPY_FRACTION = 0.15`).
 **Verify:** `pytest tests/test_pipeline.py -k indices -v`
 
-### ☐ `core/ndvi.py` — **IMPLEMENTED**, Step 26
+### ☐ `core/ndvi_nir_camera.py` — **IMPLEMENTED**, Step 26
 **Status:** IMPLEMENTED — dual-bandpass (660nm Red, 850nm NIR) NDVI calculation, silicon cross-talk unmixing, and empirical line method (ELM) calibration.
 **Provides:** `compute_ndvi`, `apply_channel_response_correction`, `apply_empirical_line_calibration`, `ndvi_from_dual_bandpass`.
 **Guards:** Inverted Bayer channel mapping (Blue=NIR, Red=660nm); bench cross-talk calibration gate (raises `NotImplementedError` if `calib_matrix is None`); ELM panel reflectance gate (raises `RuntimeError` if unconfirmed and `--allow-provisional` is False).
@@ -234,7 +234,7 @@ The implementation plan tells you **when** to build things. This tells you **wha
 
 ### ☐ `scripts/calibrate_dual_bandpass.py` — **IMPLEMENTED**, Step 26
 **Status:** IMPLEMENTED — optical bench cross-talk response calibration script for computing $K^{-1}$ from 660nm and 850nm reference illumination measurements.
-**Provides:** `compute_unmixing_matrix`, verification of invertibility, export to JSON calibration file for `core/ndvi.py`.
+**Provides:** `compute_unmixing_matrix`, verification of invertibility, export to JSON calibration file for `core/ndvi_nir_camera.py`.
 **Verify:** `python scripts/calibrate_dual_bandpass.py --mock --output /tmp/test_calib.json`
 
 ---
@@ -246,17 +246,17 @@ The implementation plan tells you **when** to build things. This tells you **wha
 **MUST NOT:** simulate a download, generate placeholder images, or report success on a failed fetch. If it fails, it says so and exits non-zero.
 **Verify:** `python train/download_data.py --verify` → every row non-zero.
 
-### ☐ `train/build_manifest.py` — BUILD, Step 8
+### ☐ `train/dataset_build_manifest.py` — BUILD, Step 8
 **Must:** walk every raw dataset dir; map source folder names → canonical classes; emit `splits/all_images.csv` (`path,label,source_dataset,orig_folder`) and `splits/class_mapping.csv` recording every merge decision.
 **Required merges:** `brown_rust`+`rust` → `sugarcane__rust`; `yellow`+`yellow_leaf_disease` → `sugarcane__yellow_leaf`; `red_rot` from the Daphal set only.
-**MUST NOT:** invent class names. Every label must already exist in `configs/classes.py`. Unmappable folders are logged and skipped, never guessed.
+**MUST NOT:** invent class names. Every label must already exist in `configs/disease_classes_model_a.py`. Unmappable folders are logged and skipped, never guessed.
 **Verify:** `set(df.label) - set(CLASS_NAMES)` is empty; total rows ≈ 27,000–30,000.
 
-### ☐ `train/dedup.py` — BUILD, Step 9
+### ☐ `train/dataset_dedup.py` — BUILD, Step 9
 **Must:** `imagehash.phash(hash_size=8)`; group images with Hamming distance ≤ 5 into a shared `group_id`; also catch exact MD5 duplicates **across** the two sugarcane datasets (both from Maharashtra, may share images); write `group_id` back to the manifest.
 **Verify:** `group_id` column exists and `df.group_id.nunique() < len(df)` (some grouping actually happened).
 
-### ☐ `train/split.py` — BUILD, Step 9
+### ☐ `train/dataset_split.py` — BUILD, Step 9
 **Must:** `StratifiedGroupKFold` grouped on `group_id`, stratified on `label`; ~80/10/10; emit `splits/train.csv`, `val.csv`, `test_indist.csv`, and `test_crossdomain.csv` built separately from PlantDoc + PlantWild.
 **MUST NOT:** split by image or use a plain random split.
 **Verify:**
@@ -269,42 +269,42 @@ assert not(g[0]&g[1]) and not(g[0]&g[2]) and not(g[1]&g[2]), 'GROUP LEAK'
 print('ok', [len(x) for x in d])"
 ```
 
-### ☐ `train/bias_audit.py` — BUILD, Step 10
+### ☐ `train/dataset_background_bias_audit.py` — BUILD, Step 10
 **Must:** extract 8 background pixels per image (4 corners + 4 edge midpoints → 24-dim); train a RandomForest on **only** those; evaluate on the test split; write `artifacts/reports/bias_audit.json` with `background_only_accuracy` and `chance_accuracy` (3.2%).
 **Verify:** the JSON exists with both fields. **Interpretation:** 3–6% clean → slide it. 15–30% mild leakage → strengthen augmentation. >40% serious → investigate which classes separate.
 
-### ☐ `train/transforms.py` — BUILD, Step 11
+### ☐ `train/augmentations_model_a.py` — BUILD, Step 11
 **Must contain, as `train_transform()`:** `RandomResizedCrop(scale=(0.35,1.0))`, `HorizontalFlip(0.5)`, `VerticalFlip(0.3)`, `ShiftScaleRotate`, `RandomBrightnessContrast(0.35)`, one-of `RandomShadow`/`RandomSunFlare`/`RandomToneCurve`, `HueSaturationValue(hue_shift_limit=12)`, one-of `MotionBlur`/`GaussianBlur`/`Defocus`, one-of `ISONoise`/`GaussNoise`, `ImageCompression(45,95)`, `CoarseDropout`, `Normalize`, `ToTensorV2`. Plus `eval_transform()`.
 **MUST NOT:** exceed ±12 hue shift, or add channel shuffle / heavy elastic transforms. Colour is diagnostic information for plant disease.
 **Verify:** save a 4×4 grid to `artifacts/reports/aug_samples.png` and **look at it**. Lesions must still be visible.
 
-### ☐ `train/dataset.py` — BUILD, Step 11
+### ☐ `train/dataset_loader_model_a.py` — BUILD, Step 11
 **Must:** read a split CSV; load with `cv2.imread` then **`cv2.cvtColor(..., COLOR_BGR2RGB)`**; emit 2–4 extra random 320×320 crops per training image (slicing-aided fine-tuning); a one-off pre-resize of all images on disk to max side 512; `WeightedRandomSampler` with sqrt-inverse frequency for stage 2.
 **MUST NOT:** forget the BGR→RGB conversion. It is the same class of bug that broke the export path.
 **Verify:** `x.shape == (B,3,224,224)`, dtype float, normalized range.
 
-### ☐ `train/model.py` — BUILD, Step 12
-**Must:** `build_model(backbone, num_classes=None, pretrained=True, drop_rate, drop_path_rate)` returning a plain `timm` model. Flat classification head with width resolved dynamically from `configs/classes.py` at runtime (`len(CLASS_NAMES)`), not a literal constant.
+### ☐ `train/disease_model_a_efficientnet.py` — BUILD, Step 12
+**Must:** `build_model(backbone, num_classes=None, pretrained=True, drop_rate, drop_path_rate)` returning a plain `timm` model. Flat classification head with width resolved dynamically from `configs/disease_classes_model_a.py` at runtime (`len(CLASS_NAMES)`), not a literal constant.
 **MUST NOT:** add attention modules, ensembles, or LSTM heads. Each addition risks ONNX export failure and none helps as much as the augmentation pipeline.
 **Verify:** `build_model()(torch.randn(2,3,224,224)).shape == (2, len(CLASS_NAMES))`
 
-### ☐ `train/train_model_a.py` — BUILD, Steps 12–13
+### ☐ `train/train_disease_model_a.py` — BUILD, Steps 12–13
 **Must:** a `--stage {1,2,3}` flag. Stage 1 = plain baseline. Stage 2 = full augmentation + class balancing + slicing + mixup/cutmix. Stage 3 = **online** consistent-teaching distillation (teacher sees the *identical* augmented tensor). AdamW, discriminative LR, OneCycle, EMA, AMP, grad clip. **Select checkpoints on macro-F1, never accuracy.** Write `artifacts/reports/stage{N}_metrics.json` with `val_macro_f1`, `val_top1`, `per_class_recall`.
 **MUST NOT:** cache teacher logits offline. Precomputed teacher targets measurably degrade distillation; teacher and student must see the same view.
 **MUST NOT:** combine training-time logit-adjusted loss with distillation. Use post-hoc adjustment instead.
 **Verify:** `stage2_macro_f1 > stage1_macro_f1`, and the rarest classes have non-zero recall.
 
-### ☐ `train/evaluate.py` — BUILD, Step 14
+### ☐ `train/evaluate_disease_model_a.py` — BUILD, Step 14
 **Must produce:** `eval_indist.json`, `eval_crossdomain.json`, `confusion_matrix.png` (row-normalised), `per_class_recall.csv`, `gradcam_panel.png` (healthy / correct / failure).
 **MUST NOT:** be run against `test_crossdomain.csv` more than once, and never used to tune.
 **Verify:** all five files exist with real values.
 
-### ☐ `train/calibrate.py` — BUILD, Step 15
-**Must fit, in this order:** (1) `T_CAL` by temperature scaling on validation NLL; (2) `TAU_ENERGY` via `core.rejection.fit_energy_threshold` using **`data/raw/openset/`**; (3) `TAU_PRIOR` by sweeping `[0,0.25,0.5,0.75,1.0]`; (4) `TAU_DISEASE` and `TAU_MARGIN` by grid sweep with a precision/recall plot. `--write-config` writes values back into `configs/train_config.py`.
+### ☐ `train/calibrate_disease_model_a.py` — BUILD, Step 15
+**Must fit, in this order:** (1) `T_CAL` by temperature scaling on validation NLL; (2) `TAU_ENERGY` via `core.unknown_object_rejection.fit_energy_threshold` using **`data/raw/openset/`**; (3) `TAU_PRIOR` by sweeping `[0,0.25,0.5,0.75,1.0]`; (4) `TAU_DISEASE` and `TAU_MARGIN` by grid sweep with a precision/recall plot. `--write-config` writes values back into `configs/model_settings.py`.
 **MUST NOT:** calibrate `TAU_ENERGY` on `data/raw/not_crop/`. Those images are in-distribution for the trained model and measure nothing.
 **Verify:** `TAU_ENERGY` and `T_CAL` are no longer `None`; `ood_metrics.json` has FPR@95TPR and AUROC; `threshold_sweep.png` exists.
 
-### ☐ `train/export_onnx.py` — BUILD, Steps 16–17
+### ☐ `train/export_disease_model_a_onnx.py` — BUILD, Steps 16–17
 **Must contain `FusedModel` with this exact line:**
 ```python
 x = x[:, [2, 1, 0], :, :].float() / 255.0     # BGR -> RGB. NEVER OMIT.
@@ -316,7 +316,7 @@ with ImageNet mean/std in **true RGB order**. Export at `opset=13`, `batch=ENGIN
 2. **End-to-end** macro-F1 on real `cv2.imread` images within 0.5% of the reference pipeline
 3. ONNX vs PyTorch tensor diff < 1e-3
 
-### ☐ `train/train_model_b.py` — BUILD, Step 30
+### ☐ `train/train_insect_model_b.py` — BUILD, Step 30
 **Must:** `TrapPestCNN` (4 conv blocks, ~150k params, **from scratch**); classes = target pests + `not_pest` (dust, debris, **and beneficials**); data from RP11 + sticky-trap datasets + synthetic composites (segmented insects pasted onto real yellow trap backgrounds at random position/rotation); rotation at **any** angle; ~40 epochs, Adam 1e-3, cosine.
 **Verify:** validation macro-F1 plus per-class recall. **`not_pest` recall must be high** — false pest counts trigger unnecessary spraying.
 
@@ -331,30 +331,30 @@ with ImageNet mean/std in **true RGB order**. Export at `opset=13`, `batch=ENGIN
 **MUST NOT:** pass `--int8`. Maxwell has no INT8 hardware — it will be no faster and less accurate.
 **Verify:** `.engine` exists; benchmark prints a mean latency (**write it down**, expect 60–120 ms for 9 tiles).
 
-### ☐ `edge/trt_classifier.py` — BUILD, Step 19
+### ☐ `edge/disease_model_runtime_tensorrt.py` — BUILD, Step 19
 **Must provide:** `TRTClassifier` with `infer()` returning **raw logits**, `infer_all()` chunk-looping so an unexpected tile count can never truncate, and `close()` freeing `d_in`, `d_out`, `stream`, `h_in`, `h_out`, `context`, `engine` then `gc.collect()`. Pagelocked buffers are `uint8 NHWC` (the fused graph does the rest).
 **MUST NOT:** contain `import pycuda.autoinit` anywhere. **MUST NOT** return probabilities from `infer()` — energy must be computed on raw logits.
-**Verify:** `python3 edge/trt_classifier.py --selftest --engine ...` prints latency, confirms output shape `(9,31)`, exits with no `LogicError`.
+**Verify:** `python3 edge/disease_model_runtime_tensorrt.py --selftest --engine ...` prints latency, confirms output shape `(9,31)`, exits with no `LogicError`.
 
-### ☐ `edge/frame_gate.py` — BUILD, Step 20
+### ☐ `edge/frame_quality_check.py` — BUILD, Step 20
 **Must reject unless all pass:** altitude in the 1.5–2.5 m band; |roll|,|pitch| under threshold; variance-of-Laplacian above `TAU_BLUR`; histogram not clipped; scene displacement vs last kept frame > 60%.
 **Verify:** `--selftest` on a sample video reports a pass rate of **3–8%**. This is your single biggest optimisation, worth 10–30×.
 
-### ☐ `edge/tiler.py` — BUILD, Step 20
-**Must:** deterministic **3×3 grid**, 320×320 tiles, 20% overlap; keep tiles with >40% vegetation using `core.thermal.vegetation_mask`; **pad to exactly `N_TILES`** so the engine batch always matches.
+### ☐ `edge/leaf_tile_finder.py` — BUILD, Step 20
+**Must:** deterministic **3×3 grid**, 320×320 tiles, 20% overlap; keep tiles with >40% vegetation using `core.water_stress_thermal.vegetation_mask`; **pad to exactly `N_TILES`** so the engine batch always matches.
 **MUST NOT:** use Otsu for the vegetation mask. On a closed canopy the ExG histogram is unimodal and Otsu bisects it, reporting ~50% vegetation on a 100% green field.
 **Verify:** `--selftest` **always** returns exactly 9 tiles, for any input.
 
-### ☐ `edge/pipeline.py` — BUILD, Step 21
+### ☐ `edge/scan_pipeline.py` — BUILD, Step 21
 **Must:** four threads — capture+tagging / gate+tile / GPU inference / decide+aggregate+rules+store. Bounded queues with drop-oldest. **CUDA context created inside the inference thread**, classifier constructed there too, `clf.close()` before `ctx.pop(); ctx.detach()`.
-**Must import, not reimplement:** `core.rejection.decide`, `core.aggregate.aggregate_frame`, `core.aggregate.aggregate_cell`.
+**Must import, not reimplement:** `core.unknown_object_rejection.decide`, `core.verdict_aggregation.aggregate_frame`, `core.verdict_aggregation.aggregate_cell`.
 **MUST NOT:** switch to multiprocessing. NumPy and OpenCV release the GIL, and `shared_memory` is Python 3.8+.
 **Verify:** `--source test_video.mp4 --dry-run --report` prints frames seen, gate pass rate, tiles classified, per-cell verdicts, and **2–4 scenes/sec**; exits cleanly.
 
-### ☐ `edge/sensors.py` — BUILD, Step 23
+### ☐ `edge/gps_and_mast_sensors.py` — BUILD, Step 23
 **Must provide:** fixed ground mast thermal station (MLX90640 spatial array for canopy extraction + MLX90614 for continuous cross-check/drift), DHT22/SHT31 → temp + RH + derived VPD, capacitive soil probes, dual CSI cameras (CSI-0 RGB inspection, CSI-1 dual-bandpass NIR survey) with **AWB and AE locked to fixed gains**, GPS + IMU + rangefinder. **Every class needs a `--simulate` mode** returning plausible synthetic values.
 **MUST NOT:** leave auto-white-balance enabled. A camera that re-balances every frame makes colourimetry meaningless.
-**Verify:** `python3 edge/sensors.py --selftest --simulate` prints one reading per sensor with units and timestamp.
+**Verify:** `python3 edge/gps_and_mast_sensors.py --selftest --simulate` prints one reading per sensor with units and timestamp.
 
 ### ☐ `edge/agronomy.py` — BUILD, Steps 25–26
 **Must provide:** `relative_nutrient_map()` for the **drone** (compares cell b\* to the field median from the same pass — no card); `absolute_lcc_panel()` for the **rover/phone** (grey card, von Kries gains on the **leaf ROI only**); RGB vegetation indices (ExG, VARI, TGI, NGRDI) per cell; canopy cover fraction for growth staging.
@@ -362,7 +362,7 @@ with ImageNet mean/std in **true RGB order**. Export at `opset=13`, `batch=ENGIN
 **Note in code:** OpenCV `COLOR_BGR2LAB` on uint8 returns b with a **+128 offset** — this is `b*+128`, not published CIELAB `b*`.
 **Verify:** on the Mendeley nitrogen dataset, the b\* index is **monotonic** across the four LCC panels. Save the plot.
 
-### ☐ `edge/rules_engine.py` — BUILD, Step 27
+### ☐ `edge/advice_rules_engine.py` — BUILD, Step 27
 **Must implement:** heat stress (consecutive hours above crop-critical temperature); flood (24/72 h rainfall + saturation persistence); drought (water-balance deficit + CWSI trend); disease-favourable (leaf wetness × temperature windows); pest pressure (trap counts vs ETL + slope).
 **Must emit the structured finding JSON:** `{crop, condition, confidence, area_pct, cell, cwsi, soil_moisture_pct, risk_flags, action, severity, timestamp}` — this is the contract with `advisory.py`.
 **Irrigation Actuation Scope Note (7 Sep 2026):** Autonomous irrigation actuation is dropped. No solenoid valve, MOSFET driver, or YF-S201 flow meter will be purchased. The system produces irrigation prescriptions displayed to the farmer, who irrigates manually. Actuation is advisory-only. `edge/actuation.py` and `edge/flow.py` are retained as validated reference implementations only and are NOT wired into any runtime path.
@@ -374,7 +374,7 @@ with ImageNet mean/std in **true RGB order**. Export at `opset=13`, `batch=ENGIN
 **MUST NOT:** pass raw sensor readings or model logits to the LLM for interpretation. The LLM renders a decided finding; it never diagnoses.
 **Verify:** **with the network disabled**, every finding type still produces sensible template output. Run it with WiFi off — that is the test that matters.
 
-### ☐ `edge/storage.py` — BUILD, Step 33
+### ☐ `edge/scan_database.py` — BUILD, Step 33
 **Must:** SQLite with tables `frames`, `cell_verdicts`, `sensor_readings`, `trap_counts`, `alerts`; survive connectivity loss; opportunistic sync when a network appears.
 **Verify:** a dry run populates every table; `sqlite3 db.sqlite ".tables"` lists all five.
 
@@ -387,7 +387,7 @@ with ImageNet mean/std in **true RGB order**. Export at `opset=13`, `batch=ENGIN
 **Verify:** a curl-posted JPEG lands on disk with correct metadata.
 
 ### ☐ `gateway/trap_count.py` — BUILD, Step 31
-**Must:** downscale to ~1280 px long side; call `core.trap_segmentation.segment_trap_blobs` with `ABS_FLOOR_PX` from `configs/trap_config.py`; classify each 64×64 crop with Model B; write per-species daily counts.
+**Must:** downscale to ~1280 px long side; call `core.trap_insect_segmentation.segment_trap_blobs` with `ABS_FLOOR_PX` from `configs/trap_config.py`; classify each 64×64 crop with Model B; write per-species daily counts.
 **MUST NOT:** reimplement blob segmentation.
 **Verify:** on a photo of a real trap, counts are within **±20%** of a manual count. Save the side-by-side image — it is excellent video material.
 
@@ -483,7 +483,7 @@ Run through this the day before you submit.
 - ☐ `git diff --stat core/` → no changes since the initial copy
 - ☐ No `import pycuda.autoinit` anywhere: `grep -rn "pycuda.autoinit" edge/ | wc -l` → 0
 - ☐ No literal `8` used as a batch size: `grep -rn "batch.*=.*8\b" edge/ train/`
-- ☐ Fused model contains the channel swap: `grep -n "\[2, 1, 0\]" train/export_onnx.py`
+- ☐ Fused model contains the channel swap: `grep -n "\[2, 1, 0\]" train/export_disease_model_a_onnx.py`
 - ☐ `edge/` parses under Python 3.6
 
 **Numbers**

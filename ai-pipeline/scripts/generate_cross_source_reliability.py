@@ -20,7 +20,7 @@ import sys
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 
 EVAL_JSON = REPO_ROOT / "artifacts/reports/eval_crossdomain.json"
 OUTPUT_JSON = REPO_ROOT / "artifacts/reports/model_a_cross_source_reliability.json"

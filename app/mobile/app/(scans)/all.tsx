@@ -14,11 +14,13 @@ import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { listAdvisories } from '../../src/db/advisories.ts';
 import type { AdvisorySummary } from '../../src/db/advisories.ts';
 import { Muted } from '../../src/ui/components.tsx';
+import { Reveal } from '../../src/ui/motion.tsx';
 import { CountTiles } from '../../src/ui/count-tiles.tsx';
 import type { Filter } from '../../src/ui/count-tiles.tsx';
 import { ScanRow, isUnclear, looksHealthy, needsLook } from '../../src/ui/scan-row.tsx';
+import { useBarClearance } from '../../src/ui/floating-bar.ts';
 import { useStatusBarStyle } from '../../src/ui/status-bar.ts';
-import { color, radius, space, type } from '../../src/ui/theme.ts';
+import { color, radius, space, type, themed } from '../../src/ui/theme.ts';
 import { useLanguage } from '../../src/i18n/language.tsx';
 import { tr } from '../../src/i18n/tr.ts';
 
@@ -34,7 +36,8 @@ export default function AllScansScreen() {
   const [filter, setFilter] = useState<Filter>(
     params.filter && params.filter in FILTERS ? params.filter : 'all',
   );
-  useStatusBarStyle('dark');
+  useStatusBarStyle('light');
+  const clearance = useBarClearance();
   useLanguage();
 
   useFocusEffect(
@@ -48,7 +51,7 @@ export default function AllScansScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: color.background }}
-      contentContainerStyle={{ padding: space.lg, paddingBottom: space.xl }}
+      contentContainerStyle={{ padding: space.lg, paddingBottom: clearance }}
     >
       {rows.length > 0 ? <CountTiles rows={rows} active={filter} onChange={setFilter} /> : null}
 
@@ -71,14 +74,16 @@ export default function AllScansScreen() {
         </View>
       )}
 
-      {shown.map((row) => (
-        <ScanRow key={row.advisoryId} row={row} />
+      {shown.map((row, i) => (
+        <Reveal key={row.advisoryId} index={i}>
+          <ScanRow row={row} />
+        </Reveal>
       ))}
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   listHead: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -92,4 +97,4 @@ const s = StyleSheet.create({
     borderColor: color.border,
     padding: space.lg,
   },
-});
+}));

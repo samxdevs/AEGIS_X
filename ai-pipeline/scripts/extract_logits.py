@@ -26,12 +26,12 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 from configs.paths import CKPT, ROOT
-from configs.train_config import BATCH_SIZE, IMAGE_SIZE
-from train.model import build_model
-from train.train_model_a import load_checkpoint_for_eval
-from train.transforms import eval_transform
+from configs.model_settings import BATCH_SIZE, IMAGE_SIZE
+from train.disease_model_a_efficientnet import build_model
+from train.train_disease_model_a import load_checkpoint_for_eval
+from train.augmentations_model_a import eval_transform
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}

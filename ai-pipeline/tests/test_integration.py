@@ -3,11 +3,11 @@ tests/test_integration.py — End-to-End Edge Pipeline Integration Test Suite (B
 
 Execution Flow:
   1. Real Video Source: `data/video/test_video_from_dataset_images.mp4` (compiled from real dataset images).
-  2. Edge Pipeline: 4-thread runtime (`edge/pipeline.py`) running real inference with ONNX Runtime (`artifacts/onnx/model_a_fused.onnx`)
+  2. Edge Pipeline: 4-thread runtime (`edge/scan_pipeline.py`) running real inference with ONNX Runtime (`artifacts/onnx/model_a_fused.onnx`)
      standing in for NVIDIA TensorRT on development/macOS hosts.
   3. Rejection & Consensus: Multi-tile quality gating, open-set energy gate, prior adjustment, spatial & temporal consensus.
   4. Rules Engine: Deterministic agronomic action synthesis.
-  5. Ground Mast Telemetry: Pull ingestion of weather telemetry via `edge/mast_collector.py`.
+  5. Ground Mast Telemetry: Pull ingestion of weather telemetry via `edge/mast_data_collector.py`.
   6. Sticky-Trap Node: HTTP `POST /api/v1/trap/upload` with sticky trap card image evaluated by Model B.
   7. Mobile App Gateway: HTTP `GET /api/v1/advisory/<id>` fetching authoritative advisory JSON.
   8. Contract Validation: Validates the entire payload against `docs/PAYLOAD_CONTRACT.md`.
@@ -23,10 +23,10 @@ import numpy as np
 import pytest
 import cv2
 
-from configs.classes import CLASS_NAMES
-from configs.classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
-from edge.pipeline import EdgePipeline
-from edge.storage import EdgeStorage
+from configs.disease_classes_model_a import CLASS_NAMES
+from configs.insect_classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
+from edge.scan_pipeline import EdgePipeline
+from edge.scan_database import EdgeStorage
 from gateway.server import EdgeGateway
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

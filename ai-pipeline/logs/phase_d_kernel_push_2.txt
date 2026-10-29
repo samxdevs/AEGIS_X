@@ -1,1 +1,0 @@
-Kernel version 3 successfully pushed.  Please check progress at https://www.kaggle.com/code/mohdahsan8178/sih-training

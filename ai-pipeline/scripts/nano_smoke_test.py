@@ -107,14 +107,14 @@ def check_imports():
     except Exception as e:
         results.append(print_check("import onnxruntime", False, str(e)))
 
-    # edge.trap_job
+    # edge.trap_insect_counting_job
     try:
         if REPO_ROOT not in sys.path:
             sys.path.insert(0, REPO_ROOT)
-        import edge.trap_job as trap_job
-        results.append(print_check("import edge.trap_job", True, "Model B trap job loaded"))
+        import edge.trap_insect_counting_job as trap_job
+        results.append(print_check("import edge.trap_insect_counting_job", True, "Model B trap job loaded"))
     except Exception as e:
-        results.append(print_check("import edge.trap_job", False, str(e)))
+        results.append(print_check("import edge.trap_insect_counting_job", False, str(e)))
 
     # gateway.server
     try:
@@ -163,7 +163,7 @@ def check_gps_uart(port="/dev/ttyTHS1", timeout_s=10.0):
     try:
         if REPO_ROOT not in sys.path:
             sys.path.insert(0, REPO_ROOT)
-        from edge.sensors import parse_nmea_sentence
+        from edge.gps_and_mast_sensors import parse_nmea_sentence
 
         line_count = 0
         valid_fix = False
@@ -277,13 +277,13 @@ def check_model_b_onnx():
 
 
 def check_class_dimension():
-    classes_path = os.path.join(REPO_ROOT, "configs", "classes.py")
+    classes_path = os.path.join(REPO_ROOT, "configs", "disease_classes_model_a.py")
     if not os.path.exists(classes_path):
-        return print_check("Taxonomy Output Dimension Match", False, "configs/classes.py missing")
+        return print_check("Taxonomy Output Dimension Match", False, "configs/disease_classes_model_a.py missing")
     try:
         if REPO_ROOT not in sys.path:
             sys.path.insert(0, REPO_ROOT)
-        from configs.classes import CLASS_NAMES
+        from configs.disease_classes_model_a import CLASS_NAMES
         count = len(CLASS_NAMES)
         expected = 29
         passed = (count == expected)

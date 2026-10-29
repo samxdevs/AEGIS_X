@@ -53,15 +53,8 @@ export const POD: Record<string, string> = {
   'Weather, soil and trap data': 'मौसम, मिट्टी और ट्रैप का डेटा',
   'The station standing in your field does not talk to this phone. The pod fetches from it, and everything the station measures reaches you through an advisory. Air temperature and soil readings come from here; so does the sticky trap photo.':
     'आपके खेत में लगा स्टेशन इस फ़ोन से सीधे बात नहीं करता। पॉड उससे डेटा लेता है, और स्टेशन जो भी मापता है वह सलाह के ज़रिए आप तक पहुँचता है। हवा का तापमान और मिट्टी की माप यहीं से आती है; चिपचिपे ट्रैप की फ़ोटो भी।',
-  'Not yet exercised on the device': 'असली उपकरण पर अभी नहीं आज़माया',
-  'The hardware team have not yet run this against the real Jetson. It is built to the contract and may work first time. If it fails, that is where to look before suspecting the phone.':
-    'हार्डवेयर टीम ने इसे अभी असली जेटसन पर नहीं चलाया है। यह तय नियमों के अनुसार बना है और पहली बार में चल सकता है। अगर नहीं चले, तो फ़ोन पर शक करने से पहले वहीं देखें।',
   'Check the field station': 'खेत का स्टेशन जाँचें',
-  'The pod is going to collect from the field station now. It will drop its own Wi-Fi for about {s} seconds and this phone will lose it. That is expected. Wait, then pull again.':
-    'पॉड अब खेत के स्टेशन से डेटा लेगा। वह लगभग {s} सेकंड के लिए अपना वाई-फ़ाई बंद करेगा और यह फ़ोन उससे कट जाएगा। ऐसा होना ठीक है। रुकें, फिर से डेटा लें।',
-  'Collect from the field station now': 'अभी खेत के स्टेशन से डेटा लें',
   'Could not do that': 'यह नहीं हो सका',
-  'Pod is going offline briefly': 'पॉड थोड़ी देर के लिए बंद हो रहा है',
   'Remembered, not current': 'पुरानी जानकारी, अभी की नहीं',
   'This is the last thing the pod told us about the field station, not a reading taken just now. Tap above to check it again.':
     'यह खेत के स्टेशन के बारे में पॉड की आखिरी जानकारी है, अभी की माप नहीं। फिर से जाँचने के लिए ऊपर टैप करें।',

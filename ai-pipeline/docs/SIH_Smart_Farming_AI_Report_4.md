@@ -137,7 +137,7 @@ An IMX219's auto-white-balance and auto-exposure continuously re-gain the image 
 
 ### 1.1.2 Field Vegetation Indices, Canopy Masking, and Dual-Bandpass NDVI ⚠ **IMPLEMENTED IN v4**
 
-To support aerial crop vigour mapping, canopy growth staging, and candidate stress flagging without an expensive commercial multispectral camera, six RGB-only vegetation indices and a dormant dual-bandpass NDVI pipeline are implemented in `core/indices.py` and `core/ndvi.py`.
+To support aerial crop vigour mapping, canopy growth staging, and candidate stress flagging without an expensive commercial multispectral camera, six RGB-only vegetation indices and a dormant dual-bandpass NDVI pipeline are implemented in `core/vegetation_indices.py` and `core/ndvi_nir_camera.py`.
 
 #### Implemented RGB Vegetation Indices
 
@@ -152,7 +152,7 @@ To support aerial crop vigour mapping, canopy growth staging, and candidate stre
 
 #### Canopy Masking Strategy Prior to Index Computation
 
-Every vegetation index in `core/indices.py` is calculated **strictly over segmented canopy pixels**, never across raw scene averages containing soil.
+Every vegetation index in `core/vegetation_indices.py` is calculated **strictly over segmented canopy pixels**, never across raw scene averages containing soil.
 1. **Absolute ExG Thresholding (`PROVISIONAL_EXG_VEG_THRESHOLD = 20`):**
    - We explicitly reject Otsu thresholding for vegetation masking. On a mature, closed canopy, the ExG distribution is unimodal; Otsu's algorithm maximises inter-class variance by forcing a split near the distribution mean. On a 100% green canopy, Otsu falsely discards ~50% of the greenest leaves as "background".
    - Instead, an absolute threshold `ExG > PROVISIONAL_EXG_VEG_THRESHOLD (20)` is used to isolate plant tissue.
@@ -175,7 +175,7 @@ In addition to RGB proxies, the project implements a committed hardware path for
   - *Critical framing:* This is a **hardware bench-calibration gate**, not a software limitation. Computing NDVI from raw Bayer channels without measuring the physical sensor's cross-talk produces scientifically invalid, ungrounded numbers. The software refuses to guess.
 - **Empirical Line Method (ELM) Across Flights:**
   - To normalise changing solar irradiance across flight passes, reference reflectance panels (nominal 5%, 50%, 84%) must be imaged pre- and post-flight (`apply_empirical_line_calibration`).
-  - In `core/ndvi.py`, `PROVISIONAL_PANEL_REFLECTANCES = (0.05, 0.50, 0.84)` are placeholder values and `PANEL_REFLECTANCES_CONFIRMED = False`. Calling ELM without confirmed panels raises a `RuntimeError` unless `--allow-provisional` is explicitly passed.
+  - In `core/ndvi_nir_camera.py`, `PROVISIONAL_PANEL_REFLECTANCES = (0.05, 0.50, 0.84)` are placeholder values and `PANEL_REFLECTANCES_CONFIRMED = False`. Calling ELM without confirmed panels raises a `RuntimeError` unless `--allow-provisional` is explicitly passed.
 
 ### 1.2 Irrigation and water stress ⚠ **REWRITTEN IN v2**
 

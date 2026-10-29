@@ -32,8 +32,8 @@ Future web-sourced weed images will go into a separate `green_noncrop_web/` dire
 
 ## 3. F2 Architectural Note: Dedup vs. Dataset Orientation Discrepancy
 
-- `train/dedup.py:28` loads images using `PIL.Image.open()` without calling `PIL.ImageOps.exif_transpose()`. Consequently, perceptual hashing is calculated on the raw un-rotated camera buffer.
-- `train/dataset.py:110` loads images using OpenCV (`cv2.imread()`), which parses EXIF metadata and applies orientation correction automatically.
+- `train/dataset_dedup.py:28` loads images using `PIL.Image.open()` without calling `PIL.ImageOps.exif_transpose()`. Consequently, perceptual hashing is calculated on the raw un-rotated camera buffer.
+- `train/dataset_loader_model_a.py:110` loads images using OpenCV (`cv2.imread()`), which parses EXIF metadata and applies orientation correction automatically.
 - Images with orientation tags 6, 8, or 3 are perceptual-hashed in landscape but trained in portrait.
 - dedup cannot detect rotation-differing duplicates (measured self-distance ~32 vs threshold 5). None were present in the September 2026 ingest. Not verified safe — verified absent.
 
@@ -48,16 +48,16 @@ Future web-sourced weed images will go into a separate `green_noncrop_web/` dire
   - **Full Manifest (`splits/all_images.csv`, 30,039 images)**: Counts range from $N_{\text{max}} = 3,178$ (`rice__blast`) down to $N_{\text{min}} = 224$ (`wheat__healthy`), yielding a raw imbalance ratio of $\frac{3178}{224} = 14.1875 \approx 14.19:1$, with $\sqrt{14.1875} \approx 3.77:1$. This reflects total harvested inventory across all partitions.
   - **Training Partition (`splits/train.csv`, 16,526 images)**: Counts range from $N_{\text{max}} = 1,535$ (`rice__normal`) down to $N_{\text{min}} = 102$ (`wheat__brown_rust`), yielding a raw imbalance ratio of $\frac{1535}{102} = 15.0490 \approx 15.05:1$, with $\sqrt{15.0490} \approx 3.88:1$.
   - **Canonical Status**: Training loss weights $w_c = \sqrt{\frac{N_{\text{total}}}{N_{\text{classes}} \cdot N_c}}$ are canonically derived from `splits/train.csv` ($15.05:1$ raw, $3.88:1$ sqrt dynamic range). Loss weights must reflect the empirical batch sampling distribution encountered by the optimizer during gradient descent; computing loss weights against the full manifest would incorrectly contaminate training penalties with holdout proportions from validation, in-distribution test, and cross-domain test splits.
-  - As noted in `core/rejection.py`, post-hoc logit prior adjustment parameters (`log_priors`, `tau_prior`) must be re-calibrated in Step 15 against the weighted model.
+  - As noted in `core/unknown_object_rejection.py`, post-hoc logit prior adjustment parameters (`log_priors`, `tau_prior`) must be re-calibrated in Step 15 against the weighted model.
 
 ---
 
 ## 5. Open-Set vs. Outlier-Exposure Roles & Calibration Governance
 
-Per `core/rejection.py:116-118` and `docs/ULTIMATE_IMPLEMENTATION_PLAN_1.md:442`, `openset_holdout/` (174 images carved from `not_crop`) cannot calibrate `TAU_ENERGY` because it represents outlier-exposure data, which is in-distribution for the trained model's rejection head. Both sets are preserved with strictly separated roles:
+Per `core/unknown_object_rejection.py:116-118` and `docs/ULTIMATE_IMPLEMENTATION_PLAN_1.md:442`, `openset_holdout/` (174 images carved from `not_crop`) cannot calibrate `TAU_ENERGY` because it represents outlier-exposure data, which is in-distribution for the trained model's rejection head. Both sets are preserved with strictly separated roles:
 
 1. **`data/raw/openset/` (and `data/packaged_min/openset/`) [5,255 images]**:
-   - **Role**: Fits `TAU_ENERGY` in Step 15 via `core.rejection.fit_energy_threshold(id_logits, openset_logits, CROP_COLS, tpr=0.95)`.
+   - **Role**: Fits `TAU_ENERGY` in Step 15 via `core.unknown_object_rejection.fit_energy_threshold(id_logits, openset_logits, CROP_COLS, tpr=0.95)`.
    - **Status**: True Out-of-Distribution (OOD). Categories are disjoint from the 29-class training taxonomy and disjoint from `not_crop`.
    - **Composition**:
      - 3,955 images are plant-disease-like (near-OOD): `hasan_openset` (584 files: sheath blight, leaf scald, narrow brown spot), `plantwild_unmatched_wheat` (799 files: head scab, loose smut, stem rust, black chaff), and `other_crop_diseases` (2,572 files: apple, tomato, bell pepper, blueberry, etc.).
@@ -147,7 +147,7 @@ To bridge the substantial domain shift between high-resolution European greenhou
 2. **Soft-Bodied Aphids & Thrips (*Rhopalosiphum padi*, *Sitobion avenae*, *Anaphothrips obscurus*)**:
    - Ground reality: Soft-bodied, elongate, matte bodies with cornicles or fringed wings.
    - Dataset status: Unlabelled in public European trap datasets (only 7 thrips in 4TU; zero labelled aphids in WUR, PST, GinJinn2).
-   - Expected behavior: Detected and counted in **total blob density** and daily interval rate by deterministic watershed (`core/trap_segmentation.py`), but unclassified into a dedicated pest taxon by Model B.
+   - Expected behavior: Detected and counted in **total blob density** and daily interval rate by deterministic watershed (`core/trap_insect_segmentation.py`), but unclassified into a dedicated pest taxon by Model B.
    - Operational impact: Wheat aphid and thrips rely on relative rate-of-change trend alerting (`TrapCountHistory`) on the total blob count, not on a quantitative per-species classifier threshold.
 3. **Weathered Glue & High-Variance Field Debris Gap**:
    - Ground reality: Real Indian yellow sticky cards exposed to open agricultural fields accumulate dust films, pollen crust, water spots, dried foliage fibers, and fungal spores.
@@ -236,10 +236,10 @@ All Model B telemetry surfaced to farmers or downstream edge storage enforces st
 ## 8. Training Crop vs. Edge 9-Tile Grid Domain Shift (Model A)
 
 ### 8.1 Architectural Discrepancy
-- **Training Input Pipeline (`train/transforms.py`)**:
+- **Training Input Pipeline (`train/augmentations_model_a.py`)**:
   - Training images are sourced from full-resolution smartphone captures (typically 3000×4000 to 3456×4624).
   - The pipeline applies `RandomCrop(height=320, width=320)` (or random resized scale `[0.7, 1.0]`) centered arbitrarily on leaf surfaces, followed by bilinear resize to $224 \times 224 \times 3$.
-- **Edge Inference Pipeline (`edge/tiler.py`, `configs/train_config.py`)**:
+- **Edge Inference Pipeline (`edge/leaf_tile_finder.py`, `configs/model_settings.py`)**:
   - The handheld pod camera captures frames at $1920 \times 1080$ (RGB).
   - The frame is partitioned into a **fixed $3 \times 3$ grid of 9 tiles** of size $320 \times 320$ with $20\%$ overlap (`TILE_GRID = 3`, `N_TILES = 9`, `TILE_OVERLAP = 0.20`).
   - Each of the 9 tiles is resized to $224 \times 224 \times 3$ and packed into an engine batch of 9 (`ENGINE_BATCH = 9`) for TensorRT inference.
@@ -251,9 +251,9 @@ All Model B telemetry surfaced to farmers or downstream edge storage enforces st
 2. **Peripheral Non-Vegetation Ingestion**:
    - In fixed $3 \times 3$ tiling, edge and corner tiles frequently capture background clutter (soil, feet/shoes, horizon, sky, operator fingers) rather than pure foliage.
 3. **Mitigations Implemented in Edge Pipeline**:
-   - **Vegetation Fraction Gating**: `edge/tiler.py` filters each tile through an ExG mask (`TILE_MIN_VEG_FRACTION = 0.40`), discarding any tile containing $< 40\%$ green foliage before classification.
+   - **Vegetation Fraction Gating**: `edge/leaf_tile_finder.py` filters each tile through an ExG mask (`TILE_MIN_VEG_FRACTION = 0.40`), discarding any tile containing $< 40\%$ green foliage before classification.
    - **Outlier Exposure Rejection**: The 29th class `not_crop` (trained on soil, hands, shoes, sky, pavement) explicitly catches peripheral background tiles.
-   - **Spatial Aggregation**: `edge/storage.py` and `core/aggregate.py` enforce multi-tile consensus (`CELL_K = 2` out of `CELL_N = 3` agreeing tiles) before asserting a disease verdict.
+   - **Spatial Aggregation**: `edge/scan_database.py` and `core/verdict_aggregation.py` enforce multi-tile consensus (`CELL_K = 2` out of `CELL_N = 3` agreeing tiles) before asserting a disease verdict.
 
 ### 8.3 Audited Performance Governance: Headline vs. Generalization Collapse
 Every citation of Model A's in-distribution performance must accompany the cross-source reality:

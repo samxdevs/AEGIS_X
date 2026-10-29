@@ -81,14 +81,21 @@ export type Health = {
   schema_version?: string;
   server_time_utc?: string;
   gps_time_valid?: boolean;
-  /** "filesystem" is the state where every timestamp the pod emits is suspect. */
-  clock_source?: 'gps' | 'rtc' | 'filesystem';
+  /**
+   * "filesystem" is the state where every timestamp the pod emits is suspect.
+   * "phone" is the pod having adopted the phone's time at Start.
+   */
+  clock_source?: 'gps' | 'rtc' | 'phone' | 'filesystem';
   advisory_count?: number;
   latest_seq?: number;
   storage_free_kb?: number;
   /** True while the pod has dropped its AP to talk to the mast as a station. */
   syncing?: boolean;
   sync_state?: 'IDLE' | 'STA_SYNC';
+  /** Gateway up, camera and engine available: the pod can start a scan. */
+  pod_ready?: boolean;
+  scan_state?: 'idle' | 'starting' | 'scanning' | 'finalizing';
+  storage?: { location?: 'sd' | 'internal'; free_mb?: number };
 };
 
 /** `GET /api/v1/sync/status` — the pod's pull against the ground mast. */
@@ -255,7 +262,7 @@ export async function setAllowMock(on: boolean): Promise<void> {
 // ---- Transport ------------------------------------------------------------
 
 /** fetch with a hard timeout — a hung socket on a field link must not hang the UI. */
-async function request(
+export async function request(
   url: string,
   init: RequestInit = {},
   timeoutMs = TIMEOUT_MS,
@@ -310,7 +317,7 @@ async function requestWithRetry(
 }
 
 /** Turns any thrown error into the sentence that goes on screen. */
-function explain(err: unknown, url: string): string {
+export function explain(err: unknown, url: string): string {
   if (err instanceof HttpError) return err.describe();
   return explainNetworkFailure(err, url);
 }

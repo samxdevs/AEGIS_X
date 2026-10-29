@@ -23,24 +23,24 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 
-import { chart, color, radius, space, type } from './theme.ts';
+import { chart, color, radius, space, type, themed, live } from './theme.ts';
 import type { Tone } from './components.tsx';
 
-const TONE_FILL: Record<Tone, string> = {
+const TONE_FILL: Record<Tone, string> = live(() => ({
   good: chart.fill.good,
   warn: chart.fill.warn,
   bad: chart.fill.bad,
   unknown: chart.fill.unknown,
   neutral: chart.muted,
-};
+}));
 
-const TONE_TRACK: Record<Tone, string> = {
+const TONE_TRACK: Record<Tone, string> = live(() => ({
   good: chart.track.good,
   warn: chart.track.warn,
   bad: chart.track.bad,
   unknown: chart.track.unknown,
   neutral: color.muted,
-};
+}));
 
 // ---- Meter ----------------------------------------------------------------
 
@@ -475,7 +475,7 @@ export function MapLegend({ items }: { items: { label: string; tone: Tone }[] })
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   meterTrackWrap: { justifyContent: 'center' },
   meterTrack: {
     height: 12,
@@ -545,4 +545,4 @@ const s = StyleSheet.create({
     marginTop: space.sm,
     justifyContent: 'center',
   },
-});
+}));

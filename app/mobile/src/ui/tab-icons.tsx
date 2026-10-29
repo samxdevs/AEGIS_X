@@ -1,7 +1,7 @@
 /**
- * The three bottom-bar icons, drawn rather than pulled from an icon font.
+ * The bottom-bar icons, drawn rather than pulled from an icon font.
  *
- * The app ships no icon set, and three outlines do not justify adding one.
+ * The app ships no icon set, and five outlines do not justify adding one.
  * Each is a 24-unit line drawing at the site's 1.8 stroke, tinted by the tab
  * bar's active / inactive colour so the label and icon always agree.
  */
@@ -42,6 +42,17 @@ export function ProfileIcon({ color, size = 24 }: IconProps) {
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Circle cx={12} cy={8.5} r={3.8} stroke={color} {...stroke} />
       <Path d="M4.5 20c.8-3.8 3.8-6 7.5-6s6.7 2.2 7.5 6" stroke={color} {...stroke} />
+    </Svg>
+  );
+}
+
+/** A microphone: ask out loud. Also the Ask tab's big talk button. */
+export function MicIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Rect x={9} y={3.5} width={6} height={11} rx={3} stroke={color} {...stroke} />
+      <Path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" stroke={color} {...stroke} />
+      <Path d="M12 18v2.5" stroke={color} {...stroke} />
     </Svg>
   );
 }

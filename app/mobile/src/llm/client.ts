@@ -23,6 +23,11 @@
  * `EXPO_PUBLIC_` is Expo's marker for "this is inlined into the bundle", which
  * is a usefully blunt name for the risk. A key saved on the Profile screen wins
  * over both.
+ *
+ * `EXPO_PUBLIC_SARVAM_API_KEY` is a third, last fallback with the same risk. It
+ * exists because a Sarvam key is the one key the Ask tab cannot work without
+ * (it is also the speech-to-text and voice), so demo week should not depend on
+ * typing it into a phone.
  */
 
 import Anthropic, {
@@ -33,6 +38,9 @@ import Anthropic, {
 } from '@anthropic-ai/sdk';
 
 import type { Advisory } from '../schema/advisory.ts';
+import type { VoiceLanguage } from '../voice/sarvam.ts';
+import { ASK_SYSTEM_PROMPT, buildAskMessage } from './ask-prompt.ts';
+import type { Turn } from './ask-prompt.ts';
 import { checkFigures } from './guard.ts';
 import type { Figure } from './guard.ts';
 import { chatCompletion } from './openai-compat.ts';
@@ -48,6 +56,7 @@ export const MODEL = getProvider('anthropic').defaultModel;
 
 const PROXY_URL = process.env.EXPO_PUBLIC_AEGIS_LLM_PROXY;
 const API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+export const BUILD_SARVAM_KEY = process.env.EXPO_PUBLIC_SARVAM_API_KEY;
 
 const TIMEOUT_MS = 60_000;
 
@@ -106,6 +115,9 @@ function resolveEndpoint(): Endpoint | null {
     };
   }
   if (API_KEY) return { format: 'anthropic', apiKey: API_KEY, model: MODEL, label: 'Claude' };
+  if (BUILD_SARVAM_KEY) {
+    return toEndpoint(getProvider('sarvam'), { apiKey: BUILD_SARVAM_KEY, model: '', baseUrl: '' });
+  }
   return null;
 }
 
@@ -119,6 +131,7 @@ export function configSummary(): string {
   if (saved) return `${saved.label}, key saved on this phone`;
   if (PROXY_URL) return `via proxy ${PROXY_URL}`;
   if (API_KEY) return 'direct, key in app bundle';
+  if (BUILD_SARVAM_KEY) return 'Sarvam, key in app bundle';
   return 'not configured';
 }
 
@@ -226,6 +239,42 @@ export async function explainAdvisory(
   return { status: 'ok', text: result.text, model: ep.model };
 }
 
+/**
+ * Answers one question from the Ask tab, from the farmer's own advisories.
+ *
+ * The guard runs exactly as it does on an explanation. What the answer may
+ * quote is everything in those advisories plus whatever the farmer said
+ * themselves: "I have 3 acres" is theirs to have repeated back.
+ */
+export async function askAboutFarm(req: {
+  question: string;
+  language: VoiceLanguage;
+  history: Turn[];
+  advisories: Advisory[];
+}): Promise<ExplainResult> {
+  const ep = resolveEndpoint();
+  if (!ep) {
+    return {
+      status: 'unconfigured',
+      reason: 'No AI provider is set up. Add an API key on the Profile screen.',
+    };
+  }
+
+  const result = await complete(
+    ep,
+    ASK_SYSTEM_PROMPT,
+    buildAskMessage(req),
+    ep.format === 'anthropic' ? 8000 : 2000,
+  );
+  if (!result.ok) return { status: 'failed', reason: describeFailure(result, ep.label) };
+
+  const farmerSaid = [...req.history.filter((t) => t.role === 'farmer').map((t) => t.text), req.question];
+  const guard = checkFigures(result.text, { advisories: req.advisories, farmerSaid });
+  if (!guard.ok) return { status: 'rejected', offending: guard.offending };
+
+  return { status: 'ok', text: result.text, model: ep.model };
+}
+
 export type TestResult = { ok: true; model: string } | { ok: false; reason: string };
 
 /**
@@ -253,7 +302,7 @@ export async function testConnection(
  * Collapsing them into one message would leave a farmer tapping "Try again" at
  * a problem only a developer can fix.
  */
-function describeFailure(f: Extract<ChatResult, { ok: false }>, label: string): string {
+export function describeFailure(f: Extract<ChatResult, { ok: false }>, label: string): string {
   switch (f.kind) {
     case 'auth':
       return `${label} rejected the API key. Check the key on the Profile screen.`;

@@ -235,7 +235,7 @@ The advisory document emitted by `GET /api/v1/advisory/<id_or_seq>` and `GET /ap
 
 #### 13. Actions Block (`actions[]`)
 - `rank`: Priority rank (`>= 1`)
-- `template_id`: One of 21 deterministic action templates (`ACT_EXT_OFFICER_CONSULT`, `ACT_IRRIGATE_WATER_DEFICIT`, `ACT_MAINTAIN_ROUTINE`, `ACT_MULTICROP_INVESTIGATE`, `ACT_RESCAN_AMBIGUOUS`, etc.)
+- `template_id`: One of 22 deterministic action templates (`ACT_EXT_OFFICER_CONSULT`, `ACT_IRRIGATE_WATER_DEFICIT`, `ACT_MAINTAIN_ROUTINE`, `ACT_MULTICROP_INVESTIGATE`, `ACT_RESCAN_AMBIGUOUS`, `ACT_RESCAN_NO_USABLE_FRAMES`, etc.)
 - `action`: English action directive (<= 240 chars)
 - `rationale`: Agronomic rationale (<= 400 chars)
 - `params`: Parameter dictionary for deterministic offline translation
@@ -265,7 +265,7 @@ The advisory document emitted by `GET /api/v1/advisory/<id_or_seq>` and `GET /ap
 
 ## 4. Ground Mast Pull Telemetry & Collector Sync Endpoints
 
-The ground mast ESP32 acts strictly as an HTTP server (`192.168.9.1`, AP `SIH-NODE-01`). The Jetson Nano pulls telemetry via `edge/mast_collector.py`.
+The ground mast ESP32 acts strictly as an HTTP server (`192.168.9.1`, AP `SIH-NODE-01`). The Jetson Nano pulls telemetry via `edge/mast_data_collector.py`.
 
 ### 4.1 Sync Management Endpoints
 

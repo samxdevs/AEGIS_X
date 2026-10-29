@@ -11,18 +11,24 @@
  * before it goes in front of farmers.
  */
 
+import { ASK } from './hi/ask.ts';
+import { CAMERA } from './hi/camera.ts';
 import { FINDINGS } from './hi/findings.ts';
 import { PESTS_STATUS } from './hi/pests-status.ts';
 import { POD } from './hi/pod.ts';
 import { READINGS } from './hi/readings.ts';
 import { SCAN } from './hi/scan.ts';
 import { SCREENS } from './hi/screens.ts';
+import { WALK } from './hi/walk.ts';
 
 export const HI: Record<string, string> = {
   ...SCREENS,
+  ...WALK,
   ...POD,
   ...SCAN,
   ...FINDINGS,
   ...READINGS,
   ...PESTS_STATUS,
+  ...ASK,
+  ...CAMERA,
 };

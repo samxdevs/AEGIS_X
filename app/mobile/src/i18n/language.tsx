@@ -12,6 +12,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { getState, setState } from '../db/client.ts';
+import { useScheme } from '../ui/theme-mode.tsx';
 import { setCurrentLanguage } from './tr.ts';
 import type { AppLanguage } from './tr.ts';
 
@@ -50,5 +51,7 @@ export function LanguageProvider({
 }
 
 export function useLanguage(): LanguageContext {
+  // Also subscribes to the light/dark choice: see theme-mode.tsx.
+  useScheme();
   return useContext(Ctx);
 }

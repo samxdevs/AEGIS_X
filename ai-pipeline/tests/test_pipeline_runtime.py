@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit and integration test suite for edge/pipeline.py runtime components (Step 21).
+Unit and integration test suite for edge/scan_pipeline.py runtime components (Step 21).
 
 Tests:
 1. DropOldestQueue: bounded capacity, drop-oldest behavior, sentinel preservation, clean closure.
@@ -18,9 +18,9 @@ import time
 import numpy as np
 import pytest
 
-from configs.classes import CLASS_NAMES, NUM_CLASSES
-from configs.train_config import ENGINE_BATCH, IMAGE_SIZE, N_TILES
-from edge.pipeline import (
+from configs.disease_classes_model_a import CLASS_NAMES, NUM_CLASSES
+from configs.model_settings import ENGINE_BATCH, IMAGE_SIZE, N_TILES
+from edge.scan_pipeline import (
     CaptureThread,
     DecisionAggregateStoreThread,
     DropOldestQueue,
@@ -33,7 +33,7 @@ from edge.pipeline import (
     is_camera_source,
     load_log_priors,
 )
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 def test_drop_oldest_queue_basic():
@@ -234,9 +234,9 @@ def test_g5_2_temperature_and_energy_single_application():
     Energy is evaluated strictly on raw logits at T=1.0 per L2 spec.
     """
     from scipy.special import logsumexp
-    from configs.train_config import T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR
-    from configs.classes import CROP_COLS, NOTCROP_COL, NUM_CLASSES
-    from core.rejection import softmax, open_set_energy, decide
+    from configs.model_settings import T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR
+    from configs.disease_classes_model_a import CROP_COLS, NOTCROP_COL, NUM_CLASSES
+    from core.unknown_object_rejection import softmax, open_set_energy, decide
 
     # Known fixed logit vector
     np.random.seed(42)
@@ -255,7 +255,7 @@ def test_g5_2_temperature_and_energy_single_application():
     energy = open_set_energy(z_raw, CROP_COLS, T=1.0)
     np.testing.assert_allclose(energy, expected_energy, rtol=1e-5, atol=1e-6)
 
-    # Hop 4: Rejection decision integration (core/rejection.py:decide)
+    # Hop 4: Rejection decision integration (core/unknown_object_rejection.py:decide)
     log_priors = np.zeros(NUM_CLASSES, dtype=np.float32)
     decisions = decide(
         logits=z_raw,
@@ -278,9 +278,9 @@ def test_l2_2_energy_temperature_invariance_and_tau_energy_rejection():
     L2.2: Verify decide() on 50 validation logits rejects exactly the samples where
     open_set_energy(z, CROP_COLS, T=1.0) > TAU_ENERGY (-2.7957), independent of T_cal.
     """
-    from configs.train_config import T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR
-    from configs.classes import CROP_COLS, NOTCROP_COL, NUM_CLASSES
-    from core.rejection import open_set_energy, decide
+    from configs.model_settings import T_CAL, TAU_ENERGY, TAU_CONF, TAU_PRIOR
+    from configs.disease_classes_model_a import CROP_COLS, NOTCROP_COL, NUM_CLASSES
+    from core.unknown_object_rejection import open_set_energy, decide
 
     np.random.seed(12345)
     # Generate 50 synthetic logits spanning in-distribution and out-of-distribution energies
@@ -351,8 +351,8 @@ def test_h4_2_end_to_end_parity_mac_onnx_vs_pytorch():
     import pandas as pd
     import albumentations as A
     from albumentations.pytorch import ToTensorV2
-    from configs.classes import CLASS_NAMES
-    from train.model import build_model
+    from configs.disease_classes_model_a import CLASS_NAMES
+    from train.disease_model_a_efficientnet import build_model
 
     repo_root = Path(__file__).resolve().parent.parent
     csv_path = repo_root / "splits_v3/test_indist.csv"

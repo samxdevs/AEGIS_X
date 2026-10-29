@@ -44,7 +44,7 @@ import {
   ThermometerIcon,
 } from './tiles.tsx';
 import { Meter, Stat } from './charts.tsx';
-import { color, space, type } from './theme.ts';
+import { color, space, type, themed } from './theme.ts';
 import { dateLocale, msg, tr } from '../i18n/tr.ts';
 import type { Irrigation, NdviProbe, NdviSatellite, Thermal } from '../schema/advisory.ts';
 
@@ -521,7 +521,7 @@ export function IrrigationCard({ irrigation }: { irrigation: Irrigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   statRow: { flexDirection: 'row', gap: space.md, marginTop: space.lg },
   heroRow: {
@@ -530,4 +530,4 @@ const s = StyleSheet.create({
     gap: space.md,
     marginBottom: space.sm,
   },
-});
+}));

@@ -18,9 +18,9 @@ import cv2
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from train.model import build_model
-from train.train_model_a import load_checkpoint_for_eval
-from train.export_onnx import reference_preprocess
+from train.disease_model_a_efficientnet import build_model
+from train.train_disease_model_a import load_checkpoint_for_eval
+from train.export_disease_model_a_onnx import reference_preprocess
 
 CKPT_PATH = ROOT / "artifacts/checkpoints/v3/stage1.pt"
 ONNX_PATH = ROOT / "artifacts/onnx/model_a_fused.onnx"

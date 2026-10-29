@@ -27,7 +27,7 @@ import imagehash
 from PIL import Image
 from tqdm import tqdm
 
-from configs.classes_model_b import CLASS_NAMES, IDX
+from configs.insect_classes_model_b import CLASS_NAMES, IDX
 from configs.paths import DATA, PROCESSED, SPLITS
 
 PATCH_DIR = PROCESSED / "model_b_patches"

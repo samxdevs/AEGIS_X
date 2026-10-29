@@ -3,7 +3,7 @@
 **Document:** `docs/VEGETATION_BLOCK_SPEC.md`  
 **Target Audience:** Mobile Application Team (Android / iOS UI & Data Engineers)  
 **Contract Baseline:** `data_flow_architecture.md §7.3` reconciled with `ans for vitthal.md §B6, §B7`  
-**Emitting Module:** `edge/storage.py` (`create_advisory()`)  
+**Emitting Module:** `edge/scan_database.py` (`create_advisory()`)  
 **Status:** **FROZEN API DELIVERABLE**  
 
 ---

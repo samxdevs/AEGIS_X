@@ -43,7 +43,7 @@ import {
 import type { Tone } from './components.tsx';
 import { EvidenceBar, Meter, Stat } from './charts.tsx';
 import { BugIcon, Dots } from './tiles.tsx';
-import { color, space, type } from './theme.ts';
+import { color, space, type, themed } from './theme.ts';
 import type { PestFinding } from '../schema/advisory.ts';
 import { TRAP_COUNT_DISCLAIMER } from '../schema/advisory.ts';
 import { describeTaxon } from '../schema/classes.ts';
@@ -381,8 +381,8 @@ export function TrapUploadResultCard({
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.md },
   inlineValue: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 4 },
   statRow: { flexDirection: 'row', gap: space.md, marginTop: space.sm },
-});
+}));

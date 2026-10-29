@@ -34,15 +34,48 @@
  * around the map there, so one finger pans it.
  */
 
-import { useMemo, useState } from 'react';
+import { createElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
+import { WebView as NativeWebView } from 'react-native-webview';
 import type { WebViewMessageEvent } from 'react-native-webview';
 
+/**
+ * react-native-webview renders nothing in a browser, so the web build shows
+ * the same page in an iframe. The page posts to its parent instead of to
+ * ReactNativeWebView, and messages are handed on in the WebView's event shape.
+ */
+function IframeView({
+  source,
+  onMessage,
+}: {
+  source: { html: string };
+  onMessage?: (e: WebViewMessageEvent) => void;
+  [prop: string]: unknown;
+}) {
+  const ref = useRef<HTMLIFrameElement | null>(null);
+  const handler = useRef(onMessage);
+  handler.current = onMessage;
+  useEffect(() => {
+    const listen = (e: MessageEvent) => {
+      if (e.source !== ref.current?.contentWindow || typeof e.data !== 'string') return;
+      handler.current?.({ nativeEvent: { data: e.data } } as WebViewMessageEvent);
+    };
+    window.addEventListener('message', listen);
+    return () => window.removeEventListener('message', listen);
+  }, []);
+  return createElement('iframe', {
+    ref,
+    srcDoc: source.html,
+    style: { border: 0, width: '100%', height: '100%', display: 'block' },
+  });
+}
+
+const WebView = (Platform.OS === 'web' ? IframeView : NativeWebView) as typeof NativeWebView;
+
 import type { Tone } from './components.tsx';
-import { chart, color, radius, space, type } from './theme.ts';
+import { chart, color, radius, space, type, themed } from './theme.ts';
 import { tr } from '../i18n/tr.ts';
 
 export type GeoPoint = {
@@ -54,6 +87,12 @@ export type GeoPoint = {
   sub?: string;
   /** Passed back through `onOpen` when the popup's link is tapped. */
   id?: string;
+  /**
+   * This point's own error radius in metres, when it has one (a walk's stretches
+   * carry their position accuracy). 0 draws the dot with no circle. Left out, the
+   * map-wide `radiusM` applies.
+   */
+  radiusM?: number;
 };
 
 /** The pod's stated fix error, CEP. See `gps.accuracy_note` on the wire. */
@@ -170,7 +209,7 @@ export function SatelliteMap({
           hitSlop={8}
           style={s.expand}
         >
-          <Text style={[type.label, { color: color.primaryForeground }]}>{tr('Full screen')}</Text>
+          <Text style={[type.label, { color: '#FFFFFF' }]}>{tr('Full screen')}</Text>
         </Pressable>
       ) : null}
       <Modal visible={expanded} animationType="slide" onRequestClose={() => setExpanded(false)}>
@@ -195,7 +234,7 @@ export function SatelliteMap({
             hitSlop={8}
             style={[s.close, { top: insets.top + space.sm }]}
           >
-            <Text style={[type.label, { color: color.primaryForeground }]}>{tr('Close')}</Text>
+            <Text style={[type.label, { color: '#FFFFFF' }]}>{tr('Close')}</Text>
           </Pressable>
         </View>
       </Modal>
@@ -217,6 +256,7 @@ function buildHtml(
     label: p.label,
     sub: p.sub ?? '',
     id: p.id ?? '',
+    radius: typeof p.radiusM === 'number' ? p.radiusM : radiusM,
   }));
 
   return `<!doctype html>
@@ -235,7 +275,11 @@ function buildHtml(
 </head><body>
 <div id="map"></div>
 <script>
-  function post(m) { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(m)); }
+  function post(m) {
+    var s = JSON.stringify(m);
+    if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(s);
+    else if (window.parent !== window) window.parent.postMessage(s, '*');
+  }
   var gotTile = false;
   setTimeout(function () { if (!gotTile) post({ type: 'offline' }); }, ${TILE_TIMEOUT_MS});
 </script>
@@ -245,7 +289,6 @@ function buildHtml(
   // Labels are pod data: escaped for the script tag here, for HTML below.
   var points = ${JSON.stringify(data).replace(/</g, '\\u003c')};
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
-  var radius = ${radiusM};
   var map = L.map('map', {
     zoomControl: true,
     attributionControl: true,
@@ -271,16 +314,17 @@ function buildHtml(
   var group = [];
   points.forEach(function (p) {
     // The true error circle, in metres: grows as you zoom, never a pin.
-    var c = L.circle([p.lat, p.lon], {
-      radius: radius, color: p.stroke, weight: 2, fillColor: p.stroke, fillOpacity: 0.28,
-    }).addTo(map);
+    var c = p.radius > 0 ? L.circle([p.lat, p.lon], {
+      radius: p.radius, color: p.stroke, weight: 2, fillColor: p.stroke, fillOpacity: 0.28,
+    }).addTo(map) : null;
     // A fixed-size dot so the finding is visible when zoomed out.
     var d = L.circleMarker([p.lat, p.lon], {
       radius: 4, color: '#000', weight: 1, fillColor: p.stroke, fillOpacity: 1,
     }).addTo(map);
     var html = '<b>' + esc(p.label) + '</b>' + (p.sub ? '<br>' + esc(p.sub) : '') +
       (${linkable} && p.id ? '<br><a href="#" data-id="' + esc(p.id) + '">' + esc(${JSON.stringify(openLabel)}) + '</a>' : '');
-    c.bindPopup(html); d.bindPopup(html);
+    if (c) c.bindPopup(html);
+    d.bindPopup(html);
     group.push([p.lat, p.lon]);
   });
   document.addEventListener('click', function (e) {
@@ -293,7 +337,7 @@ function buildHtml(
 </body></html>`;
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   frame: {
     borderRadius: radius.lg,
     overflow: 'hidden',
@@ -327,6 +371,6 @@ const s = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(248,245,240,0.85)',
+    backgroundColor: color.background + 'D9',
   },
-});
+}));

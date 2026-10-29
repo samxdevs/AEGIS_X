@@ -22,7 +22,7 @@ Everything below works today.
 cd mobile
 npm install
 npm start          # Expo dev server
-npm test           # schema, templates, cursor, LLM guard, geometry — 127 tests
+npm test           # schema, templates, cursor, LLM guard, voice, geometry — 210 tests
 npm run typecheck
 npm run station    # fake pod gateway, serving the v1.0 API from the fixtures
 ```
@@ -44,6 +44,7 @@ npm run station -- --slow 800       # 800 ms per response
 npm run station -- --booting 20     # 503 + Retry-After for the first 20 s
 npm run station -- --allow-mock     # serve mock-backend advisories instead of 403
 npm run station -- --no-mast        # mast sync reports MAST_NOT_FOUND
+npm run station -- --freeze-camera 15  # live camera stops advancing: see PAUSED
 ```
 
 It reproduces the awkward parts rather than the easy ones. `sync/trigger` really
@@ -77,6 +78,8 @@ optimism about what it just connected to.
 | `src/ui/pest.tsx` | Sticky-trap counts, the ETL comparison, and what the count actually counts. |
 | `src/ui/detections.tsx` | Findings with their reliability tier ahead of their confidence, and the field plot. |
 | `src/llm/` | The fourth tier: the advisory explained in plain language. |
+| `src/voice/` | The Ask tab's ears and voice: Sarvam speech-to-text and text-to-speech. |
+| `src/ui/pod-camera.tsx`, `src/scan/camera.ts` | The pod camera on the live screen, and Capture (`SCAN_CONTROL_API.md` §1.7, §1.8). |
 | `app/` | Three screens: history, advisory, pod. |
 | `tools/fake-field-station.mjs` | A fake pod gateway, so the whole API is testable with no hardware. |
 
@@ -281,6 +284,42 @@ Claude defaults to `claude-opus-5` at medium effort. One call per advisory per
 language, not per screen. Whichever provider writes the text, the guard above
 checks it the same way.
 
+## The Ask tab — voice questions in any Indian language
+
+The middle tab. A farmer taps the microphone, asks about their fields in their
+own language, and hears the answer back in that language.
+
+```
+speak → Sarvam speech-to-text (saaras:v3, language detected, not chosen)
+      → the AI provider, given the 3 newest valid scans on this phone
+      → the F2 guard, exactly as on an explanation
+      → Sarvam voice (bulbul:v3, 16 kHz MP3), cached so it replays offline
+```
+
+- **Languages are not symmetric.** Recognition covers 22 Indian languages plus
+  English; Sarvam has voices for 11. For the rest the answer is shown as text
+  and the screen says there is no voice yet. Typed questions take their language
+  from their script (`scriptLanguage()` in `src/voice/sarvam.ts`).
+- **What was heard is shown back** ("you said") before the answer, so a farmer
+  can see when a noisy field was misheard.
+- **The guard reads every Indian digit set.** `asciiDigits()` in `guard.ts`
+  turns ५ or ௫ into 5 before checking; before it, a dose in Devanagari digits
+  walked straight past. It still cannot read a number spelled out in words, so
+  the prompt (`src/llm/ask-prompt.ts`) requires digits and says a number word is
+  still a number. That gap is narrowed, not closed.
+- **One key covers it.** Sarvam is also a provider on the Profile tab
+  (`sarvam-105b-conversations`), so a Sarvam key alone can listen, answer and
+  speak. If another provider is active, it writes the answers and the Sarvam
+  key is still used for the voice. Build-time fallback:
+  `EXPO_PUBLIC_SARVAM_API_KEY` in `.env`, with the same in-the-APK caveat as
+  the Anthropic key.
+- Runs in Expo Go: `expo-audio` records and plays, `expo-file-system` caches.
+
+Verified live from this machine with the app's own modules (Hindi question in,
+Hindi answer out, guard passed): speech-to-text about 1.3 s, answer about 4 s,
+voice about 3.6 s. `tools/sarvam-first-call.mjs` checks a key and the
+speech-to-text endpoint on their own.
+
 ## Two platform gotchas
 
 **Android.** Joined to a WiFi network with no internet, Android keeps the
@@ -314,6 +353,10 @@ on the pod screen, in the app.
   hardware team over Ethernet, not over that radio.
 - **`POST /api/v1/trap/upload`** — implemented to the contract, not yet
   exercised on the real Jetson.
+- **`GET /api/v1/camera/frame.jpg` and `POST /api/v1/scan/capture`** (live camera
+  and Capture, added 27 Oct 2026) — specified, built in the app and the fake
+  station, not yet implemented on the Jetson. The fake station's frames are
+  drawings labelled SIMULATED, and its capture verdicts follow a fixed cycle.
 - **`POST /api/v1/sync/trigger`** — same. The AP/STA window it opens is
   simulated faithfully in `tools/fake-field-station.mjs`.
 
@@ -323,9 +366,15 @@ on the pod screen, in the app.
 - Picking a trap photo from the camera roll. `uploadTrapImage()` takes a `Blob`
   and is wired to the contract; nothing calls it from a screen yet, because
   choosing an image needs `expo-image-picker` and a dev build.
-- A live call against the real LLM API. The guard, the prompt, the cache and the
-  screen are all written and typecheck clean, but no request has been made from
-  this machine — there is no key configured here. First run needs a human.
+- A live call against the providers other than Sarvam. Sarvam's three endpoints
+  have been called from this machine; the others are written and typecheck
+  clean, but no request has been made. First run needs a human.
+- The Ask tab on a real phone in a real field: recording, permissions and
+  playback are written to the `expo-audio` API but untested on hardware, and
+  recognition has only heard a synthetic voice, not farmers in wind.
+- Asking with no signal. Today the Ask tab says it needs a connection; a queued
+  question answered when signal returns, and saving the conversation across app
+  restarts, are the next steps.
 - Localisation of the app's own fixed strings. The *advice* speaks Hindi offline;
   the card headings around it do not.
 - Entering the planting date and seed variety, which is what would move

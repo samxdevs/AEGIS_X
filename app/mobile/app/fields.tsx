@@ -17,18 +17,21 @@ import { listAdvisories } from '../src/db/advisories.ts';
 import type { AdvisorySummary } from '../src/db/advisories.ts';
 import { formatWhen } from '../src/ui/advisory.tsx';
 import { Muted, StatusChip } from '../src/ui/components.tsx';
+import { Reveal } from '../src/ui/motion.tsx';
 import { ScanRow, looksHealthy, needsLook, rowVerdict } from '../src/ui/scan-row.tsx';
+import { useBarClearance } from '../src/ui/floating-bar.ts';
 import { useStatusBarStyle } from '../src/ui/status-bar.ts';
 import { useLanguage } from '../src/i18n/language.tsx';
 import { tr } from '../src/i18n/tr.ts';
-import { color, radius, shadow, space, type } from '../src/ui/theme.ts';
+import { color, radius, shadow, space, type, themed } from '../src/ui/theme.ts';
 
 /** How many of a field's scans show under its headline. */
 const RECENT = 3;
 
 export default function FieldsScreen() {
   const [rows, setRows] = useState<AdvisorySummary[]>([]);
-  useStatusBarStyle('dark');
+  useStatusBarStyle('light');
+  const clearance = useBarClearance();
   useLanguage();
 
   useFocusEffect(
@@ -51,7 +54,7 @@ export default function FieldsScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: color.background }}
-      contentContainerStyle={{ padding: space.lg, paddingBottom: space.xl }}
+      contentContainerStyle={{ padding: space.lg, paddingBottom: clearance }}
     >
       {ordered.length === 0 ? (
         <View style={s.card}>
@@ -59,7 +62,7 @@ export default function FieldsScreen() {
         </View>
       ) : null}
 
-      {ordered.map(([fieldId, scans]) => {
+      {ordered.map(([fieldId, scans], i) => {
         const latest = scans[0];
         const look = scans.filter(needsLook).length;
         // Zero flagged is not the same as healthy: a field whose latest scan
@@ -74,7 +77,8 @@ export default function FieldsScreen() {
               ? { label: tr('LOOKS HEALTHY'), tone: 'good' as const }
               : { label: rowVerdict(latest).text.toUpperCase(), tone: 'warn' as const };
         return (
-          <View key={fieldId || 'none'} style={s.field}>
+          <Reveal key={fieldId || 'none'} index={i}>
+          <View style={s.field}>
             <View style={s.head}>
               <View style={{ flex: 1 }}>
                 <Text style={[type.title, { color: color.foreground }]}>
@@ -100,13 +104,14 @@ export default function FieldsScreen() {
               </Text>
             ) : null}
           </View>
+          </Reveal>
         );
       })}
     </ScrollView>
   );
 }
 
-const s = StyleSheet.create({
+const s = themed(() => StyleSheet.create({
   card: {
     backgroundColor: color.card,
     borderRadius: radius.xl,
@@ -117,4 +122,4 @@ const s = StyleSheet.create({
   },
   field: { marginBottom: space.xl },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
-});
+}));

@@ -1,5 +1,5 @@
 """
-Tests for core/growth_stage.py and growth_stage advisory assembly in edge/storage.py.
+Tests for core/growth_stage.py and growth_stage advisory assembly in edge/scan_database.py.
 """
 import pytest
 import numpy as np
@@ -14,7 +14,7 @@ from core.growth_stage import (
     FAO56_KC_BENCHMARKS,
     FAO56_STAGE_CANOPY_RANGES,
 )
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 FROZEN_ENUM = {STATUS_VERIFIED, STATUS_WEB_VERIFIED, STATUS_RECALLED_UNVERIFIED, STATUS_UNSOURCED}

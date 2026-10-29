@@ -6,15 +6,15 @@ Visually sanity-checks the trained model against the MacBook's webcam or static 
 Features:
 1. Loads the trained PyTorch checkpoint directly (artifacts/checkpoints/v3/stage1.pt)
 2. Runs on Apple Silicon (MPS) or CPU (not CUDA)
-3. Strictly uses official eval_transform() from train/transforms.py (as in train/dataset.py)
-4. Whole-frame single forward pass + core.rejection.decide()
-5. Real deployment 3x3 spatial tiling (320px tiles, 20% overlap) + core.aggregate.aggregate_frame()
+3. Strictly uses official eval_transform() from train/augmentations_model_a.py (as in train/dataset_loader_model_a.py)
+4. Whole-frame single forward pass + core.unknown_object_rejection.decide()
+5. Real deployment 3x3 spatial tiling (320px tiles, 20% overlap) + core.verdict_aggregation.aggregate_frame()
 6. Optional Test-Time Augmentation (--tta): horizontal flip + 1.1x scale center-cropped, logit-averaged
 7. Dual-column HUD overlay and side-by-side stdout output for direct comparison
 8. CLI flags: --image <path>, --tta, --no-tiling, --camera-index, --device, --eval-weights, --save-annotated, --show
 
 NOTE: This is a local development/demo tool only. It is never deployed to the Jetson Nano
-and does not replace official evaluation metrics in train/evaluate.py.
+and does not replace official evaluation metrics in train/evaluate_disease_model_a.py.
 """
 
 import argparse
@@ -34,7 +34,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from configs.classes import (
+from configs.disease_classes_model_a import (
     CLASS_NAMES,
     CROP_COLS,
     DISEASE_COLS,
@@ -43,7 +43,7 @@ from configs.classes import (
     NUM_CLASSES,
 )
 from configs.paths import CKPT
-from configs.train_config import (
+from configs.model_settings import (
     IMAGE_SIZE,
     N_TILES,
     T_CAL,
@@ -56,11 +56,11 @@ from configs.train_config import (
     TILE_OVERLAP,
     TILE_SIZE,
 )
-from core.aggregate import aggregate_frame
-from core.rejection import decide, open_set_energy, softmax
-from train.model import build_model
-from train.train_model_a import load_checkpoint_for_eval
-from train.transforms import eval_transform
+from core.verdict_aggregation import aggregate_frame
+from core.unknown_object_rejection import decide, open_set_energy, softmax
+from train.disease_model_a_efficientnet import build_model
+from train.train_disease_model_a import load_checkpoint_for_eval
+from train.augmentations_model_a import eval_transform
 
 
 def select_device(user_device: Optional[str] = None) -> torch.device:
@@ -114,7 +114,7 @@ def extract_3x3_tiles(
     If the input image is not 832x832, it is resized to (832, 832) using INTER_LINEAR
     so the 3x3 grid covers the complete field of view uniformly.
 
-    NOTE on edge/tiler.py: edge/tiler.py is Step 20 in the implementation plan
+    NOTE on edge/leaf_tile_finder.py: edge/leaf_tile_finder.py is Step 20 in the implementation plan
     and has not been authored in this branch. Field-specific ExG vegetation-mask
     filtering is intentionally omitted here for local test photos and webcam frames.
     """
@@ -151,7 +151,7 @@ def run_decision(
     tau_margin: float = TAU_MARGIN,
 ) -> Dict[str, Union[str, float, int]]:
     """
-    Applies core.rejection.decide() with calibrated thresholds and maps
+    Applies core.unknown_object_rejection.decide() with calibrated thresholds and maps
     to the 4 deployment states: DISEASE, HEALTHY, NOT_CROP, UNCERTAIN.
     """
     dec = decide(
@@ -847,7 +847,7 @@ def main() -> None:
     model.eval()
     print(f"[webcam_test] Successfully loaded checkpoint from {ckpt_path} (weights: {weights_used})")
 
-    # 3. Preprocessing transform (strictly matching train/dataset.py:21)
+    # 3. Preprocessing transform (strictly matching train/dataset_loader_model_a.py:21)
     tf = eval_transform(size=IMAGE_SIZE)
 
     # 4. Training log-priors for decide()

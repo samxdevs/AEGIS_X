@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit and concurrency tests for edge/storage.py (Step 33).
+Unit and concurrency tests for edge/scan_database.py (Step 33).
 
 Tests:
 1. test_schema_creation_and_pragmas: WAL mode, busy timeout, tables, indexes.
@@ -20,7 +20,7 @@ import time
 import numpy as np
 import pytest
 
-from edge.storage import EdgeStorage
+from edge.scan_database import EdgeStorage
 
 
 def test_schema_creation_and_pragmas():
@@ -492,7 +492,7 @@ def test_standing_guard_generated_by_always_template():
 def test_cross_source_reliability_in_detections():
     """F7/G3: Verify cross-source reliability tiers follow exact spec logic and are present in detections."""
     import json
-    from configs.classes import CLASS_NAMES
+    from configs.disease_classes_model_a import CLASS_NAMES
     from configs.reliability import get_cross_source_reliability
     valid_tiers = {"TESTED_ROBUST", "TESTED_WEAK", "TESTED_FAILED", "UNTESTED"}
 
@@ -635,7 +635,7 @@ def test_inputs_sensor_status_consistency():
             "wet_ref": {"row_min": 2, "row_max": 5, "col_min": 2, "col_max": 5},
             "dry_ref": {"row_min": 2, "row_max": 5, "col_min": 26, "col_max": 29},
         }
-        with unittest.mock.patch("edge.thermal_capture.load_thermal_refs", return_value=mock_refs_cfg):
+        with unittest.mock.patch("edge.thermal_camera_mlx90640.load_thermal_refs", return_value=mock_refs_cfg):
             storage.record_scan_start("scan_hw_thermal")
             storage.record_frame_event(
                 scan_id="scan_hw_thermal",
@@ -660,7 +660,7 @@ def test_inputs_sensor_status_consistency():
 
         # Scenario 4: Real hardware thermal frame captured, but references NOT_CONFIGURED
         unconf_refs_cfg = {"status": "NOT_CONFIGURED", "wet_ref": None, "dry_ref": None}
-        with unittest.mock.patch("edge.thermal_capture.load_thermal_refs", return_value=unconf_refs_cfg):
+        with unittest.mock.patch("edge.thermal_camera_mlx90640.load_thermal_refs", return_value=unconf_refs_cfg):
             storage.record_scan_start("scan_hw_unconf")
             storage.record_frame_event(
                 scan_id="scan_hw_unconf",
@@ -687,7 +687,7 @@ def test_inputs_sensor_status_consistency():
             assert inputs_map_unconf["pod_thermal"]["status"] == "PENDING_CALIBRATION"
 
         # Scenario 5: Replay scan with thermal frame provided (provenance suppression)
-        with unittest.mock.patch("edge.thermal_capture.load_thermal_refs", return_value=mock_refs_cfg):
+        with unittest.mock.patch("edge.thermal_camera_mlx90640.load_thermal_refs", return_value=mock_refs_cfg):
             storage.record_scan_start("scan_replay_therm")
             storage.record_frame_event(
                 scan_id="scan_replay_therm",
@@ -761,7 +761,7 @@ def test_thermal_block_replay_provenance_explicit(tmp_path):
     )
     storage.record_scan_end("scan_prov_replay", frames_captured=1, frames_evaluated=1, tiles_classified=9)
 
-    with unittest.mock.patch("edge.thermal_capture.load_thermal_refs", return_value=mock_refs):
+    with unittest.mock.patch("edge.thermal_camera_mlx90640.load_thermal_refs", return_value=mock_refs):
         adv_replay = storage.create_advisory("scan_prov_replay", replay=True, thermal_frame_data=hw_frame)
 
     assert adv_replay["replay"] is True
@@ -793,7 +793,7 @@ def test_thermal_block_replay_provenance_explicit(tmp_path):
     )
     storage.record_scan_end("scan_prov_live", frames_captured=1, frames_evaluated=1, tiles_classified=9)
 
-    with unittest.mock.patch("edge.thermal_capture.load_thermal_refs", return_value=mock_refs):
+    with unittest.mock.patch("edge.thermal_camera_mlx90640.load_thermal_refs", return_value=mock_refs):
         adv_live = storage.create_advisory("scan_prov_live", replay=False, thermal_frame_data=hw_frame)
 
     assert adv_live["replay"] is False

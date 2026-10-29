@@ -3,7 +3,7 @@
 **Document ID:** `docs/TEMPLATE_ID_REGISTRY.md`  
 **Target Audience:** Mobile Application Team (Android / Kotlin developers), Agronomic Reviewers, Evaluation Judges  
 **Contract Reference:** [`ans_for_vitthal.md`](file:///Users/mohdahsan/Downloads/SIH/ans%20for%20vitthal.md) §7 F1, F4, F5  
-**Emitting Module:** [`edge/rules_engine.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/edge/rules_engine.py)  
+**Emitting Module:** [`edge/advice_rules_engine.py`](file:///Users/mohdahsan/Downloads/SIH/sih-smart-farming/edge/advice_rules_engine.py)  
 **Date:** 16 September 2026  
 **Status:** **BINDING CONTRACT DELIVERABLE — AUDITED CITATION GOVERNANCE**
 
@@ -85,7 +85,7 @@ The advisory payload also carries a top-level `"growth_stage"` block containing 
 MASTER CLASSIFICATION BREAKDOWN (21 TEMPLATES)
 ========================================================================================
 Verified (Traced to repo code, contracts, or equations): 3 (14.3%)
-  1. ACT_RESCAN_AMBIGUOUS          [verified-operational]  (edge/pipeline.py:175-215)
+  1. ACT_RESCAN_AMBIGUOUS          [verified-operational]  (edge/scan_pipeline.py:175-215)
   2. ACT_MULTICROP_INVESTIGATE      [verified-operational]  (ans_for_vitthal.md §8 S2)
   3. ACT_IRRIGATE_WATER_DEFICIT     [verified-calculation]  (edge/irrigation_model.py:4-45)
 
@@ -124,21 +124,21 @@ Unsourced / Consultation Mandatory: 2 (9.5%)
 - **English Action:**
   > "Re-scan the ambiguous area. Walk at a steady, slow pace (approx. 0.5 m/s) holding the sensor pod steady at 1.0 m above canopy height under diffuse daylight."
 - **English Rationale:**
-  > "Temporal consensus (k >= 2 agreeing frames) was not achieved or image quality was degraded. Citation: SIH PS 26180 Section 5; edge/pipeline.py:175-215; edge/storage.py:118-124."
+  > "Temporal consensus (k >= 2 agreeing frames) was not achieved or image quality was degraded. Citation: SIH PS 26180 Section 5; edge/scan_pipeline.py:175-215; edge/scan_database.py:118-124."
 - **Parameters (`params`):**
   | Parameter | Type | Nullable in Reality? | Description |
   | :--- | :--- | :--- | :--- |
   | `crop` | `string` or `null` | **YES** (null if no crop identified) | Dominant crop if inferred, else `null`. |
   | `state` | `string` | **NO** | `"UNCERTAIN"`, `"NO_DATA"`, or `"NOT_CROP"`. |
   | `reason` | `string` | **NO** | Rejection code (e.g. `"UNCONFIRMED_DETECTIONS"`). |
-- **Provenance:** `verified-operational` (traced to repo code `edge/pipeline.py:175-215` and `edge/storage.py:118-124`)
+- **Provenance:** `verified-operational` (traced to repo code `edge/scan_pipeline.py:175-215` and `edge/scan_database.py:118-124`)
 
 #### 2. `ACT_MULTICROP_INVESTIGATE`
 - **Trigger Condition:** `crop_health.reason == "MULTIPLE_CROPS_DETECTED"` (when frame detections span multiple crops without any single crop achieving $\ge 85\%$ supermajority).
 - **English Action:**
   > "Inspect plot boundaries or intercropped rows. The camera observed conflicting visual characteristics of multiple crops without a clear supermajority."
 - **English Rationale:**
-  > "Detections span multiple crop taxonomies without reaching the required 85% single-crop supermajority floor. Citation: SIH-TH10 Contract ans_for_vitthal.md §8 S2; edge/storage.py:108-115."
+  > "Detections span multiple crop taxonomies without reaching the required 85% single-crop supermajority floor. Citation: SIH-TH10 Contract ans_for_vitthal.md §8 S2; edge/scan_database.py:108-115."
 - **Parameters (`params`):**
   | Parameter | Type | Nullable in Reality? | Description |
   | :--- | :--- | :--- | :--- |
@@ -146,7 +146,7 @@ Unsourced / Consultation Mandatory: 2 (9.5%)
   | `crop` | `null` | **ALWAYS NULL** | Explicitly nullified to prevent contradictory crop state. |
   | `state` | `string` | **NO** | `"UNCERTAIN"`. |
   | `reason` | `string` | **NO** | `"MULTIPLE_CROPS_DETECTED"`. |
-- **Provenance:** `verified-operational` (traced to repo specification `ans_for_vitthal.md` §8 S2 and `edge/storage.py:108-115`)
+- **Provenance:** `verified-operational` (traced to repo specification `ans_for_vitthal.md` §8 S2 and `edge/scan_database.py:108-115`)
 
 #### 3. `ACT_MAINTAIN_ROUTINE`
 - **Trigger Condition:** `crop_health.state == "HEALTHY"`.
@@ -413,8 +413,8 @@ Unsourced / Consultation Mandatory: 2 (9.5%)
 
 - **Total Templates in Master Registry:** **21**
 - **VERIFIED (Traced to repo code, contracts, or equations):** **3 of 21** (14.3%)
-  - `ACT_RESCAN_AMBIGUOUS`: `edge/pipeline.py:175-215`, `edge/storage.py:118-124`, PS 26180 §5
-  - `ACT_MULTICROP_INVESTIGATE`: `ans_for_vitthal.md` §8 S2, `edge/storage.py:108-115`
+  - `ACT_RESCAN_AMBIGUOUS`: `edge/scan_pipeline.py:175-215`, `edge/scan_database.py:118-124`, PS 26180 §5
+  - `ACT_MULTICROP_INVESTIGATE`: `ans_for_vitthal.md` §8 S2, `edge/scan_database.py:108-115`
   - `ACT_IRRIGATE_WATER_DEFICIT`: `edge/irrigation_model.py:4-45`, FAO-56 Penman-Monteith
 - **WEB_VERIFIED (Verified against CIB&RC registered label claims & ICAR bulletins):** **11 of 21** (52.4%)
   - `ACT_MAINTAIN_ROUTINE`: `docs/sources/dppqs_components_ipm.md`
@@ -442,7 +442,7 @@ Unsourced / Consultation Mandatory: 2 (9.5%)
 
 ## 4. Sticky-Trap Pest Abstention & Classification Contract (Model B)
 
-**Emitting Module:** `core/trap_segmentation.py` (`classify_trap_blobs`, `evaluate_trap_counts_against_etl`)  
+**Emitting Module:** `core/trap_insect_segmentation.py` (`classify_trap_blobs`, `evaluate_trap_counts_against_etl`)  
 **Target Schema:** Advisory Document v1.0 (`pest[]` block)  
 **Status:** **BINDING CONTRACT DELIVERABLE — AUDITED ABSTENTION GOVERNANCE**
 
@@ -480,7 +480,7 @@ Blobs triggering either gate are strictly classified as:
 
 ## 5. Model A Cross-Source Generalization Reliability Contract
 
-**Emitting Module:** `edge/storage.py` (`create_advisory()`), `configs/classes.py`  
+**Emitting Module:** `edge/scan_database.py` (`create_advisory()`), `configs/disease_classes_model_a.py`  
 **Target Schema:** Advisory Document v1.0 (`detections[].cross_source_reliability`)  
 **Status:** **BINDING CONTRACT DELIVERABLE — AUDITED GENERALIZATION TIERS**
 

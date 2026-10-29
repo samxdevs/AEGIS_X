@@ -4,7 +4,7 @@ scripts/audit_nano_compat.py
 
 C4: Test pure NumPy stable_logsumexp on extreme logits (+/- 1000).
     Run Python 3.6 AST compatibility guard across core/ and edge/.
-C5: Audit third-party import tree of edge/pipeline.py against JetPack 4.6.4 / NANO_DEPLOYMENT_RUNBOOK.md.
+C5: Audit third-party import tree of edge/scan_pipeline.py against JetPack 4.6.4 / NANO_DEPLOYMENT_RUNBOOK.md.
 """
 import sys
 import os
@@ -17,7 +17,7 @@ from scipy.special import logsumexp as scipy_lse
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.rejection import stable_logsumexp
+from core.unknown_object_rejection import stable_logsumexp
 
 print("=================================================================")
 print("PART C4: STABLE LOGSUMEXP AUDIT & EXTREME LOGIT VERIFICATION")
@@ -112,10 +112,10 @@ else:
         print(f"  {f}: {msg}")
 
 print("\n=================================================================")
-print("PART C5: edge/pipeline.py IMPORT TREE & JETPACK 4.6.4 AUDIT")
+print("PART C5: edge/scan_pipeline.py IMPORT TREE & JETPACK 4.6.4 AUDIT")
 print("=================================================================")
 
-# Recursively trace all imports starting from edge/pipeline.py
+# Recursively trace all imports starting from edge/scan_pipeline.py
 visited_modules = set()
 third_party_imports = set()
 stdlib_modules = set(sys.builtin_module_names)
@@ -173,9 +173,9 @@ def trace_imports(rel_path):
         else:
             third_party_imports.add(root_pkg)
 
-trace_imports(Path("edge/pipeline.py"))
+trace_imports(Path("edge/scan_pipeline.py"))
 
-print(f"Traced {len(visited_modules)} local modules in edge/pipeline.py import tree:")
+print(f"Traced {len(visited_modules)} local modules in edge/scan_pipeline.py import tree:")
 for m in sorted(visited_modules):
     print(f"  - {m}")
 
@@ -205,4 +205,4 @@ for pkg in sorted(third_party_imports):
         status = "FLAGGED"
     print(f"{pkg:<15} | {cls:<30} | {source:<35} | {status}")
 
-print("\nFinal Result: Zero prohibited dependencies in edge/pipeline.py runtime path!")
+print("\nFinal Result: Zero prohibited dependencies in edge/scan_pipeline.py runtime path!")

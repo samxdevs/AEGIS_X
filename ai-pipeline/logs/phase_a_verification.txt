@@ -1,4 +1,0 @@
-artifacts/checkpoints: exists=True, children_count=0
-artifacts/reports: exists=True, children_count=0
-artifacts/logits: exists=True, children_count=0
-wandb: does not exist

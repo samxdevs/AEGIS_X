@@ -5,10 +5,10 @@ import numpy as np
 import pytest
 from scipy.special import logsumexp
 
-from configs.classes import CROP_COLS
-from configs.classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
-from configs.train_config import MODEL_B_T_CAL, T_CAL
-from core.rejection import open_set_energy as runtime_model_a_energy, stable_logsumexp as core_logsumexp
+from configs.disease_classes_model_a import CROP_COLS
+from configs.insect_classes_model_b import CLASS_NAMES as MODEL_B_CLASSES
+from configs.model_settings import MODEL_B_T_CAL, T_CAL
+from core.unknown_object_rejection import open_set_energy as runtime_model_a_energy, stable_logsumexp as core_logsumexp
 
 
 def test_j2_3_model_a_energy_parity():
@@ -16,10 +16,10 @@ def test_j2_3_model_a_energy_parity():
     np.random.seed(42)
     sample_logits = np.random.randn(50, 29).astype(np.float64)
 
-    # 1. Runtime function (core.rejection.open_set_energy with T=1.0 on raw logits)
+    # 1. Runtime function (core.unknown_object_rejection.open_set_energy with T=1.0 on raw logits)
     runtime_e = runtime_model_a_energy(sample_logits, CROP_COLS, T=1.0)
 
-    # 2. Calibration formula (train/calibrate.py calling core.rejection.open_set_energy / direct formula)
+    # 2. Calibration formula (train/calibrate_disease_model_a.py calling core.unknown_object_rejection.open_set_energy / direct formula)
     crop_cols_arr = np.asarray(CROP_COLS, dtype=int)
     z_crop = sample_logits[:, crop_cols_arr]
     m = z_crop.max(axis=1, keepdims=True)
@@ -35,7 +35,7 @@ def test_j2_4_model_b_energy_parity():
     np.random.seed(42)
     sample_logits = np.random.randn(50, len(MODEL_B_CLASSES)).astype(np.float64)
 
-    # 1. Runtime formula in core/trap_segmentation.py:595
+    # 1. Runtime formula in core/trap_insect_segmentation.py:595
     runtime_b_energy = -MODEL_B_T_CAL * core_logsumexp(sample_logits / MODEL_B_T_CAL, axis=1)
 
     # 2. Calibration formula in sih-model-b-training.ipynb:411

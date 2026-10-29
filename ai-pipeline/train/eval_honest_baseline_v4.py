@@ -29,10 +29,10 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, balanced_accuracy_score
 from tqdm import tqdm
 
-from configs.classes_model_b import CLASS_NAMES, NUM_CLASSES, IDX, TARGET_CLASS_IDX
+from configs.insect_classes_model_b import CLASS_NAMES, NUM_CLASSES, IDX, TARGET_CLASS_IDX
 from configs.paths import ROOT, SPLITS, CKPT, REPORTS
-from train.model_b import TrapPestCNN
-from train.transforms_model_b import train_transform_model_b, eval_transform_model_b
+from train.insect_model_b_cnn import TrapPestCNN
+from train.augmentations_model_b import train_transform_model_b, eval_transform_model_b
 
 MANDATORY_CAVEAT: str = (
     "NOTICE: Reported metrics measure benchmark performance on group-isolated trap cards "

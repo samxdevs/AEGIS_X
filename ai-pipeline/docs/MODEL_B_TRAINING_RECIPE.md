@@ -54,7 +54,7 @@ Whoever trains or evaluates Model B must understand which half of this benchmark
 2. **The whitefly-vs-larger-insect boundary IS genuine morphology**:
    The $\sigma$-baseline scores **0.00% recall on `larger_insect`**, proving that variance cannot separate green mirids or beetles from whiteflies (both share $\sigma \in [5, 30]$). The jump from **0.5869** to **0.9735** cross-card Macro-F1 is load-bearing: the CNN learns genuine morphological structures (body elongation, antennae, translucent wing contours, leg articulation).
 3. **Operational Implication**:
-   Under real field deployment with weathered glue (dust films, pollen crust, water spots with $\sigma > 4.0$), debris may leak into insect classes. Therefore, deterministic watershed blob density from `core/trap_segmentation.py` remains the primary reported metric; the CNN's role is strictly morphological breakdown within detected insect blobs.
+   Under real field deployment with weathered glue (dust films, pollen crust, water spots with $\sigma > 4.0$), debris may leak into insect classes. Therefore, deterministic watershed blob density from `core/trap_insect_segmentation.py` remains the primary reported metric; the CNN's role is strictly morphological breakdown within detected insect blobs.
 
 ---
 
@@ -63,7 +63,7 @@ Whoever trains or evaluates Model B must understand which half of this benchmark
 1. **Sugarcane Woolly Aphid (*Ceratovacuna lanigera*) Wax Gap**:
    Woolly aphids present as flocculent white wax secretions rather than discrete insect bodies. Zero public sticky-trap datasets capture this morphology. In-field Indian trap harvesting is required for fine-tuning.
 2. **Soft-Bodied Aphids & Thrips (*Rhopalosiphum padi*, *Sitobion avenae*, *Anaphothrips obscurus*) Gap**:
-   Zero labelled aphids and only 7 labelled thrips exist in public European trap datasets. They are detected and counted in **total blob density** by deterministic watershed (`core/trap_segmentation.py`), but intentionally unclassified by the CNN.
+   Zero labelled aphids and only 7 labelled thrips exist in public European trap datasets. They are detected and counted in **total blob density** by deterministic watershed (`core/trap_insect_segmentation.py`), but intentionally unclassified by the CNN.
 3. **Weathered Glue & High-Variance Field Debris Gap**:
    Real Indian field cards carry dust films, pollen crust, water spots, dried leaf fibers, and fungal spores. Because training debris was sanitized to flat uniform yellow glue ($\sigma < 6.0$), weathered high-variance non-insect textures risk being misclassified as insects, inflating pest counts. Operational deployments must always treat watershed blob density as primary.
 

@@ -20,7 +20,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 
 OUT_DIR = Path("splits_v3")
 OUT_DIR.mkdir(parents=True, exist_ok=True)

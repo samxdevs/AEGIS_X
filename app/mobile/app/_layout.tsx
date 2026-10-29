@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Tabs } from 'expo-router/js-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,8 +18,12 @@ import { revalidateAll } from '../src/db/advisories.ts';
 import { getDb } from '../src/db/client.ts';
 import { seedFixturesIfEmpty } from '../src/db/seed.ts';
 import { loadLlmSettings } from '../src/llm/settings.ts';
-import { FieldsIcon, HomeIcon, PodIcon, ProfileIcon } from '../src/ui/tab-icons.tsx';
-import { color, font, type } from '../src/ui/theme.ts';
+import { FieldsIcon, HomeIcon, MicIcon, PodIcon, ProfileIcon } from '../src/ui/tab-icons.tsx';
+import { color, font, radius, shadow, type } from '../src/ui/theme.ts';
+import type { Scheme } from '../src/ui/theme.ts';
+import { ThemeProvider, loadSavedScheme } from '../src/ui/theme-mode.tsx';
+import { TopBar } from '../src/ui/top-bar.tsx';
+import { BAR_HEIGHT, FLOAT_GAP, FLOAT_SIDE } from '../src/ui/floating-bar.ts';
 import { LanguageProvider, loadSavedLanguage, useLanguage } from '../src/i18n/language.tsx';
 import type { AppLanguage } from '../src/i18n/tr.ts';
 import { tr } from '../src/i18n/tr.ts';
@@ -33,6 +38,7 @@ export default function RootLayout() {
   });
   const [dbReady, setDbReady] = useState(false);
   const [language, setLanguage] = useState<AppLanguage>('en');
+  const [scheme, setScheme] = useState<Scheme>('light');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,6 +56,8 @@ export default function RootLayout() {
         // The farmer's language, before the first screen draws, so a Hindi
         // reader never sees the app flash up in English.
         setLanguage(await loadSavedLanguage());
+        // Likewise the light/dark choice, so a dark phone never flashes white.
+        setScheme(await loadSavedScheme());
         // The AI provider and key, so the advisory screen knows on its first
         // render whether it can offer an explanation.
         await loadLlmSettings();
@@ -84,17 +92,37 @@ export default function RootLayout() {
       {/* No root <StatusBar>: it mounts after the first screen's focus effect
           and overwrote the light style the history band needs. Each screen
           sets its own with useStatusBarStyle. */}
-      <LanguageProvider initial={language}>
-        <AppTabs />
-      </LanguageProvider>
+      <ThemeProvider initial={scheme}>
+        <LanguageProvider initial={language}>
+          <AppTabs />
+        </LanguageProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
+/** The active tab's icon sits in a soft pill, like a native nav indicator. */
+function NavIcon({ focused, children }: { focused: boolean; children: ReactNode }) {
+  return (
+    <View
+      style={{
+        width: 54,
+        height: 30,
+        borderRadius: radius.pill,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: focused ? color.secondary : 'transparent',
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
 /**
- * Three places, always one tap away: home (the scans), the fields they came from,
- * and the pod they are pulled from. The bar stays visible on an open advisory
- * too — see (scans)/_layout.tsx.
+ * The places always one tap away: home (the scans), the fields they came from,
+ * the Ask tab in the middle where a thumb finds it, and the pod they are pulled
+ * from. The bar stays visible on an open advisory too — see (scans)/_layout.tsx.
  */
 function AppTabs() {
   // Inside SafeAreaProvider, so the inset is real.
@@ -106,21 +134,36 @@ function AppTabs() {
       screenOptions={{
         tabBarActiveTintColor: color.primary,
         tabBarInactiveTintColor: color.fgSubtle,
-        // Sized explicitly: with Montserrat the default bar clipped the bottom
-        // of its labels. Setting a height means adding the gesture-bar inset
-        // by hand, which the default would otherwise have done.
+        // A floating pill, lifted off the bottom edge and the sides. Sized
+        // explicitly: with Montserrat the default bar clipped the bottom of its
+        // labels. It floats above the gesture bar, so the inset is the gap.
         tabBarStyle: {
-          backgroundColor: color.card,
-          borderTopColor: color.border,
-          height: 70 + insets.bottom,
-          paddingTop: 6,
-          paddingBottom: 6 + insets.bottom,
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          marginHorizontal: FLOAT_SIDE,
+          bottom: insets.bottom + FLOAT_GAP,
+          height: BAR_HEIGHT,
+          paddingTop: 0,
+          paddingBottom: 0,
+          borderRadius: radius.pill,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: color.border,
+          // Slightly see-through, so the page is felt behind the bar.
+          backgroundColor: color.card + 'F6',
+          ...shadow.lifted,
         },
+        tabBarItemStyle: { paddingVertical: 7 },
         tabBarLabelStyle: { fontFamily: font.sansMedium, fontSize: 11.5, lineHeight: 15 },
-        headerStyle: { backgroundColor: color.background },
-        headerShadowVisible: false,
-        headerTintColor: color.foreground,
-        headerTitleStyle: { fontFamily: font.sansBold, fontSize: 16.5 },
+        // Tabs cross-fade rather than cut.
+        animation: 'fade',
+        // One top bar for every tab, the same band Home draws.
+        header: ({ options }) => (
+          <TopBar title={typeof options.headerTitle === 'string' ? options.headerTitle : options.title} />
+        ),
+        // No bottom padding: the bar floats over the page and content scrolls
+        // under it. Each screen pads its own scroll area (useBarClearance).
         sceneStyle: { backgroundColor: color.background },
       }}
     >
@@ -129,14 +172,34 @@ function AppTabs() {
         options={{
           title: tr('Home'),
           headerShown: false,
-          tabBarIcon: ({ color: c }) => <HomeIcon color={c} />,
+          tabBarIcon: ({ color: c, focused }) => (
+            <NavIcon focused={focused}>
+              <HomeIcon color={c} />
+            </NavIcon>
+          ),
         }}
       />
       <Tabs.Screen
         name="fields"
         options={{
           title: tr('Fields'),
-          tabBarIcon: ({ color: c }) => <FieldsIcon color={c} />,
+          tabBarIcon: ({ color: c, focused }) => (
+            <NavIcon focused={focused}>
+              <FieldsIcon color={c} />
+            </NavIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ask"
+        options={{
+          title: tr('Ask'),
+          headerTitle: tr('Ask about your fields'),
+          tabBarIcon: ({ color: c, focused }) => (
+            <NavIcon focused={focused}>
+              <MicIcon color={c} />
+            </NavIcon>
+          ),
         }}
       />
       <Tabs.Screen
@@ -144,14 +207,22 @@ function AppTabs() {
         options={{
           title: tr('Pod'),
           headerTitle: tr('Pod & sync'),
-          tabBarIcon: ({ color: c }) => <PodIcon color={c} />,
+          tabBarIcon: ({ color: c, focused }) => (
+            <NavIcon focused={focused}>
+              <PodIcon color={c} />
+            </NavIcon>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: tr('Profile'),
-          tabBarIcon: ({ color: c }) => <ProfileIcon color={c} />,
+          tabBarIcon: ({ color: c, focused }) => (
+            <NavIcon focused={focused}>
+              <ProfileIcon color={c} />
+            </NavIcon>
+          ),
         }}
       />
     </Tabs>

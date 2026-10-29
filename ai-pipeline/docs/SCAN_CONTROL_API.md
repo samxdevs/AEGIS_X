@@ -13,6 +13,8 @@ All timestamps: ISO-8601 UTC with `Z`. All endpoints are on the existing gateway
 3. Farmer taps **Start scan**, picks field + crop → `POST /api/v1/scan/start`.
 4. Farmer walks. App polls `GET /api/v1/scan/status` every 1 s, shows the live screen, vibrates on new alerts,
    and sends the phone's GPS fixes every ~5 s → `POST /api/v1/scan/track`.
+   The live screen shows what the pod camera sees (`GET /api/v1/camera/frame.jpg`, ~8× a second), and the
+   farmer can tap **Capture** to have one particular plant checked → `POST /api/v1/scan/capture`.
 5. Farmer taps **Stop** → `POST /api/v1/scan/stop`. Status goes `finalizing` → `done` with an `advisory_id`.
 6. App fetches that advisory directly (`GET /api/v1/advisory/<advisory_id>`), acks it, opens the **walk report**.
 7. Farmer taps **Shut down pod** → `POST /api/v1/pod/shutdown`.
@@ -111,6 +113,54 @@ Pod behaviour: stops the camera, collects the ESP32 once more, writes the adviso
 
 `{"confirm": true}` → `202 {"shutting_down_in_s": 5}`. If a scan is running it is stopped and finalized first.
 
+### 1.7 `GET /api/v1/camera/frame.jpg` (live view; the app polls ~8× a second while the live screen is open)
+
+The newest **preview** frame as a JPEG. Added 27 Oct 2026.
+
+- `200 image/jpeg`, longest side ≤ 640 px, JPEG quality ~60 (≈ 25–45 KB). Headers:
+  - `Cache-Control: no-store`
+  - `X-Frame-Seq: 1842`: increases by one for every new preview frame. Serving the same frame twice is fine;
+    the app uses this number to notice a frozen camera and say "feed paused" instead of showing a still picture as live.
+  - `X-Frame-UTC: 2026-10-03T04:34:38Z`
+  - `X-Frame-Source: camera` or `replay` (replay = frames of the demo crop video; the app labels the feed REPLAY)
+- `204` camera warming up, no frame yet.
+- `409 {"error": "camera_idle"}` when no scan is `starting` or `scanning`. The camera only runs during a walk.
+- `503 {"error": "camera_unavailable"}` if the camera fails mid-scan.
+
+Pod behaviour: the preview is a side branch of the capture pipeline (downscale + JPEG at ≤ 10 fps, e.g. a
+GStreamer `tee` off `nvarguscamerasrc`). **It must never slow the classifier**: if encoding falls behind, drop
+preview frames, never classifier frames. Budget: 8 fps × ~35 KB ≈ 2.2 Mbit/s on the pod's access point.
+
+Why single frames and not an MJPEG stream: the app cannot tell when an MJPEG stream has frozen, and on a
+weak 2.4 GHz link a stream builds a backlog (the picture falls further and further behind), where polling
+just drops to a lower frame rate and stays current.
+
+### 1.8 `POST /api/v1/scan/capture` (the farmer taps Capture)
+
+`{"scan_id": "2026-10-03T04:30:12Z_F01"}` → `200`:
+```jsonc
+{
+  "capture_id": 2,                         // strictly increasing within a scan, from 1
+  "utc": "2026-10-03T04:34:41Z",
+  "media_id": "cap_2026-10-03T04:30:12Z_F01_2",
+  "image_path": "/api/v1/media/cap_2026-10-03T04:30:12Z_F01_2",   // full-resolution JPEG
+  "quality": "OK",                         // OK | BLURRY | TOO_DARK | TOO_BRIGHT
+  "verdict": "DISEASE",                    // HEALTHY | DISEASE | UNCERTAIN | NOT_CROP | NO_DATA (NO_DATA when quality is not OK)
+  "top_class": "wheat__brown_rust",        // null unless verdict is DISEASE
+  "confidence": 0.91,                      // null with NO_DATA
+  "cross_source_reliability": "TESTED_WEAK",
+  "lat": 26.8467, "lon": 80.9462, "pos_accuracy_m": 4.0, "pos_source": "phone_gps"   // same rule as §1.4; nulls if none
+}
+```
+Errors: `404 {"error": "no_such_scan"}`, `409 {"error": "not_scanning"}`, `429 {"error": "capture_busy"}`
+(one capture at a time), `503 {"error": "camera_unavailable"}`. Target: answer within 2 s.
+
+Pod behaviour: takes the newest **full-resolution** frame (not the preview), runs the same quality checks,
+tiling and classifier as a walk frame, saves the JPEG as media, and adds the result to the walk's `captures[]`.
+- The declared-crop rule (§3) applies: another crop's class is `UNCERTAIN`, never that crop's disease.
+- One frame is weaker evidence than the walk's ≥ 3-frame agreement. A capture **never raises an alert and never
+  changes the stretch counts**. It is the farmer pointing at one plant and asking.
+
 ---
 
 ## 2. The walk report (advisory) — new fields
@@ -136,6 +186,7 @@ Everything existing stays. Added:
       "lat": 26.8467, "lon": 80.9462, "pos_accuracy_m": 4.0, "pos_source": "phone_gps" }   // nulls if no position
   ],
   "alerts": [ /* every alert raised during the walk, same shape as in status */ ],
+  "captures": [ /* every photo the farmer took (§1.8), same shape as the capture response; [] if none */ ],
   "field_conditions": {
     "available": true, "reason": null, "node_id": "SIH-NODE-01",
     "reading_utc": "...", "age_minutes": 0.4,

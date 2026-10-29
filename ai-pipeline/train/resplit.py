@@ -25,7 +25,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from configs.paths import ROOT, SPLITS
-from configs.classes import CLASS_NAMES
+from configs.disease_classes_model_a import CLASS_NAMES
 
 SPLITS_V2 = ROOT / 'splits_v2'
 
